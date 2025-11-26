@@ -4456,6 +4456,7 @@ __metadata:
     prettier: ^3.0.0
     prettier-plugin-tailwindcss: ^0.6.11
     react: 19.0.0
+    react-circular-progressbar: ^2.2.0
     react-dom: 19.0.0
     reading-time: 1.5.0
     rehype-autolink-headings: ^7.1.0
@@ -10080,6 +10081,15 @@ __metadata:
   version: 1.2.3
   resolution: "queue-microtask@npm:1.2.3"
   checksum: b676f8c040cdc5b12723ad2f91414d267605b26419d5c821ff03befa817ddd10e238d22b25d604920340fd73efd8ba795465a0377c4adf45a4a41e4234e42dc4
+  languageName: node
+  linkType: hard
+
+"react-circular-progressbar@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "react-circular-progressbar@npm:2.2.0"
+  peerDependencies:
+    react: ">=0.14.0"
+  checksum: d7d27554c0ff523ca13e8473cea7ae60ea52262e4beca037db44109eca4f30e339d924398933da5fc0568e2743ad02e3624a96b7836ca632a0ca60bc33b342e1
   languageName: node
   linkType: hard
 
