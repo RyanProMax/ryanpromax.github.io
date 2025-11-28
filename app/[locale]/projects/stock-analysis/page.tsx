@@ -1,26 +1,13 @@
 'use client';
 
 import axios from 'axios';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { useParams } from 'next/navigation';
-import { TrendingUp, TrendingDown, Shield, Activity, Brain, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronUp, Table2, LayoutGrid } from 'lucide-react';
 import { Locale } from '@/locales/config';
+import StockCard, { StockData } from './StockCard';
 
-import { CircularProgressbarWithChildren, buildStyles } from 'react-circular-progressbar';
-import 'react-circular-progressbar/dist/styles.css';
-
-interface StockData {
-  symbol: string;
-  price: number;
-  score: number;
-  advice: string;
-  trend_status: string;
-  stop_loss_price: number;
-  bullish_signals: string[];
-  bearish_signals: string[];
-  fear_greed_index: number;
-  fear_greed_label: string;
-}
+type ViewMode = 'table' | 'card';
 
 const translations = {
   [Locale.EN]: {
@@ -34,9 +21,18 @@ const translations = {
     fearGreedIndex: 'Fear & Greed',
     loading: 'Loading...',
     noSignals: 'No signals detected',
+    symbol: 'Symbol',
+    advice: 'Advice',
+    viewTable: 'Table View',
+    viewCard: 'Card View',
+    // 简短表头
+    symbolShort: 'Symbol',
+    scoreShort: 'Score',
+    adviceShort: 'Advice',
+    fearGreedShort: 'F&G',
   },
   [Locale.ZH]: {
-    title: '智能股票分析报告',
+    title: '股票分析报告',
     currentPrice: '当前价格',
     analysisScore: '综合评分',
     trendStatus: '趋势状态',
@@ -46,6 +42,15 @@ const translations = {
     fearGreedIndex: '恐惧贪婪指数',
     loading: '加载中...',
     noSignals: '暂无信号',
+    symbol: '股票代码',
+    advice: '建议',
+    viewTable: '表格视图',
+    viewCard: '卡片视图',
+    // 简短表头
+    symbolShort: '代码',
+    scoreShort: '评分',
+    adviceShort: '建议',
+    fearGreedShort: '贪恐',
   },
 };
 
@@ -55,8 +60,20 @@ export default function StockAnalysisPage() {
   const [stocksData, setStocksData] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedSymbol, setExpandedSymbol] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
   const t = translations[locale];
-  const [symbols, setSymbols] = useState(['TQQQ', 'NVDX', 'TSLA', 'YINN']);
+  const [symbols, setSymbols] = useState([
+    'TQQQ',
+    'TECL',
+    'NVDA',
+    'GOOGL',
+    'TSLA',
+    'AAPL',
+    'YINN',
+    'BABA',
+    'CONL',
+  ]);
 
   // 获取股票数据的函数
   const fetchStockData = async () => {
@@ -90,19 +107,19 @@ export default function StockAnalysisPage() {
     bullish: {
       bg: 'bg-emerald-50',
       text: 'text-emerald-700',
-      ring: '#10b981', // emerald-500
+      ring: '#10b981',
       dot: 'bg-emerald-500',
     },
     neutral: {
       bg: 'bg-amber-50',
       text: 'text-amber-800',
-      ring: '#f59e0b', // amber-500
+      ring: '#f59e0b',
       dot: 'bg-amber-500',
     },
     bearish: {
       bg: 'bg-rose-50',
       text: 'text-rose-700',
-      ring: '#f43f5e', // rose-500
+      ring: '#f43f5e',
       dot: 'bg-rose-500',
     },
   };
@@ -112,6 +129,19 @@ export default function StockAnalysisPage() {
     if (score >= 70) return themeColors.bullish;
     if (score <= 40) return themeColors.bearish;
     return themeColors.neutral;
+  };
+
+  // 从 fear_greed_label 中提取 emoji
+  const getEmojiFromLabel = (label: string) => {
+    // 匹配 emoji（包括各种 emoji 范围）
+    const emojiMatch = label.match(
+      /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]/u
+    );
+    return emojiMatch ? emojiMatch[0] : '';
+  };
+
+  const toggleExpand = (symbol: string) => {
+    setExpandedSymbol(expandedSymbol === symbol ? null : symbol);
   };
 
   return (
@@ -152,176 +182,322 @@ export default function StockAnalysisPage() {
         </div>
       )}
 
-      <div className="container mx-auto mt-8 grid auto-rows-auto grid-cols-1 gap-6 md:grid-cols-2 xl:auto-rows-fr">
-        {stocksData.map((stockData, index) => {
-          const currentTheme = getThemeStyles(stockData.score);
-          const fearGreedTheme = getThemeStyles(stockData.fear_greed_index);
+      {/* 视图切换按钮 */}
+      {!loading && stocksData.length > 0 && (
+        <div className="container mx-auto mt-8 flex justify-end gap-2">
+          <button
+            onClick={() => setViewMode('table')}
+            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              viewMode === 'table'
+                ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+            }`}
+          >
+            <Table2 className="h-4 w-4" />
+            {t.viewTable}
+          </button>
+          <button
+            onClick={() => setViewMode('card')}
+            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              viewMode === 'card'
+                ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+            }`}
+          >
+            <LayoutGrid className="h-4 w-4" />
+            {t.viewCard}
+          </button>
+        </div>
+      )}
 
-          return (
-            <div
-              key={stockData.symbol}
-              className="flex h-auto w-full max-w-full min-w-0 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] xl:h-full dark:bg-gray-800 dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.3)]"
-            >
-              {/* 头部：股票代码与建议横幅 */}
-              <div className="p-8 pb-0">
-                <div className="mb-6 flex items-baseline justify-between">
-                  <h2 className="text-5xl font-extralight tracking-tight text-gray-900 dark:text-gray-100">
-                    {stockData.symbol}
-                  </h2>
-                  <div className="text-right">
-                    <p className="text-2xl font-light text-gray-900 dark:text-gray-100">
-                      ${stockData.price.toFixed(2)}
-                    </p>
-                    {/* <p className="text-sm text-gray-500">{t.currentPrice}</p> */}
-                  </div>
-                </div>
-              </div>
+      {/* 表格视图 */}
+      {!loading && stocksData.length > 0 && viewMode === 'table' && (
+        <div className="container mx-auto mt-8 overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-gray-200 dark:border-gray-700">
+                <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                  <span className="md:hidden">{t.symbolShort}</span>
+                  <span className="hidden md:inline">{t.symbol}</span>
+                </th>
+                <th className="hidden px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell dark:text-gray-400">
+                  {t.currentPrice}
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                  <span className="md:hidden">{t.scoreShort}</span>
+                  <span className="hidden md:inline">{t.analysisScore}</span>
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                  <span className="md:hidden">{t.adviceShort}</span>
+                  <span className="hidden md:inline">{t.advice}</span>
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                  <span className="md:hidden">{t.fearGreedShort}</span>
+                  <span className="hidden md:inline">{t.fearGreedIndex}</span>
+                </th>
+                <th className="hidden px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell dark:text-gray-400">
+                  {t.trendStatus}
+                </th>
+                <th className="hidden px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell dark:text-gray-400">
+                  {t.stopLoss}
+                </th>
+                <th className="hidden px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell dark:text-gray-400">
+                  操作
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
+              {stocksData.map((stockData) => {
+                const currentTheme = getThemeStyles(stockData.score);
+                const fearGreedTheme = getThemeStyles(stockData.fear_greed_index);
+                const isExpanded = expandedSymbol === stockData.symbol;
 
-              {/* 建议 Banner - 全宽、柔和背景色 */}
-              <div
-                className={`w-full px-8 py-4 ${currentTheme.bg} flex items-center justify-center`}
-              >
-                <p className={`text-lg font-medium ${currentTheme.text}`}>{stockData.advice}</p>
-              </div>
-
-              {/* 核心指标区域 */}
-              <div className="grid grid-cols-1 items-center gap-8 border-b border-gray-100 p-8 xl:grid-cols-12 dark:border-gray-700">
-                {/* 左侧：大圆环评分 */}
-                <div className="flex flex-col items-center justify-center py-4 xl:col-span-5">
-                  <div className="h-40 w-40">
-                    {/* 使用 react-circular-progressbar 实现极细圆环 */}
-                    <CircularProgressbarWithChildren
-                      value={stockData.score}
-                      strokeWidth={3} // 极细线条
-                      styles={buildStyles({
-                        pathColor: currentTheme.ring,
-                        trailColor: '#f3f4f6', // 非常浅的灰色轨迹
-                        strokeLinecap: 'round',
-                        pathTransitionDuration: 1,
-                      })}
+                return (
+                  <Fragment key={stockData.symbol}>
+                    <tr
+                      className="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                      onClick={() => toggleExpand(stockData.symbol)}
                     >
-                      <div className="text-center">
-                        <p className="text-5xl font-thin text-gray-900 dark:text-gray-100">
-                          {stockData.score}
-                        </p>
-                      </div>
-                    </CircularProgressbarWithChildren>
-                  </div>
-                  <p className="mt-4 text-sm font-medium tracking-wide text-gray-500 dark:text-gray-400">
-                    {t.analysisScore}
-                  </p>
-                </div>
-
-                {/* 右侧：关键数据指标 - 使用更细的图标和字体 */}
-                <div className="space-y-6 py-4 xl:col-span-7 xl:border-l xl:border-gray-100 xl:pl-8 dark:xl:border-gray-700">
-                  {/* 建议止损 */}
-                  <div>
-                    <div className="mb-2 flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                      <Shield className="h-4 w-4" strokeWidth={1.5} />
-                      <p className="text-xs font-medium">{t.stopLoss}</p>
-                    </div>
-                    <p className="text-2xl font-light text-gray-900 dark:text-gray-100">
-                      ${stockData.stop_loss_price.toFixed(2)}
-                    </p>
-                  </div>
-
-                  {/* 趋势状态 */}
-                  <div>
-                    <div className="mb-2 flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                      <Activity className="h-4 w-4" strokeWidth={1.5} />
-                      <p className="text-xs font-medium">{t.trendStatus}</p>
-                    </div>
-                    <p className="text-xl font-normal text-gray-900 dark:text-gray-100">
-                      {stockData.trend_status}
-                    </p>
-                  </div>
-
-                  {/* 恐惧贪婪 - 简化版 */}
-                  <div className="border-t border-gray-50 pt-6 dark:border-gray-700">
-                    <div className="mb-2 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                        <Brain className="h-4 w-4" strokeWidth={1.5} />
-                        <p className="text-xs font-medium">{t.fearGreedIndex}</p>
-                      </div>
-                      <span className={`text-sm font-medium ${fearGreedTheme.text}`}>
-                        {stockData.fear_greed_label}
-                      </span>
-                    </div>
-                    {/* 极简进度条 */}
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
-                      <div
-                        className="h-full rounded-full transition-all duration-1000 ease-out"
-                        style={{
-                          width: `${stockData.fear_greed_index}%`,
-                          backgroundColor: fearGreedTheme.ring,
-                        }}
-                      />
-                    </div>
-                    <p className="mt-1 text-right text-sm font-light text-gray-900 dark:text-gray-100">
-                      {stockData.fear_greed_index.toFixed(1)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 底部：信号列表 - 双栏布局，使用小圆点替代大图标 */}
-              <div className="relative mt-auto grid grid-cols-1 gap-8 bg-gray-50/50 p-8 xl:grid-cols-2 dark:bg-gray-900/50">
-                {/* 中间分割线 */}
-                <div className="absolute top-8 bottom-8 left-1/2 hidden w-px bg-gray-200 xl:block dark:bg-gray-700"></div>
-
-                {/* 看涨信号 */}
-                <div>
-                  <div className="mb-4 flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-emerald-600" strokeWidth={2} />
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {t.bullishSignals}
-                    </h3>
-                  </div>
-                  {stockData.bullish_signals.length > 0 ? (
-                    <ul className="space-y-3">
-                      {stockData.bullish_signals.map((signal, idx) => (
-                        <li key={idx} className="flex items-start gap-3">
-                          {/* 极简小圆点 */}
-                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-                          <span className="text-sm leading-relaxed font-light text-gray-600 dark:text-gray-300">
-                            {signal}
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="text-base font-medium text-gray-900 dark:text-gray-100">
+                          {stockData.symbol}
+                        </div>
+                      </td>
+                      {/* 价格 - PC端显示，移动端隐藏 */}
+                      <td className="hidden px-4 py-4 whitespace-nowrap md:table-cell">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          ${stockData.price.toFixed(2)}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium ${currentTheme.bg} ${currentTheme.text}`}
+                          >
+                            {stockData.score}
                           </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-gray-400 italic dark:text-gray-500">{t.noSignals}</p>
-                  )}
-                </div>
-
-                {/* 看跌信号 */}
-                <div>
-                  <div className="mb-4 flex items-center gap-2">
-                    <TrendingDown className="h-4 w-4 text-rose-600" strokeWidth={2} />
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {t.bearishSignals}
-                    </h3>
-                  </div>
-                  {stockData.bearish_signals.length > 0 ? (
-                    <ul className="space-y-3">
-                      {stockData.bearish_signals.map((signal, idx) => (
-                        <li key={idx} className="flex items-start gap-3">
-                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" />
-                          <span className="text-sm leading-relaxed font-light text-gray-600 dark:text-gray-300">
-                            {signal}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="text-sm text-gray-900 dark:text-gray-100">
+                          {/* 移动端：只显示英文建议（BUY/HOLD/SELL等，包括小写） */}
+                          <span className="md:hidden">
+                            {stockData.advice.match(/[A-Za-z]+/)?.[0] || stockData.advice}
                           </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-gray-400 italic dark:text-gray-500">{t.noSignals}</p>
-                  )}
-                </div>
-              </div>
+                          {/* PC端：显示完整建议 */}
+                          <span className="hidden md:inline">{stockData.advice}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        {/* 移动端：显示数字和emoji图标 */}
+                        <div className="flex items-center gap-1.5 md:hidden">
+                          <span className="text-base">
+                            {getEmojiFromLabel(stockData.fear_greed_label)}
+                          </span>
+                          <span className={`text-sm font-medium ${fearGreedTheme.text}`}>
+                            {stockData.fear_greed_index.toFixed(1)}
+                          </span>
+                        </div>
+                        {/* PC端：显示完整进度条 */}
+                        <div className="hidden items-center gap-3 md:flex">
+                          <div className="min-w-[120px] flex-1">
+                            <div className="mb-1 flex items-center justify-between">
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {stockData.fear_greed_index.toFixed(1)}
+                              </span>
+                              <span className={`text-xs font-medium ${fearGreedTheme.text}`}>
+                                {stockData.fear_greed_label}
+                              </span>
+                            </div>
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
+                              <div
+                                className="h-full rounded-full transition-all duration-1000 ease-out"
+                                style={{
+                                  width: `${stockData.fear_greed_index}%`,
+                                  backgroundColor: fearGreedTheme.ring,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      {/* 趋势 - PC端显示，移动端隐藏 */}
+                      <td className="hidden px-4 py-4 whitespace-nowrap md:table-cell">
+                        <div className="text-sm text-gray-900 dark:text-gray-100">
+                          {stockData.trend_status}
+                        </div>
+                      </td>
+                      {/* 止损价 - PC端显示，移动端隐藏 */}
+                      <td className="hidden px-4 py-4 whitespace-nowrap md:table-cell">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          ${stockData.stop_loss_price.toFixed(2)}
+                        </div>
+                      </td>
+                      {/* 操作列 - PC端显示，移动端隐藏 */}
+                      <td className="hidden px-4 py-4 text-right whitespace-nowrap md:table-cell">
+                        {isExpanded ? (
+                          <ChevronUp className="ml-auto h-5 w-5 text-gray-400" />
+                        ) : (
+                          <ChevronDown className="ml-auto h-5 w-5 text-gray-400" />
+                        )}
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <>
+                        {/* 移动端：colSpan=4（代码、评分、建议、贪恐指数） */}
+                        <tr className="md:hidden">
+                          <td colSpan={4} className="bg-gray-50 px-4 py-6 dark:bg-gray-900/50">
+                            {/* 移动端：显示价格、趋势、止损价 */}
+                            <div className="mb-4 grid grid-cols-1 gap-4 border-b border-gray-200 pb-4 md:hidden dark:border-gray-700">
+                              <div>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {t.currentPrice}:
+                                </span>
+                                <p className="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  ${stockData.price.toFixed(2)}
+                                </p>
+                              </div>
+                              <div>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {t.trendStatus}:
+                                </span>
+                                <p className="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {stockData.trend_status}
+                                </p>
+                              </div>
+                              <div>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {t.stopLoss}:
+                                </span>
+                                <p className="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  ${stockData.stop_loss_price.toFixed(2)}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* 涨跌信号 - PC和移动端都显示 */}
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                              {/* 看涨信号 */}
+                              <div>
+                                <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {t.bullishSignals}
+                                </h4>
+                                {stockData.bullish_signals.length > 0 ? (
+                                  <ul className="space-y-2">
+                                    {stockData.bullish_signals.map((signal, idx) => (
+                                      <li key={idx} className="flex items-start gap-2">
+                                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                                        <span className="text-sm text-gray-600 dark:text-gray-300">
+                                          {signal}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="text-sm text-gray-400 italic dark:text-gray-500">
+                                    {t.noSignals}
+                                  </p>
+                                )}
+                              </div>
+
+                              {/* 看跌信号 */}
+                              <div>
+                                <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {t.bearishSignals}
+                                </h4>
+                                {stockData.bearish_signals.length > 0 ? (
+                                  <ul className="space-y-2">
+                                    {stockData.bearish_signals.map((signal, idx) => (
+                                      <li key={idx} className="flex items-start gap-2">
+                                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" />
+                                        <span className="text-sm text-gray-600 dark:text-gray-300">
+                                          {signal}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="text-sm text-gray-400 italic dark:text-gray-500">
+                                    {t.noSignals}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                        {/* PC端：colSpan=8 */}
+                        <tr className="hidden md:table-row">
+                          <td colSpan={8} className="bg-gray-50 px-4 py-6 dark:bg-gray-900/50">
+                            {/* 涨跌信号 - PC端只显示信号 */}
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                              {/* 看涨信号 */}
+                              <div>
+                                <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {t.bullishSignals}
+                                </h4>
+                                {stockData.bullish_signals.length > 0 ? (
+                                  <ul className="space-y-2">
+                                    {stockData.bullish_signals.map((signal, idx) => (
+                                      <li key={idx} className="flex items-start gap-2">
+                                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                                        <span className="text-sm text-gray-600 dark:text-gray-300">
+                                          {signal}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="text-sm text-gray-400 italic dark:text-gray-500">
+                                    {t.noSignals}
+                                  </p>
+                                )}
+                              </div>
+
+                              {/* 看跌信号 */}
+                              <div>
+                                <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {t.bearishSignals}
+                                </h4>
+                                {stockData.bearish_signals.length > 0 ? (
+                                  <ul className="space-y-2">
+                                    {stockData.bearish_signals.map((signal, idx) => (
+                                      <li key={idx} className="flex items-start gap-2">
+                                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" />
+                                        <span className="text-sm text-gray-600 dark:text-gray-300">
+                                          {signal}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="text-sm text-gray-400 italic dark:text-gray-500">
+                                    {t.noSignals}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      </>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* 卡片列表视图 */}
+      {!loading && stocksData.length > 0 && viewMode === 'card' && (
+        <div className="container mx-auto mt-8 columns-1 gap-6 md:columns-2">
+          {stocksData.map((stockData) => (
+            <div key={stockData.symbol} className="mb-6 break-inside-avoid">
+              <StockCard stockData={stockData} translations={t} />
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
