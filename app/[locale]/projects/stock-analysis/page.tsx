@@ -1,5 +1,6 @@
 'use client';
 
+import axios from 'axios';
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { TrendingUp, TrendingDown, Shield, Activity, Brain, AlertTriangle } from 'lucide-react';
@@ -55,35 +56,24 @@ export default function StockAnalysisPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const t = translations[locale];
+  const [symbols, setSymbols] = useState(['NVDA', 'TSLA', 'TQQQ']);
 
   // 获取股票数据的函数
-  const fetchStockData = async (symbol: string) => {
+  const fetchStockData = async () => {
     try {
       setLoading(true);
       setError(null);
 
       const isDev = process.env.NODE_ENV === 'development';
       const apiUrl = isDev
-        ? `/proxy/stock/analyze/${symbol}`
-        : `https://stock-analyzer-service-55638944338.us-central1.run.app/stock/analyze/${symbol}`;
+        ? `/proxy/stock/analyze`
+        : `https://stock-analyzer-service-55638944338.us-central1.run.app/stock/analyze`;
 
-      const response = await fetch(apiUrl);
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch data for ${symbol}: ${response.statusText}`);
-      }
-
-      const data: StockData = await response.json();
-
-      setStocksData((prev) => {
-        const existingIndex = prev.findIndex((stock) => stock.symbol === data.symbol);
-        if (existingIndex >= 0) {
-          const updated = [...prev];
-          updated[existingIndex] = data;
-          return updated;
-        }
-        return [...prev, data];
+      const response = await axios.post<StockData[]>(apiUrl, {
+        symbols,
       });
+
+      setStocksData(response.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       console.error('Error fetching stock data:', err);
@@ -93,8 +83,8 @@ export default function StockAnalysisPage() {
   };
 
   useEffect(() => {
-    fetchStockData('NVDA');
-  }, []);
+    fetchStockData();
+  }, [symbols]);
 
   const themeColors = {
     bullish: {

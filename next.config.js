@@ -94,11 +94,13 @@ module.exports = () => {
         return [
           {
             source: '/:locale/proxy/:path*',
-            destination: 'https://stock-analyzer-service-55638944338.us-central1.run.app/:path*',
+            destination: 'http://localhost:8080/:path*',
+            // destination: 'https://stock-analyzer-service-55638944338.us-central1.run.app/:path*',
           },
           {
             source: '/proxy/:path*',
-            destination: 'https://stock-analyzer-service-55638944338.us-central1.run.app/:path*',
+            destination: 'http://localhost:8080/:path*',
+            // destination: 'https://stock-analyzer-service-55638944338.us-central1.run.app/:path*',
           },
         ];
       },
