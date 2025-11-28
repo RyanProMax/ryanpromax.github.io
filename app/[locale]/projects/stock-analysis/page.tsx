@@ -56,7 +56,7 @@ export default function StockAnalysisPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const t = translations[locale];
-  const [symbols, setSymbols] = useState(['NVDA', 'TSLA', 'TQQQ']);
+  const [symbols, setSymbols] = useState(['TQQQ', 'NVDX', 'TSLA', 'YINN']);
 
   // 获取股票数据的函数
   const fetchStockData = async () => {
@@ -152,7 +152,7 @@ export default function StockAnalysisPage() {
         </div>
       )}
 
-      <div className="container mx-auto mt-8 grid auto-rows-max grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="container mx-auto mt-8 grid auto-rows-auto grid-cols-1 gap-6 md:grid-cols-2 xl:auto-rows-fr">
         {stocksData.map((stockData, index) => {
           const currentTheme = getThemeStyles(stockData.score);
           const fearGreedTheme = getThemeStyles(stockData.fear_greed_index);
@@ -160,7 +160,7 @@ export default function StockAnalysisPage() {
           return (
             <div
               key={stockData.symbol}
-              className="w-full max-w-full min-w-0 overflow-hidden rounded-[2rem] bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] lg:min-w-[450px] dark:bg-gray-800 dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.3)]"
+              className="flex h-auto w-full max-w-full min-w-0 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] xl:h-full dark:bg-gray-800 dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.3)]"
             >
               {/* 头部：股票代码与建议横幅 */}
               <div className="p-8 pb-0">
@@ -185,9 +185,9 @@ export default function StockAnalysisPage() {
               </div>
 
               {/* 核心指标区域 */}
-              <div className="grid grid-cols-1 items-center gap-8 border-b border-gray-100 p-8 md:grid-cols-12 dark:border-gray-700">
+              <div className="grid grid-cols-1 items-center gap-8 border-b border-gray-100 p-8 xl:grid-cols-12 dark:border-gray-700">
                 {/* 左侧：大圆环评分 */}
-                <div className="flex flex-col items-center justify-center py-4 md:col-span-5">
+                <div className="flex flex-col items-center justify-center py-4 xl:col-span-5">
                   <div className="h-40 w-40">
                     {/* 使用 react-circular-progressbar 实现极细圆环 */}
                     <CircularProgressbarWithChildren
@@ -213,7 +213,7 @@ export default function StockAnalysisPage() {
                 </div>
 
                 {/* 右侧：关键数据指标 - 使用更细的图标和字体 */}
-                <div className="space-y-6 py-4 md:col-span-7 md:border-l md:border-gray-100 md:pl-8 dark:md:border-gray-700">
+                <div className="space-y-6 py-4 xl:col-span-7 xl:border-l xl:border-gray-100 xl:pl-8 dark:xl:border-gray-700">
                   {/* 建议止损 */}
                   <div>
                     <div className="mb-2 flex items-center gap-2 text-gray-500 dark:text-gray-400">
@@ -265,9 +265,9 @@ export default function StockAnalysisPage() {
               </div>
 
               {/* 底部：信号列表 - 双栏布局，使用小圆点替代大图标 */}
-              <div className="relative grid grid-cols-1 gap-8 bg-gray-50/50 p-8 md:grid-cols-2 dark:bg-gray-900/50">
+              <div className="relative mt-auto grid grid-cols-1 gap-8 bg-gray-50/50 p-8 xl:grid-cols-2 dark:bg-gray-900/50">
                 {/* 中间分割线 */}
-                <div className="absolute top-8 bottom-8 left-1/2 hidden w-px bg-gray-200 md:block dark:bg-gray-700"></div>
+                <div className="absolute top-8 bottom-8 left-1/2 hidden w-px bg-gray-200 xl:block dark:bg-gray-700"></div>
 
                 {/* 看涨信号 */}
                 <div>
