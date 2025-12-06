@@ -89,22 +89,6 @@ module.exports = () => {
         },
       ];
     },
-    ...(process.env.NODE_ENV === 'development' && {
-      async rewrites() {
-        return [
-          {
-            source: '/:locale/proxy/:path*',
-            destination: 'http://localhost:8080/:path*',
-            // destination: 'https://stock-analyzer-service-55638944338.us-central1.run.app/:path*',
-          },
-          {
-            source: '/proxy/:path*',
-            destination: 'http://localhost:8080/:path*',
-            // destination: 'https://stock-analyzer-service-55638944338.us-central1.run.app/:path*',
-          },
-        ];
-      },
-    }),
     webpack: (config, options) => {
       config.module.rules.push({
         test: /\.svg$/,

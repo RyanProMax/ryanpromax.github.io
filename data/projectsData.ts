@@ -28,7 +28,7 @@ const projectsData: Record<Locale, Project[]> = {
       title: 'Stock Analysis',
       description: `Real-time stock technical indicator analysis with scoring, trend analysis, and fear & greed index monitoring.`,
       imgSrc: '/static/images/stock-analysis.png',
-      href: '/projects/stock-analysis',
+      href: 'https://ryanpromax.github.io/stock-analysis/',
     },
   ],
   [Locale.ZH]: [
@@ -48,7 +48,7 @@ const projectsData: Record<Locale, Project[]> = {
       title: '股票分析',
       description: `实时股票技术指标分析，包含评分系统、趋势分析和恐惧贪婪指数监控。`,
       imgSrc: '/static/images/stock-analysis.png',
-      href: '/projects/stock-analysis',
+      href: 'https://ryanpromax.github.io/stock-analysis/',
     },
   ],
 };
