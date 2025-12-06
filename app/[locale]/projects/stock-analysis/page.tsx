@@ -196,7 +196,7 @@ export default function StockAnalysisPage() {
   };
 
   return (
-    <div className="min-h-screen px-4 py-12 font-sans sm:px-6 lg:px-8">
+    <div className="min-h-screen px-3 py-12 font-sans sm:px-6 lg:px-8">
       <div className="container mx-auto text-center">
         <h1 className="text-3xl font-light tracking-tight text-gray-900 sm:text-4xl dark:text-gray-100">
           {t.title}
@@ -249,28 +249,51 @@ export default function StockAnalysisPage() {
                 {/* 股票头部信息 - 可点击展开/收起 */}
                 <button
                   onClick={() => toggleStock(stock.symbol)}
-                  className="w-full border-b border-gray-200 bg-gray-50 px-6 py-4 text-left transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-900/50 dark:hover:bg-gray-800"
+                  className="w-full border-b border-gray-200 bg-gray-50 px-4 py-4 text-left transition-colors hover:bg-gray-100 sm:px-6 dark:border-gray-700 dark:bg-gray-900/50 dark:hover:bg-gray-800"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-4">
+                    {/* 移动端：股票名、当前价格、贪恐指数并排一行 */}
+                    <div className="flex items-center gap-3 sm:gap-4">
                       {isStockExpanded ? (
-                        <ChevronUp className="h-5 w-5 text-gray-400" />
+                        <ChevronUp className="h-5 w-5 shrink-0 text-gray-400" />
                       ) : (
-                        <ChevronDown className="h-5 w-5 text-gray-400" />
+                        <ChevronDown className="h-5 w-5 shrink-0 text-gray-400" />
                       )}
                       <h2 className="w-20 truncate text-2xl font-light text-gray-900 dark:text-gray-100">
                         {stock.symbol}
                       </h2>
                       <div className="text-left">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{t.currentPrice}</p>
+                        <p className="hidden text-sm text-gray-500 sm:block dark:text-gray-400">
+                          {t.currentPrice}
+                        </p>
                         <p className="text-xl font-medium text-gray-900 dark:text-gray-100">
                           ${stock.price.toFixed(2)}
                         </p>
                       </div>
+                      {/* 移动端：贪恐指数（进度条+emoji+分数） */}
+                      <div className="ml-auto flex items-center gap-2 sm:hidden">
+                        <div className="h-2 w-16 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
+                          <div
+                            className="h-full rounded-full transition-all duration-1000 ease-out"
+                            style={{
+                              width: `${stock.fear_greed.index}%`,
+                              backgroundColor: fearGreedTheme.ring,
+                            }}
+                          />
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-base">
+                            {getEmojiFromLabel(stock.fear_greed.label)}
+                          </span>
+                          <span className={`text-sm font-medium ${fearGreedTheme.text}`}>
+                            {stock.fear_greed.index.toFixed(1)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
-                    {/* 恐惧贪婪指数 */}
-                    <div className="flex items-center gap-3">
+                    {/* PC端：显示完整样式（emoji+数字+分隔线+进度条） */}
+                    <div className="hidden items-center gap-3 sm:flex">
                       <div className="text-right">
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           {t.fearGreedIndex}
@@ -315,7 +338,7 @@ export default function StockAnalysisPage() {
 
                 {/* 因子列表 - 可折叠 */}
                 {isStockExpanded && (
-                  <div className="p-6">
+                  <div className="p-4 sm:p-6">
                     {/* 按分类展示因子 */}
                     {Object.entries(groupedFactors).map(([category, factors]) => {
                       if (factors.length === 0) return null;
