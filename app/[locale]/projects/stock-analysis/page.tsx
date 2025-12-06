@@ -292,45 +292,34 @@ export default function StockAnalysisPage() {
                       </div>
                     </div>
 
-                    {/* PC端：显示完整样式（emoji+数字+分隔线+进度条） */}
-                    <div className="hidden items-center gap-3 sm:flex">
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {t.fearGreedIndex}
-                        </p>
+                    {/* PC端：显示完整样式（进度条上方显示emoji+分数+标签） */}
+                    <div className="hidden min-w-[120px] sm:block">
+                      <div className="mb-1 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-lg">
+                          <span className="text-base">
                             {getEmojiFromLabel(stock.fear_greed.label)}
                           </span>
                           <span className={`text-sm font-medium ${fearGreedTheme.text}`}>
                             {stock.fear_greed.index.toFixed(1)}
                           </span>
                         </div>
+                        <span className={`text-xs font-medium ${fearGreedTheme.text}`}>
+                          {stock.fear_greed.label
+                            .replace(
+                              /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]/gu,
+                              ''
+                            )
+                            .trim()}
+                        </span>
                       </div>
-                      <div className="h-12 w-1 rounded-full bg-gray-200 dark:bg-gray-700"></div>
-                      <div className="min-w-[120px]">
-                        <div className="mb-1 flex items-center justify-between">
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {stock.fear_greed.index.toFixed(1)}
-                          </span>
-                          <span className={`text-xs font-medium ${fearGreedTheme.text}`}>
-                            {stock.fear_greed.label
-                              .replace(
-                                /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]/gu,
-                                ''
-                              )
-                              .trim()}
-                          </span>
-                        </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
-                          <div
-                            className="h-full rounded-full transition-all duration-1000 ease-out"
-                            style={{
-                              width: `${stock.fear_greed.index}%`,
-                              backgroundColor: fearGreedTheme.ring,
-                            }}
-                          />
-                        </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
+                        <div
+                          className="h-full rounded-full transition-all duration-1000 ease-out"
+                          style={{
+                            width: `${stock.fear_greed.index}%`,
+                            backgroundColor: fearGreedTheme.ring,
+                          }}
+                        />
                       </div>
                     </div>
                   </div>
