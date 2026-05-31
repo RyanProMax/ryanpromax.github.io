@@ -10,6 +10,10 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
   const { locale = DEFAULT_LOCALE } = await params;
   const title = getNavLinkData(locale, '/projects')?.title || 'Projects';
   const desc = Description[locale];
+  const labels =
+    locale === Locale.ZH
+      ? { role: '角色', focus: '方向', impact: '成果' }
+      : { role: 'Role', focus: 'Focus', impact: 'Impact' };
 
   return (
     <>
@@ -27,8 +31,12 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
                 key={d.title}
                 title={d.title}
                 description={d.description}
+                role={d.role}
+                focus={d.focus}
+                impact={d.impact}
                 imgSrc={d.imgSrc}
                 href={d.href}
+                labels={labels}
               />
             ))}
           </div>

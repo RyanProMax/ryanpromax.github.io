@@ -101,8 +101,7 @@ openspec/
 
 - 对于多轮执行、跨会话恢复、任务交接，会稳定很多
 
-> [!NOTE]
-> **但代价同样明显**：过多的约束会引入更高的系统复杂度及维护成本，缺乏治理容易导致<u>文档膨胀</u>、<u>上下文噪声</u>和<u>状态失真</u>等问题。
+> [!NOTE] > **但代价同样明显**：过多的约束会引入更高的系统复杂度及维护成本，缺乏治理容易导致<u>文档膨胀</u>、<u>上下文噪声</u>和<u>状态失真</u>等问题。
 > Augment Code 在其文章 [What spec-driven development gets wrong](https://x.com/augmentcode/status/2025993446633492725) 中指出，代码才是最可靠的真实来源，而 Spec 虽然很有用，但一旦失去维护，它就会快速腐烂。
 
 因此，个人更倾向于把 Spec 看成**中短周期任务的执行支架，而非长期沉淀的系统记忆**；其核心价值在于「约束执行过程」。
@@ -119,8 +118,7 @@ Superpowers 代表的是另一种风格。
 
 我自己也常在使用上，先让 Agent 在 **Plan mode** 或 brainstorming 阶段把问题梳理清楚，产出结构化的 plan 和 todo list，再开始执行。
 
-> [!NOTE]
-> **但 Superpowers 的代价也很明显：它会带来额外的上下文和执行开销，实际是在用流程、时间和上下文，换取更稳定、可控的执行。**
+> [!NOTE] > **但 Superpowers 的代价也很明显：它会带来额外的上下文和执行开销，实际是在用流程、时间和上下文，换取更稳定、可控的执行。**
 
 > https://x.com/HiTw93/status/2041053321851789629
 
@@ -139,8 +137,7 @@ npx skills add https://github.com/obra/superpowers
 
 ### 上下文不是越多越好，而是越准越好
 
-> [!NOTE]
-> **高质量的上下文供给**对于模型行为是至关重要的。好的上下文设计可以让模型更快理解任务、减少幻觉、提升输出质量。但过多的上下文同样会产生噪声，导致模型注意力分散。
+> [!NOTE] > **高质量的上下文供给**对于模型行为是至关重要的。好的上下文设计可以让模型更快理解任务、减少幻觉、提升输出质量。但过多的上下文同样会产生噪声，导致模型注意力分散。
 
 Anthropic 在 [Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) 中提到：**context 是关键资源，但也是有限资源。随着 token 增加，模型的注意力预算会被不断消耗，收益不是线性增长，反而会出现边际递减。**
 
@@ -299,11 +296,15 @@ desktop_app/
 │   ├── Handoff.md                        # 交接协议：结束时要交付什么信息
 │   ├── Implement.md                      # 实施协议：开始改动前后必须做哪些动作
 │   └── Review.md                         # 评审协议：自检/互检时遵循的步骤
-└── .codex/agents/                    # Codex 子代理角色卡
-    ├── implementer.md
-    ├── reader.md
-    ├── reviewer.md
-    └── tester.md
+└── .agents/                          # Agent 协作资产：角色与仓库级 skills
+    ├── roles/                        # 子代理角色卡
+    │   ├── implementer.md
+    │   ├── reader.md
+    │   ├── reviewer.md
+    │   └── tester.md
+    └── skills/                       # 仓库级 skill：沉淀可复用工作流
+        ├── code-review.md
+        └── smoke-test.md
 ```
 
 ---

@@ -1,7 +1,22 @@
 import Image from './Image';
 import Link from './Link';
 
-const Card = ({ title, description, imgSrc, href }) => (
+const DEFAULT_LABELS = {
+  role: 'Role',
+  focus: 'Focus',
+  impact: 'Impact',
+};
+
+const Card = ({
+  title,
+  description,
+  role,
+  focus,
+  impact,
+  imgSrc,
+  href,
+  labels = DEFAULT_LABELS,
+}) => (
   <div className="md max-w-[544px] p-4 md:w-1/2">
     <div
       className={`${
@@ -38,7 +53,35 @@ const Card = ({ title, description, imgSrc, href }) => (
             title
           )}
         </h2>
-        <p className="prose mb-3 max-w-none text-gray-500 dark:text-gray-400">{description}</p>
+        <p className="prose mb-4 max-w-none text-gray-500 dark:text-gray-400">{description}</p>
+        {(role || focus || impact) && (
+          <dl className="mb-4 space-y-2 text-sm leading-6">
+            {role && (
+              <div>
+                <dt className="inline font-semibold text-gray-900 dark:text-gray-100">
+                  {labels.role}:{' '}
+                </dt>
+                <dd className="inline text-gray-600 dark:text-gray-300">{role}</dd>
+              </div>
+            )}
+            {focus && (
+              <div>
+                <dt className="inline font-semibold text-gray-900 dark:text-gray-100">
+                  {labels.focus}:{' '}
+                </dt>
+                <dd className="inline text-gray-600 dark:text-gray-300">{focus}</dd>
+              </div>
+            )}
+            {impact && (
+              <div>
+                <dt className="inline font-semibold text-gray-900 dark:text-gray-100">
+                  {labels.impact}:{' '}
+                </dt>
+                <dd className="inline text-gray-600 dark:text-gray-300">{impact}</dd>
+              </div>
+            )}
+          </dl>
+        )}
         {href && (
           <Link
             href={href}

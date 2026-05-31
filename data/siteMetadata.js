@@ -3,7 +3,8 @@ const siteMetadata = {
   title: `Ryan's Blog`,
   author: 'Ryan',
   headerTitle: `Ryan's Blog`,
-  description: 'Welcome to my blog - here I share everything that I love.',
+  description:
+    'Personal site of Ryan: Electron desktop engineering, game live streaming, and AI4SE practice.',
   language: 'en-US',
   theme: 'system', // system, dark or light
   siteUrl: 'https://ryanpromax.github.io/blog',
@@ -12,7 +13,7 @@ const siteMetadata = {
   socialBanner: `${process.env.BASE_PATH || ''}/static/images/twitter-card.png`,
   mastodon: 'https://mastodon.social/@mastodonuser',
   email: 'ryan.pro.1024@gmail.com',
-  github: 'https://github.com',
+  github: 'https://github.com/RyanProMax/',
   x: 'https://twitter.com/x',
   // twitter: 'https://twitter.com/Twitter',
   facebook: 'https://facebook.com',

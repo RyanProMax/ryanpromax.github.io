@@ -101,8 +101,7 @@ The benefits are direct:
 
 - Multi-turn execution, cross-session recovery, and task handoff become much more stable
 
-> [!NOTE]
-> **The cost is also obvious**: too many constraints introduce higher system complexity and maintenance cost. Without governance, they can create document bloat, context noise, and distorted state.
+> [!NOTE] > **The cost is also obvious**: too many constraints introduce higher system complexity and maintenance cost. Without governance, they can create document bloat, context noise, and distorted state.
 > Augment Code points out in [What spec-driven development gets wrong](https://x.com/augmentcode/status/2025993446633492725) that code is still the most reliable source of truth; specs are useful, but once they stop being maintained, they decay quickly.
 
 Therefore, I personally prefer to treat Spec as an execution scaffold for short- and medium-term tasks, rather than long-term system memory. Its core value is constraining the execution process.
@@ -119,8 +118,7 @@ The typical path in the official repository is: `brainstorming` -> `writing-plan
 
 In my own use, I often ask the agent to first clarify the problem in **Plan mode** or during brainstorming, produce a structured plan and todo list, and then begin execution.
 
-> [!NOTE]
-> **The cost of Superpowers is also clear: it introduces additional context and execution overhead. In practice, it trades process, time, and context budget for more stable and controllable execution.**
+> [!NOTE] > **The cost of Superpowers is also clear: it introduces additional context and execution overhead. In practice, it trades process, time, and context budget for more stable and controllable execution.**
 
 > Source: https://x.com/HiTw93/status/2041053321851789629
 
@@ -139,8 +137,7 @@ npx skills add https://github.com/obra/superpowers
 
 ### Context Should Be Accurate, Not Just Large
 
-> [!NOTE]
-> **High-quality context supply** is critical to model behavior. Good context design helps the model understand tasks faster, reduce hallucinations, and improve output quality. Too much context, however, also creates noise and scatters the model’s attention.
+> [!NOTE] > **High-quality context supply** is critical to model behavior. Good context design helps the model understand tasks faster, reduce hallucinations, and improve output quality. Too much context, however, also creates noise and scatters the model’s attention.
 
 Anthropic notes in [Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) that context is a critical but finite resource. As token count increases, the model’s attention budget is consumed; the benefit is not linear and can show diminishing returns.
 
@@ -295,11 +292,15 @@ desktop_app/
 │   ├── Handoff.md                        # Handoff protocol: what must be delivered at the end
 │   ├── Implement.md                      # Implementation protocol: required actions before and after editing
 │   └── Review.md                         # Review protocol: self-check and peer-check steps
-└── .codex/agents/                    # Codex sub-agent role cards
-    ├── implementer.md
-    ├── reader.md
-    ├── reviewer.md
-    └── tester.md
+└── .agents/                          # Agent collaboration assets: roles and repo-level skills
+    ├── roles/                        # Sub-agent role cards
+    │   ├── implementer.md
+    │   ├── reader.md
+    │   ├── reviewer.md
+    │   └── tester.md
+    └── skills/                       # Repo-level skills: reusable workflows
+        ├── code-review.md
+        └── smoke-test.md
 ```
 
 ---
