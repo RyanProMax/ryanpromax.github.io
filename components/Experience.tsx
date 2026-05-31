@@ -34,7 +34,7 @@ export const EXPERIENCES: Record<Locale, Experience[]> = {
       logo: '/static/images/timeline/bytedance.svg',
       start: 'Jul 2021',
       end: 'PRESENT',
-      title: '🧑‍💻​Head of Game Direction at Douyin Live Studio',
+      title: '🧑‍💻​Head of Game & AI Coding Directions at Douyin Live Studio',
       details: () => {
         return (
           <ul className="[&>li]:my-2 [&>li]:pl-0">
@@ -86,6 +86,11 @@ export const EXPERIENCES: Record<Locale, Experience[]> = {
               </a>{' '}
               functionalities to ensure high system availability.
             </li>
+            <li>
+              <strong>Drive AI Friendly & Harness Engineering</strong>: Lead main-repository
+              improvements around agent-ready context, collaboration conventions, validation loops,
+              and task orchestration to make AI-assisted development more reliable and repeatable.
+            </li>
           </ul>
         );
       },
@@ -122,7 +127,7 @@ export const EXPERIENCES: Record<Locale, Experience[]> = {
       logo: '/static/images/timeline/bytedance.svg',
       start: '2021/07',
       end: '至今',
-      title: '🧑‍💻抖音直播伴侣 - 游戏方向负责人',
+      title: '🧑‍💻抖音直播伴侣 - 游戏方向 / AI Coding 方向负责人',
       details: () => {
         return (
           <ul className="[&>li]:my-2 [&>li]:pl-0">
@@ -172,6 +177,11 @@ export const EXPERIENCES: Record<Locale, Experience[]> = {
                 手机投屏
               </a>{' '}
               等功能的关键性能指标，确保系统高可用性。
+            </li>
+            <li>
+              <strong>AI Friendly & Harness 工程建设</strong>
+              ：负责主仓库面向 AI 协作的上下文组织、协作规范、验证闭环与任务编排能力建设，提升 AI
+              辅助研发的稳定性、可恢复性与可重复执行能力。
             </li>
           </ul>
         );
