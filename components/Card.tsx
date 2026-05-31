@@ -5,6 +5,7 @@ const DEFAULT_LABELS = {
   role: 'Role',
   focus: 'Focus',
   impact: 'Impact',
+  learnMore: 'Learn more',
 };
 
 const Card = ({
@@ -17,7 +18,7 @@ const Card = ({
   href,
   labels = DEFAULT_LABELS,
 }) => (
-  <div className="md max-w-[544px] p-4 md:w-1/2">
+  <div className="max-w-[544px] p-4 md:w-1/2">
     <div
       className={`${
         imgSrc && 'h-full'
@@ -88,7 +89,7 @@ const Card = ({
             className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 text-base leading-6 font-medium"
             aria-label={`Link to ${title}`}
           >
-            Learn more &rarr;
+            {labels.learnMore} &rarr;
           </Link>
         )}
       </div>

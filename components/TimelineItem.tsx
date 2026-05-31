@@ -31,7 +31,7 @@ export const TimelineItem = ({ exp, last }: { exp: Experience; last?: boolean })
       className={clsx(
         'group/timeline-item',
         'relative -mx-3 flex flex-row items-start gap-3 rounded-lg p-3',
-        'cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800',
+        Details && 'cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800',
         !last && [
           'before:-z-1',
           'before:absolute before:top-10 before:left-[35px]',

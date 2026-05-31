@@ -3,8 +3,20 @@ import Card from '@/components/Card';
 import { genPageMetadata } from 'app/[locale]/seo';
 import { DEFAULT_LOCALE, Locale } from '@/locales/config';
 import { getNavLinkData } from '@/data/headerNavLinks';
+import { Metadata } from 'next';
 
-export const metadata = genPageMetadata({ title: 'Projects' });
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}): Promise<Metadata> {
+  const { locale = DEFAULT_LOCALE } = await params;
+  return genPageMetadata({
+    title: getNavLinkData(locale, '/projects')?.title || 'Projects',
+    description: Description[locale],
+    locale,
+  });
+}
 
 export default async function Page({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale = DEFAULT_LOCALE } = await params;
@@ -12,8 +24,8 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
   const desc = Description[locale];
   const labels =
     locale === Locale.ZH
-      ? { role: '角色', focus: '方向', impact: '成果' }
-      : { role: 'Role', focus: 'Focus', impact: 'Impact' };
+      ? { role: '角色', focus: '方向', impact: '成果', learnMore: '查看详情' }
+      : { role: 'Role', focus: 'Focus', impact: 'Impact', learnMore: 'Learn more' };
 
   return (
     <>

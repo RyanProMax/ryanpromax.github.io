@@ -7,10 +7,17 @@ import { DEFAULT_LOCALE, Locale } from '@/locales/config';
 const POSTS_PER_PAGE = 5;
 
 export const generateStaticParams = async () => {
-  const totalPages = Math.ceil(allBlogs.length / POSTS_PER_PAGE);
-  const paths = Array.from({ length: totalPages }, (_, i) => ({ page: (i + 1).toString() }));
+  return Object.values(Locale).flatMap((locale) => {
+    const postCount = allBlogs.filter(
+      (post) => (post.language || DEFAULT_LOCALE) === locale
+    ).length;
+    const totalPages = Math.ceil(postCount / POSTS_PER_PAGE);
 
-  return paths;
+    return Array.from({ length: totalPages }, (_, i) => ({
+      locale,
+      page: (i + 1).toString(),
+    }));
+  });
 };
 
 export default async function Page({
@@ -19,7 +26,9 @@ export default async function Page({
   params: Promise<{ page: string; locale: Locale }>;
 }) {
   const { page, locale = DEFAULT_LOCALE } = await params;
-  const posts = allCoreContent(sortPosts(allBlogs));
+  const posts = allCoreContent(sortPosts(allBlogs)).filter(
+    (p) => (p.language || DEFAULT_LOCALE) === locale
+  );
   const pageNumber = parseInt(page as string);
   const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE);
 

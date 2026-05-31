@@ -9,23 +9,25 @@ export default function LocaleSwitcher() {
   const { locale = DEFAULT_LOCALE } = useParams();
   const nextLocale = locale === Locale.EN ? Locale.ZH : Locale.EN;
 
-  // 检测是否为GitHub Pages或静态环境
-  const isStaticEnvironment = () => {
-    return (
-      typeof window !== 'undefined' &&
-      (window.location.hostname.includes('github.io') ||
-        window.location.hostname.includes('pages.dev') ||
-        (process.env.NODE_ENV === 'production' && !window.location.hostname.includes('localhost')))
-    );
-  };
-
   const parseCurrentPath = () => {
     const pathname = window.location.pathname;
-    const localeRegex = new RegExp(`^/(${SupportedLanguages.join('|')})(/.*)?$`);
-    const localeMatch = pathname.match(localeRegex);
+    const segments = pathname.split('/').filter(Boolean);
+    const localeIndex = segments.findIndex((segment) =>
+      SupportedLanguages.includes(segment as Locale)
+    );
+
+    if (localeIndex === -1) {
+      return {
+        basePath: '',
+        pathnameWithoutLocale: pathname || '/',
+      };
+    }
+
+    const baseSegments = segments.slice(0, localeIndex);
+    const pathSegments = segments.slice(localeIndex + 1);
     return {
-      currentUrlLocale: localeMatch?.[1] || null,
-      basePath: localeMatch?.[2] || '/',
+      basePath: baseSegments.length ? `/${baseSegments.join('/')}` : '',
+      pathnameWithoutLocale: pathSegments.length ? `/${pathSegments.join('/')}` : '/',
     };
   };
 
@@ -34,13 +36,10 @@ export default function LocaleSwitcher() {
       localStorage.setItem('preferred-locale', nextLocale);
       document.cookie = `preferred-locale=${nextLocale}; max-age=${365 * 24 * 60 * 60}; path=/; samesite=lax`;
 
-      if (isStaticEnvironment()) {
-        const { basePath } = parseCurrentPath();
-        const targetPath = `/${nextLocale}${basePath}${window.location.search}`;
-        window.location.href = targetPath;
-      } else {
-        window.location.reload();
-      }
+      const { basePath, pathnameWithoutLocale } = parseCurrentPath();
+      const pathSuffix = pathnameWithoutLocale === '/' ? '' : pathnameWithoutLocale;
+      const targetPath = `${basePath}/${nextLocale}${pathSuffix}${window.location.search}${window.location.hash}`;
+      window.location.assign(targetPath);
     } catch (e) {
       console.error('Failed to save language preference:', e);
     }

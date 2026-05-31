@@ -5,8 +5,20 @@ import tagData from 'app/tag-data.json';
 import { genPageMetadata } from 'app/[locale]/seo';
 import { DEFAULT_LOCALE, Locale } from '@/locales/config';
 import { getNavLinkData } from '@/data/headerNavLinks';
+import { Metadata } from 'next';
 
-export const metadata = genPageMetadata({ title: 'Tags', description: 'Things I blog about' });
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}): Promise<Metadata> {
+  const { locale = DEFAULT_LOCALE } = await params;
+  return genPageMetadata({
+    title: getNavLinkData(locale, '/tags')?.title || 'Tags',
+    description: locale === Locale.ZH ? '文章标签' : 'Things I blog about',
+    locale,
+  });
+}
 
 export default async function Page({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale = DEFAULT_LOCALE } = await params;

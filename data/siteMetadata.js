@@ -5,6 +5,10 @@ const siteMetadata = {
   headerTitle: `Ryan's Blog`,
   description:
     'Personal site of Ryan: Electron desktop engineering, game live streaming, and AI4SE practice.',
+  descriptions: {
+    en: 'Personal site of Ryan: Electron desktop engineering, game live streaming, and AI4SE practice.',
+    zh: 'Ryan 的个人网站，记录 Electron 桌面端工程、游戏直播和 AI4SE 实践。',
+  },
   language: 'en-US',
   theme: 'system', // system, dark or light
   siteUrl: 'https://ryanpromax.github.io/blog',

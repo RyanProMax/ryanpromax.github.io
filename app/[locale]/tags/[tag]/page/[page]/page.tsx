@@ -33,7 +33,14 @@ export default async function TagPage({
   const title = tag[0].toUpperCase() + tag.split(' ').join('-').slice(1);
   const pageNumber = parseInt(page);
   const filteredPosts = allCoreContent(
-    sortPosts(allBlogs.filter((post) => post.tags && post.tags.map((t) => slug(t)).includes(tag)))
+    sortPosts(
+      allBlogs.filter(
+        (post) =>
+          post.tags &&
+          post.tags.map((t) => slug(t)).includes(tag) &&
+          (post.language || DEFAULT_LOCALE) === locale
+      )
+    )
   );
   const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE);
 

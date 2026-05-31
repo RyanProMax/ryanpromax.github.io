@@ -2,6 +2,7 @@ import Link from '@/components/Link';
 import Tag from '@/components/Tag';
 import siteMetadata from '@/data/siteMetadata';
 import { Locale } from '@/locales/config';
+import { getDateLocale } from '@/locales/utils';
 import { formatDate } from 'pliny/utils/formatDate';
 // import NewsletterForm from 'pliny/ui/NewsletterForm'
 
@@ -31,6 +32,7 @@ const HOME_COPY = {
 export default function Home({ posts, locale }) {
   const copy = HOME_COPY[locale] || HOME_COPY[Locale.EN];
   const localizedPath = (path) => `/${locale}${path}`;
+  const dateLocale = getDateLocale(locale);
 
   return (
     <>
@@ -85,7 +87,7 @@ export default function Home({ posts, locale }) {
                       <dl>
                         <dt className="sr-only">Published on</dt>
                         <dd className="text-base leading-6 font-medium text-gray-500 dark:text-gray-400">
-                          <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
+                          <time dateTime={date}>{formatDate(date, dateLocale)}</time>
                         </dd>
                       </dl>
                       <div className="space-y-5 xl:col-span-3">

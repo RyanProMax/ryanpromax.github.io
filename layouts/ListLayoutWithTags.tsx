@@ -7,9 +7,9 @@ import { CoreContent } from 'pliny/utils/contentlayer';
 import type { Blog } from 'contentlayer/generated';
 import Link from '@/components/Link';
 import Tag from '@/components/Tag';
-import siteMetadata from '@/data/siteMetadata';
 import tagData from 'app/tag-data.json';
 import { Locale } from '@/locales/config';
+import { getDateLocale } from '@/locales/utils';
 
 interface PaginationProps {
   totalPages: number;
@@ -79,6 +79,7 @@ export default function ListLayoutWithTags({
   const tagCounts = (tagData as Record<Locale, Record<string, number>>)[locale];
   const tagKeys = Object.keys(tagCounts);
   const sortedTags = tagKeys.sort((a, b) => tagCounts[b] - tagCounts[a]);
+  const dateLocale = getDateLocale(locale);
 
   const displayPosts = initialDisplayPosts.length > 0 ? initialDisplayPosts : posts;
 
@@ -139,7 +140,7 @@ export default function ListLayoutWithTags({
                         <dt className="sr-only">Published on</dt>
                         <dd className="text-base leading-6 font-medium text-gray-500 dark:text-gray-400">
                           <time dateTime={date} suppressHydrationWarning>
-                            {formatDate(date, siteMetadata.locale)}
+                            {formatDate(date, dateLocale)}
                           </time>
                         </dd>
                       </dl>

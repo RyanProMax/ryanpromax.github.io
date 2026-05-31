@@ -7,8 +7,8 @@ import { CoreContent } from 'pliny/utils/contentlayer';
 import type { Blog } from 'contentlayer/generated';
 import Link from '@/components/Link';
 import Tag from '@/components/Tag';
-import siteMetadata from '@/data/siteMetadata';
 import { DEFAULT_LOCALE } from '@/locales/config';
+import { getDateLocale } from '@/locales/utils';
 
 interface PaginationProps {
   totalPages: number;
@@ -73,6 +73,9 @@ export default function ListLayout({
   pagination,
 }: ListLayoutProps) {
   const [searchValue, setSearchValue] = useState('');
+  const pathname = usePathname();
+  const locale = pathname.startsWith('/zh') ? 'zh' : DEFAULT_LOCALE;
+  const dateLocale = getDateLocale(locale);
   const filteredBlogPosts = posts.filter((post) => {
     const searchContent = post.title + post.summary + post.tags?.join(' ');
     return searchContent.toLowerCase().includes(searchValue.toLowerCase());
@@ -126,7 +129,7 @@ export default function ListLayout({
                   <dl>
                     <dt className="sr-only">Published on</dt>
                     <dd className="text-base leading-6 font-medium text-gray-500 dark:text-gray-400">
-                      <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
+                      <time dateTime={date}>{formatDate(date, dateLocale)}</time>
                     </dd>
                   </dl>
                   <div className="space-y-3 xl:col-span-3">

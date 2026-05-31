@@ -19,7 +19,11 @@ export async function generateMetadata({
   const tag = decodeURI(_tag);
   return genPageMetadata({
     title: tag,
-    description: `${siteMetadata.title} ${tag} tagged content`,
+    description:
+      locale === Locale.ZH
+        ? `${siteMetadata.title} 中与 ${tag} 相关的文章`
+        : `${siteMetadata.title} ${tag} tagged content`,
+    locale,
     alternates: {
       canonical: './',
       types: {

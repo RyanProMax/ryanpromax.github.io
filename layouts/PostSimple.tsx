@@ -8,6 +8,8 @@ import PageTitle from '@/components/PageTitle';
 import SectionContainer from '@/components/SectionContainer';
 import siteMetadata from '@/data/siteMetadata';
 import ScrollTopAndComment from '@/components/ScrollTopAndComment';
+import { DEFAULT_LOCALE } from '@/locales/config';
+import { getDateLocale } from '@/locales/utils';
 
 interface LayoutProps {
   content: CoreContent<Blog>;
@@ -17,7 +19,8 @@ interface LayoutProps {
 }
 
 export default function PostLayout({ content, next, prev, children }: LayoutProps) {
-  const { path, slug, date, title } = content;
+  const { path, slug, date, title, language = DEFAULT_LOCALE } = content;
+  const dateLocale = getDateLocale(language);
 
   return (
     <SectionContainer>
@@ -30,7 +33,7 @@ export default function PostLayout({ content, next, prev, children }: LayoutProp
                 <div>
                   <dt className="sr-only">Published on</dt>
                   <dd className="text-base leading-6 font-medium text-gray-500 dark:text-gray-400">
-                    <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
+                    <time dateTime={date}>{formatDate(date, dateLocale)}</time>
                   </dd>
                 </div>
               </dl>

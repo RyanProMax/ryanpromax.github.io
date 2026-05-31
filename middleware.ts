@@ -36,7 +36,6 @@ export function middleware(request: NextRequest) {
   // 解析当前路径中的语言信息
   const localeMatch = pathname.match(LOCALE_REGEX);
   const currentUrlLocale = localeMatch?.[1] as Locale | null;
-  const basePath = localeMatch?.[2] || '/';
 
   // 获取用户偏好语言
   const preferredLocale = getPreferredLocale(request);
@@ -47,14 +46,8 @@ export function middleware(request: NextRequest) {
     return createRedirectResponse(url, preferredLocale);
   }
 
-  // 情况2：当前语言与偏好语言不匹配 -> 重定向到偏好语言
-  if (currentUrlLocale !== preferredLocale) {
-    url.pathname = `/${preferredLocale}${basePath}`;
-    return createRedirectResponse(url, preferredLocale);
-  }
-
-  // 情况3：正常请求，确保有cookie
-  if (!request.cookies.get('preferred-locale')) {
+  // 情况2：显式语言路径优先，确保 cookie 与当前 URL 同步
+  if (request.cookies.get('preferred-locale')?.value !== currentUrlLocale) {
     const response = NextResponse.next();
     setLocaleCookie(response, currentUrlLocale);
     return response;

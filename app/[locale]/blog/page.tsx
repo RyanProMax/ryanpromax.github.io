@@ -3,10 +3,18 @@ import { allBlogs } from 'contentlayer/generated';
 import { genPageMetadata } from 'app/[locale]/seo';
 import ListLayout from '@/layouts/ListLayoutWithTags';
 import { DEFAULT_LOCALE, Locale } from '@/locales/config';
+import { Metadata } from 'next';
 
 const POSTS_PER_PAGE = 5;
 
-export const metadata = genPageMetadata({ title: 'Blog' });
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}): Promise<Metadata> {
+  const { locale = DEFAULT_LOCALE } = await params;
+  return genPageMetadata({ title: locale === Locale.ZH ? '全部文章' : 'Blog', locale });
+}
 
 export default async function BlogPage({ params }) {
   const { locale = DEFAULT_LOCALE } = await params;
