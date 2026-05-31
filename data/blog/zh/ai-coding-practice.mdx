@@ -1,9 +1,9 @@
 ---
-title: AI Coding 实践分享
-date: '2026-03-29'
-tags: ['AI', 'AI Coding']
+title: AI Coding 实践：上下文、任务组织与验收闭环
+date: '2026-04-09'
+tags: ['AI', 'AI Coding', 'Agent']
 draft: false
-summary: AI Coding 失控，通常不是模型不够强，而是上下文、任务组织和验收闭环没有被设计好。
+summary: AI Coding 的稳定性不只取决于模型能力，更取决于上下文供给、任务编排和验收闭环。
 language: zh
 ---
 
@@ -11,436 +11,438 @@ language: zh
 
 ---
 
-## 现状
+> [!NOTE]
+> 相信大家在使用 AI Coding 的时候，都会遇到 **模型在不确定时自动脑补、长任务持续漂移、看起来解释清楚但实际上没有做对** 之类的问题。这些问题本质上都可以拆解成以下三个维度：
+>
+> 1. 上下文怎么给：Agent 拿到的上下文是否足够准确
+> 2. 任务怎么组织：执行任务时有没有被放进一个稳定的推进机制里
+> 3. 结果怎么验收：产出的结果有没有被一个明确的验收闭环约束住
 
-AI Coding 最常见的问题，不是“模型不会写”，而是它会在不确定时主动补需求、在长任务里持续漂移、在看起来解释清楚时实际上没有做对。
+## 上下文怎么给
 
-所以我现在看 AI Coding，重点已经不再是“prompt 写得够不够花”，而是这三件事：
+### 从 Vibe 到 Spec 再到 Harness
 
-1. **上下文怎么给**
-2. **任务怎么组织**
-3. **结果怎么验收**
+这是三种很典型的 AI Coding 范式，本质区别不在于“模型本身是否更聪明了”，而在于给予了模型不同程度的自由度及约束。
 
-如果这三件事没设计好，再强的模型也只是在更快地产生不可控改动；如果这三件事设计好了，AI 才更像一个可协作、可约束、可验收的工程执行者。
+| 范式                                                                      | 本质                   | 适合任务                                 | 你需要给 AI 的东西                   | 主要风险                                  | 典型产出                         |
+| ------------------------------------------------------------------------- | ---------------------- | ---------------------------------------- | ------------------------------------ | ----------------------------------------- | -------------------------------- |
+| **Vibe Coding**                                                           | 快速试探和迭代         | 小改动、原型、demo、低风险修补           | 明确边界、少量上下文、快速验证命令   | 容易漂移，容易把“跑起来了”误当成“做对了”  | 一个可运行初版                   |
+| [**Spec-Driven Development**](https://juejin.cn/post/7587965908287553546) | 先收敛意图，再执行实现 | 中等复杂度功能、模块改造、替换依赖       | 目标、约束、非目标、验收方式         | Spec 沉淀过多且不维护，会反过来污染上下文 | 一份设计文档 + 分步实现          |
+| **Harness Loop**                                                          | 把执行放进循环系统     | 长链路、高风险、跨模块、可持续推进的任务 | 任务拆分、外置状态、质量把关、回滚点 | 不把关质量，只会把错误自动化放大          | 一个可重复运行且不失控的执行闭环 |
 
----
+这其实是一条很清晰的演化线：
 
-## 1. 上下文怎么给
+- **Vibe** 回应：先把东西做出来
 
-### 1.1 从 Vibe 到 Spec 到 Harness：三种 AI 编程范式
+- **Spec** 回应：需求容易漂移
 
-可以把 `Vibe -> Spec -> Harness` 写成三种“AI 编程范式”，但更准确地说，它们是三种**控制范式**：区别不在于工具，而在于你给 AI 多大自由度、多少约束，以及有没有闭环。
+- **Harness** 回应：长任务会失控、会中断、会越做越乱
 
-这不是一个严格的标准分类，而是我在实践里最有用的一套观察框架。
-
-| 范式 | 本质 | 适合任务 | 你需要给 AI 的东西 | 主要风险 | 典型产出 |
-| --- | --- | --- | --- | --- | --- |
-| **Vibe coding** | 快速试探和迭代 | 小改动、原型、demo、低风险修补 | 明确边界、少量上下文、快速验证命令 | 容易漂移，容易把“跑起来了”误当成“做对了” | 一个可运行初版 |
-| **Spec-driven execution** | 先收敛意图，再执行实现 | 中等复杂度功能、模块改造、替换依赖 | 目标、约束、非目标、验收方式 | spec 写得过重或过旧，会反过来污染上下文 | 一份设计工件 + 分步实现 |
-| **Harness loop** | 把执行放进循环系统 | 长链路、高风险、跨模块、可持续推进的任务 | 任务拆分、外置状态、质量门、回滚点 | 没有质量门时，只会把错误自动化放大 | 一个可重复运行的执行闭环 |
-
-我的经验是：
-
-- **Vibe** 解决的是“我想先试试”
-- **Spec** 解决的是“我到底要什么”
-- **Harness** 解决的是“我怎么持续推进，而且不失控”
-
-它们不是互斥关系，而是控制强度逐级上升。大任务通常不是“只用 Harness”，而是 **先用 Spec 收敛边界，再用 Harness 推进执行**。
-
-再落到更实用的一层，可以这么选：
-
-| 任务特征 | 推荐范式 | 原因 |
-| --- | --- | --- |
-| 范围小、验证快、失败成本低 | **Vibe** | 启动快，最适合先拿到可运行版本 |
-| 已经超出一句话能说清的范围 | **Spec** | 先把目标和约束固定下来，避免 AI 补需求 |
-| 跨模块、跨仓库、跨多轮会话 | **Spec + Harness** | 单次对话很难兜住，需要外置状态和质量门 |
-| 一旦出错代价很高 | **Spec + Harness** | 重点从“会不会写”切换到“怎么验证和回滚” |
-
-如果只用一句话概括：
-
-> **AI Coding 的区别，不在于是不用 AI，而在于你让它处在哪种控制范式里。**
-
-参考：
-
-- [OpenSpec](https://github.com/Fission-AI/OpenSpec)
-- [Superpowers](https://github.com/obra/superpowers)
-- [Ralph](https://github.com/snarktank/ralph)
+彼此不是互斥关系，而是控制强度逐级上升，逐步补全前一阶段的短板。
 
 ---
 
-### 1.2 Spec-driven execution：从 OpenSpec 到 Superpowers
+### Spec：规范驱动开发 (SDD)
 
-`Spec-driven execution` 的核心，不是“多写文档”，而是**把稳定决策从聊天记录里拿出来**，让 AI 基于一个更可靠的中间工件执行。
+> [!NOTE]
+> 一句话描述：用结构化文档把任务从「对话驱动」升级为「状态驱动」，通过外部约束来**稳定**模型在多步开发中的行为。
 
-这件事既可以做得很结构化，也可以做得很轻量。我觉得 `OpenSpec` 和 `Superpowers` 刚好代表了两个很典型的方向。
+#### 三个核心原则
 
-#### OpenSpec：结构化 spec 工件
+- **意图先行**：先明确「做什么」再讨论「怎么做」
 
-[OpenSpec](https://github.com/Fission-AI/OpenSpec) 的思路，是给每个 change 建一套完整工件：`proposal`、`specs`、`design`、`tasks`，再配合 `propose -> apply -> archive` 这类流程，让需求、设计和实施都落在可审阅、可版本化的文件系统里。
+- **规格外置**：把目标、边界、约束、验收从对话里抽出来
 
-这类方式的优点很明确：
+- **渐进式细化**：从高层需求到技术实现，通过渐进式细化避免一次性生成的局限性
 
-- 适合多人异步协作
-- 适合需求需要审阅、归档、回看
-- 适合把“这次改什么、为什么改、怎么验收”留成长期工件
+这类方法的价值，不是让 AI 更有创造力，而是让它**少靠猜、多靠对齐**。
 
-但它的代价也很明确：
+[Understanding Spec-Driven-Development: Kiro, spec-kit, and Tessl](https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html) 里提到，这个概念本身还在快速演化，行业里对 “spec-driven development” 的定义并没有完全定型。它更像一类实践，而不是一套已经成熟、定型的方法论，需要辩证看待。
 
-- 前置结构更重
-- 对小任务来说容易过度设计
-- 如果团队不做裁剪，工件会很快膨胀
+> _the definition of ‘spec-driven development’ (SDD) is still in flux._
+>
+> “规范驱动开发”（SDD）的定义仍在不断变化。
 
-所以我更把 OpenSpec 看成一种**结构化上限**：它告诉你 spec 系统可以强到什么程度，但不代表每个任务都需要用满。
+---
 
-#### Superpowers：更自由的 spec 工作流
+#### [OpenSpec](https://github.com/Fission-AI/OpenSpec)：把变更状态沉淀到文件系统
 
-相比之下，[Superpowers](https://github.com/obra/superpowers) 更像一种**自由 spec 范式**。
+OpenSpec 是一个很典型的 Spec 落地方式。
 
-它的重点不是固定目录，而是固定工作流：先澄清，再收敛设计，再生成执行计划。以它仓库里的 [`brainstorming` skill](https://github.com/obra/superpowers/blob/main/skills/brainstorming/SKILL.md) 和 [`writing-plans` skill](https://github.com/obra/superpowers/blob/main/skills/writing-plans/SKILL.md) 为例，核心路径大致是：
+它会把一次变更拆成 `proposal / specs / design / tasks` 这几类文档，再通过 `propose -> apply -> archive` 这样的流程，把一次改动沉淀成显式、可审阅、可版本化的状态。
 
-```text
-对话澄清 -> 收敛设计 -> 写短 spec -> 生成 implementation plan -> 执行
+换句话说，它在做的一件事是：**把模型执行依赖的关键状态，从“会话记忆”外置到“文件系统”上。**
+
+一个典型的 Spec 文件系统结构，大概长这样：
+
+```plaintext
+openspec/
+├── project.md              # 项目约定
+├── specs/                  # 当前系统的真实规格 - 已构建的内容
+│   └── [capability]/           # 单一专注功能
+│       ├── spec.md             # 需求和场景
+│       └── design.md           # 技术模式
+├── changes/                # 每次变更的提案、任务清单及规格增量
+│   ├── [change-name]/
+│   │   ├── proposal.md         # 提案
+│   │   ├── tasks.md            # 实施清单
+│   │   ├── design.md           # 技术决策（可选；见标准）
+│   │   └── specs/              # 增量变更
+│   │       └── [capability]/
+│   │           └── spec.md         # ADDED/MODIFIED/REMOVED
+│   └── archive/                # 归档：已完成的变更
 ```
 
-我更喜欢把这种方式当成 `Spec-driven execution` 的主线，原因很简单：
+这种方式的优点很直接：
 
-- 它允许 spec 先从对话里长出来
-- 它更适合在真实项目里渐进收敛
-- 它没有要求你先接受一整套固定目录
-- 它更接近多数工程团队已经有的工作节奏
+- 当前任务依赖什么，不再只存在聊天上下文里
 
-如果让我给一个实际建议，我会这样取舍：
+- 改动为什么做、准备怎么做、做到哪一步，都可以被审阅和追踪
 
-- **团队协作、异步审阅、长期沉淀更重要**：偏 `OpenSpec`
-- **日常开发、局部改造、强调灵活收敛更重要**：偏 `Superpowers`
+- 对于多轮执行、跨会话恢复、任务交接，会稳定很多
 
-也就是说，OpenSpec 更像“完整 spec 体系”，Superpowers 更像“轻量 spec 工作流”。
+> [!NOTE]
+> **但代价同样明显**：过多的约束会引入更高的系统复杂度及维护成本，缺乏治理容易导致<u>文档膨胀</u>、<u>上下文噪声</u>和<u>状态失真</u>等问题。
+> Augment Code 在其文章 [What spec-driven development gets wrong](https://x.com/augmentcode/status/2025993446633492725) 中指出，代码才是最可靠的真实来源，而 Spec 虽然很有用，但一旦失去维护，它就会快速腐烂。
 
-#### spec 也会变坏
+因此，个人更倾向于把 Spec 看成**中短周期任务的执行支架，而非长期沉淀的系统记忆**；其核心价值在于「约束执行过程」。
 
-很多人第一次引入 spec，会本能地觉得：“只要把东西都写下来，质量就会更高。”
+---
 
-现实通常不是这样。
+#### [Superpowers](https://github.com/obra/superpowers)：用流程换稳定性
 
-spec 很容易在这四种情况下变坏：
+Superpowers 代表的是另一种风格。
 
-1. **目标、历史决策、执行日志、聊天摘抄混在一起**
-   一份文档同时承担“为什么做、要做什么、做过什么、聊过什么”，最后没有任何一层是清晰的。
+它没有很重的文件规范体系，而是更偏向一套工作流：先收敛问题、再写计划、最后执行。
 
-2. **同一份文档同时承担对齐、追踪、复盘、备忘**
-   一旦一个文件试图兼任所有角色，它就会越来越长，也越来越难被 AI 正确消费。
+官方仓库给出的典型链路是：`brainstorming` -\> `writing-plans` -\> `subagent-driven-development` / `executing-plans`。
 
-3. **旧 spec 不归档，信息开始腐烂**
-   已经过期的约束和已经失效的设计仍然留在主文档里，AI 很容易把它们当成仍然有效的指令。
+我自己也常在使用上，先让 Agent 在 **Plan mode** 或 brainstorming 阶段把问题梳理清楚，产出结构化的 plan 和 todo list，再开始执行。
 
-4. **补丁式追加，层次越来越乱**
-   今天补一段、明天补一段，最后变成 append-only 大杂烩，人和 AI 都只会读到局部。
+> [!NOTE]
+> **但 Superpowers 的代价也很明显：它会带来额外的上下文和执行开销，实际是在用流程、时间和上下文，换取更稳定、可控的执行。**
 
-这也是为什么我现在不再把 spec 理解成“越全越好”，而是更强调**上下文卫生**。
+> https://x.com/HiTw93/status/2041053321851789629
 
-我自己的精简原则是：
+![Superpowers 讨论截图](/static/images/ai-coding-practice/superpowers-discussion.png)
 
-- 稳定约束单独放，比如架构约束、接口原则、公共约定
-- 当前任务 spec 只写这次真正需要对齐的内容
-- 执行记录、进度、实验结论另存，不要混进 spec 主文
-- 任务结束后，要么归档，要么裁剪，不要把所有历史永久挂在主干上
+这类方式更适合类似于 长任务、容易偏航、需要阶段性检查 的场景，而不是一个几分钟能改完的小问题。
 
-一句话总结就是：
+```bash
+# 安装 Skills
+npx skills add https://github.com/obra/superpowers
+```
 
-> **spec 的价值不在于“写得多”，而在于“把真正稳定且关键的东西，从聊天记录里提取出来”。**
+> [Superpowers 官方仓库](https://github.com/obra/superpowers)
 
-#### plan mode 适合什么，不适合什么
+---
 
-`plan mode` 这一类能力，我更愿意把它理解成**会话级规划工具**，而不是 spec 系统本身。
+### 上下文不是越多越好，而是越准越好
 
-它很适合：
+> [!NOTE]
+> **高质量的上下文供给**对于模型行为是至关重要的。好的上下文设计可以让模型更快理解任务、减少幻觉、提升输出质量。但过多的上下文同样会产生噪声，导致模型注意力分散。
 
-- 把模糊需求拆成一版可执行路线
-- 快速发现风险和依赖项
-- 帮你把讨论收敛成一份设计草稿
+Anthropic 在 [Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) 中提到：**context 是关键资源，但也是有限资源。随着 token 增加，模型的注意力预算会被不断消耗，收益不是线性增长，反而会出现边际递减。**
 
-但它不天然解决这些问题：
+> Context is a critical but finite resource for AI agents.
+>
+> 上下文是人工智能智能体至关重要但有限的资源。
+>
+> as the number of tokens in the context window increases, the model’s ability to accurately recall information from that context decreases.
+>
+> 随着上下文窗口中 tokens 数量的增加，模型从该上下文中准确回忆信息的能力会下降。
 
-- 跨会话复用
-- 多人异步审阅
-- 长期版本化沉淀
-- 任务结束后的归档与裁剪
+换句话说，一旦上下文过长，混入过多信息后，问题就不再是“模型看不到”，而是它无法稳定判断什么才是真正重要的信号。
 
-所以更稳的用法不是“plan mode 替代 spec”，而是：
+所以，上下文设计的重点不是“把资料都喂进去”，而是两件事：
 
-```text
-对话澄清 -> plan 收敛 -> 固化成短 spec / 计划工件 -> 执行
+- **先把最关键的信息放到模型最容易看到的位置**
+
+- **再让模型知道，剩下的信息应该去哪里找**
+
+---
+
+#### AGENTS.md
+
+AGENTS.md 通常是模型的默认入口，最适合放**高密度、控制性强、且无法从代码中直接推导的信息**，例如：
+
+- 项目架构入口
+
+- 关键模块索引
+
+- 默认命令入口
+
+- 禁区与约束
+
+- 最低完成标准
+
+- 范围控制原则
+
+它不适合承载大段背景介绍，也不适合把 docs 里的内容再重复一遍。因为 AGENTS.md 一旦什么都写，就会从“控制入口”退化成“噪声入口”，它应该遵循**最小必要原则**进行设计。
+
+---
+
+#### docs
+
+个人理解 docs 是一个**分层、按需加载的上下文系统，用于沉淀仓库关键的长期记忆**。
+
+主要用于积累长期稳定、且会持续影响任务判断的知识，比如：
+
+- 架构文档：系统结构、关键数据流、核心边界
+
+- 模块文档：模块职责、关键入口、相互依赖
+
+- 工程规范：验证方式、评审规则、工作流约定
+
+这样做的好处是，模型不需要一开始就读完整个仓库，而是先知道“应该先看哪里”。
+
+---
+
+### 模型的上下文焦虑
+
+上下文窗口变大，并不等于长任务问题自然消失。
+
+Anthropic 在 [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps) 里提到一个很有意思的现象：随着上下文不断膨胀，模型可能会出现一种类似“该收尾了”的倾向，开始提前总结、避免继续展开、或者保守地宣布任务“基本完成”。这类现象背后并不一定是模型真的判断任务完成了，更可能是**上下文压力驱动下的行为收缩**。
+
+> First is that models tend to lose coherence on lengthy tasks as the context window fills (see our post on [<u>context engineering</u>](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)). Some models also exhibit "context anxiety," in which they begin wrapping up work prematurely as they approach what they believe is their context limit. Context resets—clearing the context window entirely and starting a fresh agent, combined with a structured handoff that carries the previous agent's state and the next steps—addresses both these issues.
+>
+> 首先，随着上下文窗口被填满，模型在处理冗长任务时往往会失去连贯性（详见我们关于[<u>上下文工程</u>](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)的文章）。部分模型还会表现出“上下文焦虑”，即当它们接近认为的上下文上限时，就会提前结束工作。上下文重置——完全清空上下文窗口并启动一个新的智能体，同时结合结构化的交接来传递前一个智能体的状态和后续步骤——可以解决这两个问题。
+
+这也是为什么长任务里真正有效的做法，通常不是单纯继续喂更多上下文，而是做三件事：
+
+1. **压缩**：把历史执行过程总结成高保真摘要
+
+1. **外置**：把目标、状态、验证、风险显式写进 repo 文件
+
+1. **重置**：当任务进入新阶段时，通过 handoff 让新会话接手
+
+原文的总结也很明确：对于长任务来说，单纯 compaction 并不总是够用；很多时候 **带着结构化交接的上下文重置 **比继续压缩膨胀的上下文更稳，因为它保留状态并给了模型更干净的上下文。
+
+所以个人理解 **真正稳定的长任务，不能只靠模型记忆，建设可“沉淀”、“恢复”、“交接” 的系统或许更关键。**
+
+这里也有值得注意的点：**不要频繁手动压缩上下文、同一会话窗口最好不要切换模型**
+在大多数 IDE / CLI 的多轮会话里，新输入通常只是追加在后面，稳定的前缀在模型缓存机制下能更容易复用缓存、减少重复计算。如果中途压缩上下文形成新的摘要，或者切换模型继续同一任务，由于 prompt cache 依赖前缀匹配，会导致原本可复用的上下文失效，继而引起 token 计算成本上升。
+
+所以一般建议 **尽量保持单一会话的连续性，把压缩留给系统处理或阶段性交接，**以及 **把不同模型的任务拆到不同会话窗口**。
+
+> https://developers.openai.com/api/docs/pricing
+
+![OpenAI Pricing 截图](/static/images/ai-coding-practice/openai-pricing.png)
+
+---
+
+## 任务怎么组织
+
+### 长任务的项目编排
+
+OpenAI 在 [Run long horizon tasks with Codex](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) 里明确指出，真正让长任务稳定推进的，往往不是一个更长的 prompt，而是**模型所处的 agent loop**。
+
+> Long-running work is less about one giant prompt and more about the agent loop the model operates inside.
+>
+> 长期运行的工作并非主要依赖一个巨型提示词，而更多取决于模型所运行的智能体循环。
+
+他们通过以下流程编排和文件设计，使得 GPT-5.3-Codex 在“Extra High”推理级别下能连续运行了约 25 小时，共计消耗了约 1300 万 tokens，生成约 3 万行代码。核心是把 agent loop 直接拆成了 7 步：
+
+1. Plan
+
+1. Edit code
+
+1. Run tools (tests / build / lint)
+
+1. Observe results
+
+1. Repair failures
+
+1. Update docs / status
+
+1. Repeat
+
+当 Agent 一直处于一个**有反馈、有修复、有状态更新**的循环里工作， 它便获得真实反馈、外置状态，以及跨时间持续可纠偏的能力。
+
+![Agent Loop 示意图](/static/images/ai-coding-practice/agent-loop.png)
+
+> 源码：https://github.com/derrickchoi-openai/design-desk/blob/main/docs/prompt.md
+
+```bash
+repo/
+├── AGENTS.md            # 长期规则：目录、命令、约束、done 定义
+├── Prompt.md            # 定义目标和交付物，spec + deliverables
+├── Plan.md              # 做 milestone 和验证，milestones + validations
+├── Implement.md         # 作为运行手册，要“follow the plan, keep diffs scoped, run validations, update docs”
+└── Documentation.md     # 作为共享记忆和审计日志，记录状态、决策、运行方式和 follow-ups。
+```
+
+以下是一个桌面应用项目上下文编排示例。相比上面官方仓库的最小闭环，它进一步把不同职责的文档模块拆开，并外置计划与检查点。
+
+- **长期稳定信息** 放在 `AGENTS.md` 和 `docs/`
+
+- **本轮任务计划** 放在 `PLANS/ACTIVE.md`
+
+- **怎么执行、怎么评审、怎么交接** 放在 `RUNBOOKS/`
+
+- **验证入口** 固定成脚本，比如 `validate.sh / smoke.sh`
+
+这样即使面对任务异常中断或者跨会话的场景，也能快速恢复上下文继续任务。
+
+```bash
+desktop_app/
+├── AGENTS.md                         # AI 协作入口：全局规则、阅读顺序、关键边界
+├── docs/                             # 长期记忆：只放稳定知识
+│   ├── INDEX.md                      # 文档导航入口：告诉人和 agent“先读什么”
+│   ├── ARCHITECTURE/                 # 架构文档：解释系统级结构
+│   ├── MODULE/                       # 模块地图：按仓库子系统解释目录职责
+│   └── ENGINEERING/                  # 工程规范：验证、评审、工作流约定
+├── PLANS/                            # 执行期计划：进行中的任务计划，不属于长期记忆
+│   ├── ACTIVE.md                         # 当前活跃计划：本轮任务列表、milestone、执行记录
+│   └── _TEMPLATE.md                      # 计划模板：新任务复制这个起步
+├── RUNBOOKS/                         # 动作协议：告诉 agent 和开发者“具体怎么做”
+│   ├── Handoff.md                        # 交接协议：结束时要交付什么信息
+│   ├── Implement.md                      # 实施协议：开始改动前后必须做哪些动作
+│   └── Review.md                         # 评审协议：自检/互检时遵循的步骤
+└── .codex/agents/                    # Codex 子代理角色卡
+    ├── implementer.md
+    ├── reader.md
+    ├── reviewer.md
+    └── tester.md
 ```
 
 ---
 
-### 1.3 不要一次性喂满上下文，让 AI 先澄清再执行
+### Agent Teams / Sub Agents
 
-高质量的上下文，不是“用户预先写完所有细节”，而是**用户先给目标，AI 先补齐关键不确定项，再进入执行**。
+这两个能力都不是“派生越多越高级”，而是**在单 Agent 已经开始吃力时，引入受控分工**。
 
-如果一上来就让 AI 开始改代码，它最容易做的事情就是补需求。而一旦它开始补需求，后面所有“看起来合理”的实现都可能建立在错误前提上。
+OpenAI 在 [A practical guide to building agents](https://cdn.openai.com/business-guides-and-resources/a-practical-guide-to-building-agents.pdf) 里建议，默认先从更简单的系统开始，只有当复杂度已经明显超过单 Agent 能稳定处理的范围，再考虑更复杂的** Agents 编排**。
 
-我现在更偏向把澄清过程固定成一个协议，至少先问清这五件事：
+> maximize a single agent’s capabilities first.
+>
+> 先最大化单个智能体的能力。
 
-| 维度 | 要澄清的问题 |
-| --- | --- |
-| **目标结果** | 这次到底要交付什么，成功长什么样？ |
-| **允许修改的边界** | 哪些文件、层级、模块可以改，哪些不要碰？ |
-| **不变量** | 哪些接口、行为、数据契约必须保持不变？ |
-| **验证方式** | 改完用什么命令、测试、截图或日志来证明？ |
-| **停止条件** | 什么叫做“够了”，什么不属于这次范围？ |
+Anthropic 在 [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) 中也提到多 Agents 的优势以及显著增加的 token 成本问题。
 
-如果 AI 没有主动问这五类问题，我基本会认为它还没准备好开始动手。
+> There is a downside: in practice, these architectures burn through tokens fast. In our data, agents typically use about 4× more tokens than chat interactions, and multi-agent systems use about 15× more tokens than chats. For economic viability, multi-agent systems require tasks where the value of the task is high enough to pay for the increased performance. Further, some domains that require all agents to share the same context or involve many dependencies between agents are not a good fit for multi-agent systems today. For instance, most coding tasks involve fewer truly parallelizable tasks than research, and LLM agents are not yet great at coordinating and delegating to other agents in real time. We’ve found that multi-agent systems excel at valuable tasks that involve heavy parallelization, information that exceeds single context windows, and interfacing with numerous complex tools.
+>
+> 这里存在一个缺点：在实际应用中，这些架构会快速消耗 tokens。在我们的数据中，**智能体通常比聊天交互多消耗约 4 倍的 tokens，而多智能体系统比聊天多消耗约 15 倍的 tokens。**为实现经济可行性，多智能体系统需要任务价值足够高，足以覆盖性能提升所带来的成本。此外，如今一些要求所有智能体共享同一上下文或智能体间存在大量依赖关系的领域，并不适合采用多智能体系统。例如，大多数编码任务的真正可并行化任务数量少于研究类任务，且大语言模型智能体目前还难以实时协调并指派任务给其他智能体。我们发现，多智能体系统在以下高价值任务中表现出色：涉及高度并行化的任务、超出单上下文窗口的信息处理，以及与众多复杂工具的交互。
 
-一个我觉得足够实用的输入模板是：
+换句话说，多 Agent 当然能带来好处，但前提是：**任务本身真的适合拆开并行推进。**
 
-```text
-目标：这次要完成什么
-现状：当前已知的问题是什么
-边界：哪些模块/文件允许改，哪些不要碰
-不变量：哪些行为或接口不能变
-验收：改完怎么验证
-如果你不确定，请先追问，不要自行假设
-```
+#### 任务天然可并行
 
-另外，有几类任务我认为必须先追问，不能直接做：
+比如：对一个 Electron 需求，同时派 2～3 个 Agent 分别梳理 `main / renderer / bridge` 的影响面，最后由主 Agent 汇总成一份改动地图。
 
-- 跨模块修改
-- 可能影响兼容行为
-- 当前没有测试兜底
-- 跨仓库接入
-- 涉及 schema、协议、公共 API 调整
+或者对一个复杂 PR，同时派不同 Agent 分别检查：安全风险、改动影响面、接口或 IPC 约定是否被破坏以及文档、脚本、配置是否需要同步更新。
 
-在这些情况下，AI 最不应该做的就是“先写了再说”。
+#### 子任务需要不同工作模式
 
----
+此时 Sub Agent 的价值不只是“同时做几件事”，而是 **把不同的工作方式隔离开**。比如：
 
-## 2. 任务怎么组织
+- `reader`：只负责读代码、梳理依赖、识别影响面
 
-### 2.1 跨仓库协作：给 AI 一个最小集成上下文包
+- `implementer`：只负责小范围实现，避免顺手扩散改动
 
-跨仓库任务最容易乱，不是因为代码难，而是因为**上下文天然不共享**。解决方式不是把两个仓库整包塞给 AI，而是给它一个最小集成上下文包。
+- `tester`：只负责补测试、跑验证、整理失败信息
 
-这个上下文包至少应该包含：
+- `reviewer`：只负责看 diff、看范围、看风险、看是否真的可合并
 
-- 上游仓库的版本或 commit SHA
-- 目标方法的签名、入参、返回值、错误语义
-- 一个最小可运行示例
-- 本地下游仓库的接入点和 adapter 边界
-- 明确的验证命令
+#### 分离“执行角色”和“评判角色”
 
-我更推荐下面这 5 步流程：
+Anthropic 在 [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps) 中提到一个很现实的问题是：Agent 在评估自己产出的结果时，天然容易偏宽松。因此，分离角色是能改善长任务的稳定性的。
 
-1. **冻结上游版本**
-   先明确这次接的是哪个 release、tag 或 commit，不要让 AI 一边查主干一边实现。
+所以在后续实践中，大家可以尝试以下方式：
 
-2. **提取外部契约和最小示例**
-   不要让 AI 自己从整个仓库推断接口语义，最好先给出你认可的最小 contract。
+- 主 Agent 维护目标与总状态
 
-3. **定义本地 adapter 边界**
-   这次只允许改哪一层，哪些公共接口不能动，要提前说清。
+- 子 Agent 做局部探索或局部实现
 
-4. **先补 contract / integration test**
-   让验证标准先落地，而不是把“接成功没有”交给主观判断。
+- reviewer / evaluator 只负责判断结果是否达标
 
-5. **再实现接入**
-   这时 AI 面对的是一个明确 contract，而不是两个同时打开的代码宇宙。
+Anthropic 的 Multi-Agents 系统也是类似的编排模式：lead agent 负责计划与协调，subagents 负责并行执行，再把结果回收统一判断。
 
-如果任务特别复杂，当然也可以继续拆成 `Scout / Integrator / Verifier` 这类角色，但那是增强项，不是主流程。主流程的关键仍然是：
+但也**不是所有任务都值得上 Agent Teams。**当任务边界不明确、子任务之间耦合度过高、或者当前上下文上限不是瓶颈时，多 Agents 只会把混乱放大。OpenAI 的建议本质上也是一样的：先把单 Agent 用好，再在确实需要时引入更多编排复杂度。
 
-> **不要让 AI 同时消化两个仓库；要让它围绕一个明确契约工作。**
+一个比较推荐的判断方式是：**先拆解任务计划和检查点，再决定要不要拆多个 Agent。**如果连检查点都拆不出来，多半还不到上 Agent Teams 的时候。
 
 ---
 
-### 2.2 不要一条 prompt 干到底：checkpoint、回滚和 harness loop
+## 结果怎么验收（探索中）
 
-长任务最危险的地方，不是“AI 会不会写”，而是**你看不见它什么时候开始偏，而且偏了之后很难拉回来**。
+### TDD 测试驱动开发
 
-这也是为什么我越来越不相信“一条 prompt 跑到底”的做法。它在 demo 里很好看，在工程里通常意味着：
+在开始改代码之前，先明确完成预期。比如：
 
-- 中间状态不可观察
-- 错误会被连续放大
-- 你不知道是哪一步开始偏的
-- 你没有明确的回滚点
+- 哪些功能必须能跑通
 
-更稳的方式，是把任务切成带 checkpoint 的执行单元。每个单元至少要有：
+- 哪些边界情况必须覆盖
 
-- 这一步要交付什么
-- 允许动哪些东西
-- 用什么命令验证
-- 失败时回到哪里
+- 哪些旧功能不能被改坏
 
-#### Harness loop 可以怎么理解
+- 至少要通过哪些验证命令
 
-如果说 `Spec` 解决的是“边界先对齐”，那 `Harness` 解决的就是“长任务怎么持续推进而不失控”。
+OpenAI 在 [Run long horizon tasks with Codex](https://developers.openai.com/blog/run-long-horizon-tasks-with-codex) 中也有强调这一点：每个 milestone 后都要做验证，**不是写完就算，而是验证通过后才能继续。** 他们在总结里也直接把 `tests / lint / typecheck / build` 列成了持续验证的一部分。
 
-这里我觉得 [Ralph](https://github.com/snarktank/ralph) 是一个很好的例子。它不是单纯在说“多轮调用 AI”，而是在把执行做成一个循环系统。
+结合到日常使用中，我计划尝试把他分成两个固定入口文件。这样的好处是对于日常任务，Agent 不需要每次都临时推断怎么验收，它只需要执行固定命令，把核心内容检查一遍。
 
-Ralph 最值得拿来讲的有四点：
+#### `validate.sh`
 
-1. **每轮都是 fresh context**
-   每次迭代都启动一个新的 AI 实例，不让单次上下文越滚越脏。
+只放“高频、稳定、核心”的测试用例，通常是：**ESLint、typecheck、build、单元测试、必要的集成测试**。
 
-2. **任务必须足够小**
-   它不是让 AI “实现整个 PRD”，而是每轮只挑一个足够小的 story。
+#### `smoke.sh`
 
-3. **状态外置**
-   记忆不靠会话本身，而是靠 `git history`、`progress.txt`、`prd.json` 这些外部状态。
+检查启动和 P0 级别关键路径，比如：
 
-4. **过了质量门才继续**
-   typecheck、tests、质量检查通过之后，才允许把 story 标成完成并进入下一轮。
+- 应用能不能正常启动
 
-也就是说，Ralph 这类 loop 最重要的不是“自动连续跑”，而是：
+- 首页能不能打开
 
-> **把任务、记忆、验证和停止条件从聊天窗口里拿出来，放进一个可重复执行的系统。**
+- 核心操作能不能走通一遍
 
-如果用一句更工程化的话来定义 `Harness loop`，我会写成：
-
-> **Harness 不是“多开几个 agent”，而是“把执行放进一个有状态、有质量门、有回滚点的循环系统”。**
-
-一个足够实用的简化版可以长这样：
-
-```text
-收敛 spec -> 拆成小任务 -> 每次只做一个任务 -> 跑质量门 -> 记录状态 -> 进入下一轮
-```
-
-这也是为什么我会把 `2.2` 和前面的 `Harness` 放在一起讲：checkpoint、回滚和质量门，不是补充细节，它们本身就是 harness 的一部分。
+- 关键日志里有没有明显报错
 
 ---
 
-## 3. 结果怎么验收
+### 测试入口的技术选型：CLI / MCP
 
-### 3.1 Electron 场景：把验收压成三层
+[MCP vs. CLI for AI-native development](https://circleci.com/blog/mcp-vs-cli/) 总结得很清楚：
 
-Electron 场景最能说明一个问题：**“能跑”不等于“可以合并”。**
+> _Summary: The CLI vs. MCP question is really a question about where you are in the development loop. CLIs fit the inner loop: fast, local, zero overhead. MCP servers fit the outer loop: external systems, shared infrastructure, structured access. Most teams need both._
+>
+> CLI 与 MCP 的问题，本质上是关于你处于开发循环的哪个阶段。CLI 适用于内部循环：快速、本地、零开销。MCP 服务器适用于外部循环：外部系统、共享基础设施、结构化访问。大多数团队需要两者兼具。
 
-因为 Electron 天然横跨主进程、渲染进程、preload、IPC 和宿主环境，所以我更推荐把验收压成三层：
+此外，有一点值得注意的是，[MCP is up to 32× more expensive than CLI. Here’s why we still use it.](https://www.scalekit.com/blog/mcp-vs-cli-use) 通过 75 次基准测试，验证了 CLI 比 MCP 成本低 10-32 倍，可靠性也比 MCP 要强。
 
-1. **纯逻辑测试**
-   能剥离出宿主环境的逻辑，尽量先在 Node / Vitest / Jest 层测掉。
+> We ran 75 benchmark runs comparing CLI and MCP for AI agent tasks. CLI won on every efficiency metric — 10 to 32× cheaper, 100% reliable versus MCP’s 72%.
+>
+> 我们针对 AI 智能体任务开展了 75 次基准测试，对比 CLI 与 MCP 的表现。在各项效率指标上 CLI 均取得胜利——成本比 MCP 低 10 至 32 倍，且实现了 100% 的可靠性，而 MCP 的可靠性仅为 72%。
 
-2. **边界 / 契约测试**
-   preload 暴露 API、IPC request/response、权限控制和错误处理，优先测契约而不是 UI。
+因此对于本地桌面应用这类测试场景，通过 CLI 暴露原子测试能力个人认为是更高效的。因为 MCP 这套协议更侧重于把现有能力暴露给外部 Agent 调用。
 
-3. **启动级 / E2E 测试**
-   必须依赖 Electron 的部分，再交给自动化启动去覆盖。
-
-Electron 官方文档已经给了比较清晰的路径：
-
-- [Electron Automated Testing](https://www.electronjs.org/docs/latest/tutorial/automated-testing)
-- [Playwright Electron API](https://playwright.dev/docs/api/class-electron)
-- [WebdriverIO Electron](https://webdriver.io/docs/desktop-testing/electron/)
-
-我对这部分的结论一直很简单：
-
-> **不要把所有问题都丢给 E2E。能下沉到纯逻辑，就下沉；必须依赖 Electron，再用启动级自动化。**
+后续也可以尝试通过 [CLI-Anything](https://github.com/HKUDS/CLI-Anything) 将本地应用的原子能力 CLI 化，应用到测试环节中。
 
 ---
 
-### 3.2 CLI 和 MCP：按 inner loop / outer loop 分工
+## 使用总结
 
-我现在更认同的表述，不是“CLI 比 MCP 更好”，而是：**CLI 和 MCP 解决的是不同层面的闭环问题。**
+1. 仓库文档编排遵循**最小必要原则**：把长期稳定规则放进 `AGENTS.md / docs`，把本轮目标、状态、验证和风险外置到计划文件里。
 
-在本地编码和验收的 `inner loop` 里，CLI 通常更自然：
+1. 任务执行只提供当前阶段所需必要的上下文。
 
-- 读代码
-- 改代码
-- 跑测试
-- 看日志
-- 修失败
-- 再验证
+1. 不要频繁手动压缩上下文，也不要在同一会话里来回切模型。
 
-这些动作本来就发生在终端里，所以 AI 接进来之后，很容易形成一个连续闭环。
+1. 小任务先用轻量 Vibe，复杂一点再上 Spec，长任务需要规划好 Agent Loop，测试用例必不可少。
 
-而在跨系统协作、鉴权、租户隔离、审计治理的 `outer loop` 里，MCP 的价值会更明显：
+1. Sub Agents / Agent Teams 按需调用。
 
-- 权限边界更清晰
-- 外部系统接入更统一
-- 团队共享工具更容易治理
-
-这也是为什么我很喜欢 CircleCI 那篇文章里 `inner loop / outer loop` 的划分，它比“谁更先进”这种争论有用得多：
-
-- [MCP vs. CLI for AI-native development - CircleCI](https://circleci.com/blog/mcp-vs-cli/)
-
-另外两篇文章也很适合拿来当补充视角：
-
-- [Why CLI Tools Are Beating MCP for AI Agents - Jannik Reinhard](https://jannikreinhard.com/2026/02/22/why-cli-tools-are-beating-mcp-for-ai-agents/)
-- [MCP vs CLI Use - Scalekit](https://www.scalekit.com/blog/mcp-vs-cli-use)
-
-所以我的结论不是“CLI 打败 MCP”，而是：
-
-- **本地开发和验收闭环，优先 CLI**
-- **跨系统权限和团队治理，优先 MCP**
-
-这两者更像分工，不像替代关系。
+1. 测试入口可以尝试使用 CLI，执行会更高效。
 
 ---
 
-### 3.3 合并前五问
+## 结语
 
-最后我会把 AI 结果的验收压成“五问”，因为“能跑”远远不够。
+> 突然意识到，人生某种程度上也像一个巨大的 self-attention。
+> 未来始终被 mask 掉，我们看不见完整答案，只能带着过往沉淀下来的 KV cache，在一次次选择里，继续计算下一个 token 的概率分布。一路上，外界的反馈像 reward model，不断给我们的决定打分；而那些走过的弯路、吃过的亏、做过的修正，又像 actor loss，一点点更新我们面对未来的方式。
+> 于是我们就在这样的迭代中，继续生成、继续修正、继续向前。
+> 也许对更高的视角来说，我们漫长的一生，不过是一句话；人生里的每一个阶段，也不过是其中一个 token。可只有真正走到回头看的那一刻，才会明白，那些当时以为绕远的路、那些以为无意义的损失、那些反复修正的瞬间，最终都参与完成了属于自己的那次反向传播。
 
-#### 第一问：静态检查过了吗？
+愿大家都能在自己的序列里，持续生成值得回看的内容。
 
-- 编译通过了吗？
-- lint 通过了吗？
-- type check 通过了吗？
-
-#### 第二问：功能真的对了吗？
-
-- 主要路径可用吗？
-- 边界输入可用吗？
-- 错误处理符合预期吗？
-
-#### 第三问：契约有没有被意外破坏？
-
-- 外部接口有没有偷偷变掉？
-- adapter、IPC、SDK 调用的语义有没有偏？
-- 旧行为有没有悄悄回归失败？
-
-#### 第四问：工程质量能不能 review？
-
-- 抽象是不是清楚？
-- diff 能不能被团队正常 review？
-- 测试是在验证行为，还是只是在迎合当前实现？
-- 有没有顺手带进一堆无关改动？
-
-#### 第五问：这份改动值不值得合并？
-
-- 有没有变更说明？
-- 有没有风险点说明？
-- 有没有回滚方式？
-- 有没有明确哪些内容留到后续？
-
-真正实用的验收标准，不是“写完了没有”，而是：
-
-> **这份改动，作为团队代码，是否值得被合并。**
-
----
-
-## 收尾
-
-如果把今天的内容压缩成一句话，我会这样说：
-
-> **AI Coding 的关键，不是让 AI 写更多代码，而是让它在正确的控制范式里工作，并且始终处在可验证、可回滚、可合并的闭环里。**
-
-再落到最实用的一层，就是这三句话：
-
-1. **上下文怎么给**：不要让 AI 直接补需求，要先澄清，再执行
-2. **任务怎么组织**：不要一条 prompt 干到底，要拆任务、设 checkpoint、保留回滚点
-3. **结果怎么验收**：不要只看能跑，要看契约、质量、风险和可合并性
-
-文中提到的公开资料：
-
-- [OpenSpec](https://github.com/Fission-AI/OpenSpec)
-- [Superpowers](https://github.com/obra/superpowers)
-- [`brainstorming` skill](https://github.com/obra/superpowers/blob/main/skills/brainstorming/SKILL.md)
-- [`writing-plans` skill](https://github.com/obra/superpowers/blob/main/skills/writing-plans/SKILL.md)
-- [Ralph](https://github.com/snarktank/ralph)
-- [Demystifying evals for AI agents - Anthropic](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)
-- [Electron Automated Testing](https://www.electronjs.org/docs/latest/tutorial/automated-testing)
-- [Playwright Electron API](https://playwright.dev/docs/api/class-electron)
-- [WebdriverIO Electron](https://webdriver.io/docs/desktop-testing/electron/)
-- [MCP vs. CLI for AI-native development - CircleCI](https://circleci.com/blog/mcp-vs-cli/)
-- [Why CLI Tools Are Beating MCP for AI Agents - Jannik Reinhard](https://jannikreinhard.com/2026/02/22/why-cli-tools-are-beating-mcp-for-ai-agents/)
-- [MCP vs CLI Use - Scalekit](https://www.scalekit.com/blog/mcp-vs-cli-use)
+也祝大家前程似锦，token 落处皆有意义，步步向前，最终收敛到属于自己的最好结果。

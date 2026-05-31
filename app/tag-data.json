@@ -1,5 +1,8 @@
 {
   "en": {
+    "ai": 1,
+    "ai-coding": 1,
+    "agent": 1,
     "game-capture": 3,
     "live-stream": 3,
     "window-capture": 1,
@@ -7,6 +10,9 @@
     "electron": 1
   },
   "zh": {
+    "ai": 1,
+    "ai-coding": 1,
+    "agent": 1,
     "game-capture": 3,
     "live-stream": 3,
     "window-capture": 1,

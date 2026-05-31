@@ -24,12 +24,6 @@ const projectsData: Record<Locale, Project[]> = {
       imgSrc: '/static/images/electron-react-rspack.png',
       href: 'https://github.com/RyanProMax/electron-react-rspack',
     },
-    {
-      title: 'Stock Analysis',
-      description: `Real-time stock technical indicator analysis with scoring, trend analysis, and fear & greed index monitoring.`,
-      imgSrc: '/static/images/stock-analysis.png',
-      href: 'https://ryanpromax.github.io/stock-analysis/',
-    },
   ],
   [Locale.ZH]: [
     {
@@ -43,12 +37,6 @@ const projectsData: Record<Locale, Project[]> = {
       description: `基于 TypeScript 和 Rspack 的 Electron-React 脚手架模板，支持持久化存储、本地日志记录、增量更新等功能，适用于构建跨平台桌面应用。`,
       imgSrc: '/static/images/electron-react-rspack.png',
       href: 'https://github.com/RyanProMax/electron-react-rspack',
-    },
-    {
-      title: '股票分析',
-      description: `实时股票技术指标分析，包含评分系统、趋势分析和恐惧贪婪指数监控。`,
-      imgSrc: '/static/images/stock-analysis.png',
-      href: 'https://ryanpromax.github.io/stock-analysis/',
     },
   ],
 };
