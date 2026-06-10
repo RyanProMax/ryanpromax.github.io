@@ -17,7 +17,7 @@ const projectsData: Record<Locale, Project[]> = {
       description: `Support various live streams including
       entertainment, gaming, and e-commerce. It offers one-click streaming start, real-time audio/video 
       processing, beauty filters, and comment management, helping hosts create high-quality broadcasts effortlessly.`,
-      role: 'Head of Game & AI Coding directions',
+      role: 'Owner of Game & AI Coding directions',
       focus: 'Game live streaming, interaction experience, desktop engineering',
       impact:
         'Responsible for core game-streaming capabilities and main-repository AI Friendly & Harness engineering.',
@@ -28,21 +28,12 @@ const projectsData: Record<Locale, Project[]> = {
       title: 'Electron React Rspack',
       description: `An Electron-React boilerplate with TypeScript & Rspack, supporting persistent storage, 
       local logging, incremental updates, and more.`,
-      role: 'Creator',
+      role: 'Owner',
       focus: 'Electron, React, TypeScript, Rspack',
       impact:
         'A reusable desktop application starter that packages common engineering capabilities for faster product iteration.',
       imgSrc: '/static/images/electron-react-rspack.png',
       href: 'https://github.com/RyanProMax/electron-react-rspack',
-    },
-    {
-      title: 'AI Friendly & Harness Engineering',
-      description: `A main-repository engineering practice for AI-assisted development, covering context organization, agent collaboration conventions, validation loops, and task orchestration.`,
-      role: 'Direction owner',
-      focus: 'AI4SE, agent workflow, validation loops',
-      impact:
-        'Improves the stability, recoverability, and repeatability of AI-assisted development in a large front-end repository.',
-      href: '/en/blog/ai-coding-practice',
     },
   ],
   [Locale.ZH]: [
@@ -58,19 +49,11 @@ const projectsData: Record<Locale, Project[]> = {
     {
       title: 'Electron React Rspack',
       description: `基于 TypeScript 和 Rspack 的 Electron-React 脚手架模板，支持持久化存储、本地日志记录、增量更新等功能，适用于构建跨平台桌面应用。`,
-      role: '创建者',
+      role: 'Owner',
       focus: 'Electron、React、TypeScript、Rspack',
       impact: '沉淀桌面应用常见工程能力，降低跨平台产品从 0 到 1 的启动成本。',
       imgSrc: '/static/images/electron-react-rspack.png',
       href: 'https://github.com/RyanProMax/electron-react-rspack',
-    },
-    {
-      title: 'AI Friendly & Harness 工程',
-      description: `面向 AI 辅助研发的主仓库工程实践，覆盖上下文组织、Agent 协作规范、验证闭环和任务编排。`,
-      role: '方向负责人',
-      focus: 'AI4SE、Agent 工作流、验证闭环',
-      impact: '提升大型前端仓库中 AI 辅助研发的稳定性、可恢复性与可重复执行能力。',
-      href: '/zh/blog/ai-coding-practice',
     },
   ],
 };

@@ -34,7 +34,7 @@ export const EXPERIENCES: Record<Locale, Experience[]> = {
       logo: '/static/images/timeline/bytedance.svg',
       start: 'Jul 2021',
       end: 'PRESENT',
-      title: '🧑‍💻​Head of Game & AI Coding Directions at Douyin Live Studio',
+      title: '🧑‍💻​Owner of Game & AI Coding Directions at Douyin Live Studio',
     },
     {
       org: 'GainerTech Co., Ltd.',
