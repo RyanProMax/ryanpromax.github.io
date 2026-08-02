@@ -249,12 +249,19 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
     setVideoReady(true);
   }, [activeSection]);
 
-  const updateLoadingProgress = useCallback(() => {
-    const video = videoRef.current;
-    if (!video || !Number.isFinite(video.duration) || video.buffered.length === 0) return;
-    const bufferedEnd = video.buffered.end(video.buffered.length - 1);
-    setLoadingProgress(Math.min(99, Math.round((bufferedEnd / video.duration) * 100)));
-  }, []);
+  useEffect(() => {
+    if (videoReady || videoError) return;
+
+    const interval = window.setInterval(() => {
+      setLoadingProgress((current) => {
+        if (current >= 94) return current;
+        const increment = Math.max(1, Math.round((94 - current) * 0.08));
+        return Math.min(94, current + increment);
+      });
+    }, 120);
+
+    return () => window.clearInterval(interval);
+  }, [videoError, videoReady]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -431,7 +438,6 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
           videoTransitioning ? 'opacity-100' : 'opacity-0'
         }`}
         onLoadedData={handleVideoReady}
-        onProgress={updateLoadingProgress}
         onError={() => {
           setVideoError(true);
           setVideoTransitioning(false);
@@ -462,22 +468,11 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
 
       {!videoReady && !videoError && (
         <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center">
-          <div className="flex w-56 flex-col items-center gap-4 text-center">
-            <div className="relative grid h-20 w-20 place-items-center rounded-full border border-white/15 bg-black/15 backdrop-blur-md">
-              <div className="absolute inset-2 animate-spin rounded-full border border-white/10 border-t-white/70 motion-reduce:animate-none" />
-              <span className="text-sm font-medium text-white/85 tabular-nums">
-                {Math.round(loadingProgress)}%
-              </span>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-white/85">
-                {isChinese ? '正在加载视频简历' : 'Loading the video résumé'}
-              </p>
-              <p className="mt-1 text-xs text-white/45">
-                {isChinese ? '多机位画面加载中' : 'Loading multi-angle footage'}
-              </p>
-            </div>
-            <div className="h-px w-full overflow-hidden bg-white/10">
+          <div className="flex w-40 flex-col items-center gap-3">
+            <span className="text-3xl font-light tracking-tight text-white/85 tabular-nums">
+              {Math.round(loadingProgress)}%
+            </span>
+            <div className="h-px w-full overflow-hidden bg-white/15">
               <div
                 className="h-full bg-white/75 transition-[width] duration-300"
                 style={{ width: `${loadingProgress}%` }}
@@ -490,8 +485,8 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
       {videoError && (
         <div className="pointer-events-none absolute top-20 left-1/2 z-30 -translate-x-1/2 rounded-full border border-amber-200/20 bg-amber-950/35 px-4 py-2 text-center text-xs text-amber-50/85 backdrop-blur-md">
           {isChinese
-            ? '视频暂时无法加载，简历内容仍可浏览。'
-            : 'The video could not load. The resume is still available.'}
+            ? '部分效果未能加载，内容仍可浏览。'
+            : 'Some effects could not load. The content remains available.'}
         </div>
       )}
 

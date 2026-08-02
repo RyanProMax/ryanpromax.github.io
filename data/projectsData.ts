@@ -20,7 +20,7 @@ const projectsData: Record<Locale, Project[]> = {
       role: 'Owner of Game & AI Coding directions',
       focus: 'Game live streaming, interaction experience, desktop engineering',
       impact:
-        'Responsible for core game-streaming capabilities and main-repository AI Friendly & Harness engineering.',
+        'Responsible for core game-streaming capabilities and main-repository AI Friendly & E2E engineering.',
       imgSrc: '/static/images/webcast-mate.png',
       href: 'https://streamingtool.douyin.com/',
     },
@@ -42,7 +42,7 @@ const projectsData: Record<Locale, Project[]> = {
       description: `支持娱乐、游戏、电商等多种直播类型，提供一键开播、实时音视频处理、美颜滤镜和评论管理等功能，助力主播高效打造高质量直播内容。`,
       role: '游戏方向 / AI Coding 方向负责人',
       focus: '游戏直播、互动体验、桌面端工程',
-      impact: '负责游戏直播核心能力建设，并推进主仓库 AI Friendly & Harness 工程实践。',
+      impact: '负责游戏直播核心能力建设，并推进主仓库 AI Friendly & E2E 工程实践。',
       imgSrc: '/static/images/webcast-mate.png',
       href: 'https://streamingtool.douyin.com/',
     },
