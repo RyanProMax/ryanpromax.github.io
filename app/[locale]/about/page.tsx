@@ -1,28 +1,44 @@
-import { Authors, allAuthors } from 'contentlayer/generated';
-import { MDXLayoutRenderer } from 'pliny/mdx-components';
-import AuthorLayout from '@/layouts/AuthorLayout';
-import { coreContent } from 'pliny/utils/contentlayer';
+import { allAuthors, type Authors } from 'contentlayer/generated';
 import { genPageMetadata } from 'app/[locale]/seo';
-import { Timeline } from '@/components/Experience';
-import { DEFAULT_LOCALE, Locale } from '@/locales/config';
-import { getNavLinkData } from '@/data/headerNavLinks';
+import { EXPERIENCES } from '@/components/Experience';
+import ImmersiveResume, { type ResumeLocalization } from '@/components/ImmersiveResume';
+import { DEFAULT_LOCALE, Locale, SupportedLanguages } from '@/locales/config';
 
 export const metadata = genPageMetadata({ title: 'About' });
 
 export default async function Page({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale = DEFAULT_LOCALE } = await params;
-  const author = allAuthors.find(
-    (p) => p.slug.includes('default') && p.locale === (locale || DEFAULT_LOCALE)
-  ) as Authors;
-  const mainContent = coreContent(author);
-  const title = getNavLinkData(locale, '/about')?.title || 'About';
+  const localizations = Object.fromEntries(
+    SupportedLanguages.map((currentLocale) => {
+      const author = allAuthors.find(
+        (entry) => entry.slug.includes('default') && entry.locale === currentLocale
+      ) as Authors;
+
+      return [
+        currentLocale,
+        {
+          experiences: EXPERIENCES[currentLocale],
+          profile: {
+            name: author.name,
+            occupation: author.occupation,
+            company: author.company,
+            summary: author.summary,
+            email: author.email,
+            github: author.github,
+            linkedin: author.linkedin,
+            twitter: author.twitter,
+            bluesky: author.bluesky,
+          },
+        },
+      ];
+    })
+  ) as Record<Locale, ResumeLocalization>;
 
   return (
-    <>
-      <AuthorLayout title={title} content={mainContent}>
-        <MDXLayoutRenderer code={author.body.code} />
-        <Timeline locale={locale} />
-      </AuthorLayout>
-    </>
+    <ImmersiveResume
+      assetPrefix={process.env.BASE_PATH || ''}
+      initialLocale={locale}
+      localizations={localizations}
+    />
   );
 }
