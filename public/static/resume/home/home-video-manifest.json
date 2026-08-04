@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "family": "home-initial-state",
+  "status": "electron-preview",
+  "assetVersion": "20260803-fal-electron-preview-1",
+  "anchor": {
+    "file": "../stages/video-endpoints/h-1-main.png",
+    "sha256": "952418c6bd8df5546aa963c7abcc8a8a4853414052552edeae5d5c50ee5d8bc4",
+    "width": 1672,
+    "height": 940
+  },
+  "video": {
+    "width": 1280,
+    "height": 720,
+    "fps": 24,
+    "audio": false,
+    "pixelFormat": "yuv420p"
+  },
+  "playback": ["home-idle-loop", "home-idea-electron"],
+  "idle": {
+    "id": "home-idle-loop",
+    "mp4": "home-idle-loop.mp4",
+    "webm": "home-idle-loop.webm",
+    "durationMs": 3083,
+    "frames": 74
+  },
+  "ideas": [
+    {
+      "id": "home-idea-electron",
+      "technology": "electron",
+      "mp4": "home-idea-electron.mp4",
+      "webm": "home-idea-electron.webm",
+      "durationMs": 5042,
+      "frames": 121
+    }
+  ],
+  "deferredIdeas": ["home-idea-douyinlive", "home-idea-react"]
+}
