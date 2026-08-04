@@ -51,11 +51,13 @@ const WHEEL_GESTURE_IDLE_DELAY = 160;
 const TOUCH_SNAP_THRESHOLD = 52;
 const TIMELINE_NODE_OPACITY = [1, 0.52, 0.36, 0.26, 0.2];
 const RESUME_ASSET_VERSION = '20260802-keyframe-4';
-const HOME_ASSET_VERSION = '20260803-fal-electron-preview-1';
+const HOME_ASSET_VERSION = '20260803-fal-all-ideas-1';
 
 type HomeVideoSlot = 0 | 1;
 
-const HOME_CLIPS = [{ id: 'home-idle-loop' }, { id: 'home-idea-electron' }] as const;
+const HOME_IDLE_ID = 'home-idle-loop';
+const HOME_IDEA_IDS = ['home-idea-douyinlive', 'home-idea-react', 'home-idea-electron'] as const;
+type HomeIdeaId = (typeof HOME_IDEA_IDS)[number];
 
 interface VideoTransition {
   endTime: number;
@@ -82,6 +84,7 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
   const homeReadyRef = useRef<[boolean, boolean]>([false, false]);
   const homePendingSlotRef = useRef<HomeVideoSlot | null>(null);
   const homeAmbientActiveRef = useRef(true);
+  const lastHomeIdeaIdRef = useRef<HomeIdeaId | null>(null);
   const visualSectionRef = useRef(0);
   const transitionRef = useRef<VideoTransition | null>(null);
   const wheelAccumulatorRef = useRef(0);
@@ -98,6 +101,7 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
   const [videoError, setVideoError] = useState(false);
   const [videoTransitioning, setVideoTransitioning] = useState(false);
   const [homeActiveSlot, setHomeActiveSlot] = useState<HomeVideoSlot>(0);
+  const [homeIdeaId, setHomeIdeaId] = useState<HomeIdeaId>(HOME_IDEA_IDS[0]);
   const [homeReady, setHomeReady] = useState<[boolean, boolean]>([false, false]);
   const [timelineOffset, setTimelineOffset] = useState(0);
 
@@ -107,6 +111,7 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
   const videoUrl = `${assetPrefix}/static/resume/video/ryan-resume-landscape.mp4?v=${RESUME_ASSET_VERSION}`;
   const posterUrl = `${assetPrefix}/static/resume/stages/video-endpoints/${STAGE_IMAGE_NAMES[0]}?v=${RESUME_ASSET_VERSION}`;
   const homeAmbientActive = activeSection === 0 && !videoTransitioning;
+  const homeClipIds = [HOME_IDLE_ID, homeIdeaId] as const;
   homeAmbientActiveRef.current = homeAmbientActive;
   const sections = useMemo(
     () => [
@@ -209,6 +214,13 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
     setHomeReady(homeReadyRef.current);
   }, []);
 
+  const pickNextHomeIdea = useCallback(() => {
+    const candidates = HOME_IDEA_IDS.filter((id) => id !== lastHomeIdeaIdRef.current);
+    const nextIdea = candidates[Math.floor(Math.random() * candidates.length)];
+    lastHomeIdeaIdRef.current = nextIdea;
+    return nextIdea;
+  }, []);
+
   const activateHomeSlot = useCallback(
     (nextSlot: HomeVideoSlot, finishedSlot: HomeVideoSlot) => {
       const finishedVideo = getHomeVideo(finishedSlot);
@@ -256,9 +268,36 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
       } else {
         homePendingSlotRef.current = nextSlot;
       }
+
+      if (slot === 1) {
+        setHomeSlotReady(1, false);
+        setHomeIdeaId(pickNextHomeIdea());
+      }
     },
-    [activateHomeSlot]
+    [activateHomeSlot, pickNextHomeIdea, setHomeSlotReady]
   );
+
+  useEffect(() => {
+    const idleVideo = homeVideoARef.current;
+    if (!idleVideo) return;
+
+    if (idleVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      handleHomeVideoLoaded(0);
+    } else {
+      idleVideo.load();
+    }
+  }, [handleHomeVideoLoaded]);
+
+  useEffect(() => {
+    setHomeIdeaId(pickNextHomeIdea());
+  }, [pickNextHomeIdea]);
+
+  useEffect(() => {
+    const ideaVideo = homeVideoBRef.current;
+    if (!ideaVideo) return;
+    setHomeSlotReady(1, false);
+    ideaVideo.load();
+  }, [homeIdeaId, setHomeSlotReady]);
 
   useEffect(() => {
     const activeVideo = getHomeVideo(homeActiveSlotRef.current);
@@ -524,10 +563,10 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
         />
       ))}
 
-      {HOME_CLIPS.map((clip, index) => {
+      {homeClipIds.map((clipId, index) => {
         const slot = index as HomeVideoSlot;
         const active = homeAmbientActive && slot === homeActiveSlot && homeReady[slot];
-        const homeVideoBaseUrl = `${assetPrefix}/static/resume/home/${clip.id}`;
+        const homeVideoBaseUrl = `${assetPrefix}/static/resume/home/${clipId}`;
 
         return (
           <video
@@ -543,7 +582,7 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
             onLoadedData={() => handleHomeVideoLoaded(slot)}
             onEnded={() => handleHomeVideoEnded(slot)}
             onError={() => setHomeSlotReady(slot, false)}
-            data-home-clip={clip.id}
+            data-home-clip={clipId}
             data-home-slot={slot}
             data-home-active={active ? 'true' : 'false'}
             aria-hidden="true"
