@@ -31,8 +31,7 @@ interface Props {
   localizations: Record<Locale, ResumeLocalization>;
 }
 
-const HOLD_DURATION = 1.2;
-const TRANSITION_DURATION = 1.2;
+const TRANSITION_DURATION = 1.5;
 const STAGE_IMAGE_NAMES = [
   'h-1-main.png',
   'h-2-douyin.png',
@@ -40,24 +39,17 @@ const STAGE_IMAGE_NAMES = [
   'h-4-unicom.png',
   'h-5-sysu.png',
 ];
-const HOLD_START_TIMES = STAGE_IMAGE_NAMES.map((_, index) => index * HOLD_DURATION);
-const TRANSITION_OFFSET = HOLD_START_TIMES.length * HOLD_DURATION;
-const EXPECTED_VIDEO_DURATION =
-  TRANSITION_OFFSET + (STAGE_IMAGE_NAMES.length - 1) * 2 * TRANSITION_DURATION;
-const SEEK_PADDING = 1 / 30;
+const HOLD_START_TIMES = STAGE_IMAGE_NAMES.map(() => 0);
+const TRANSITION_OFFSET = 0;
+const EXPECTED_VIDEO_DURATION = (STAGE_IMAGE_NAMES.length - 1) * 2 * TRANSITION_DURATION;
+const SEEK_PADDING = 1 / 24;
 const TRANSITION_SEEK_EPSILON = 1 / 240;
 const WHEEL_SNAP_THRESHOLD = 72;
 const WHEEL_GESTURE_IDLE_DELAY = 160;
 const TOUCH_SNAP_THRESHOLD = 52;
 const TIMELINE_NODE_OPACITY = [1, 0.52, 0.36, 0.26, 0.2];
-const RESUME_ASSET_VERSION = '20260802-keyframe-4';
-const HOME_ASSET_VERSION = '20260803-fal-all-ideas-1';
-
-type HomeVideoSlot = 0 | 1;
-
-const HOME_IDLE_ID = 'home-idle-loop';
-const HOME_IDEA_IDS = ['home-idea-douyinlive', 'home-idea-react', 'home-idea-electron'] as const;
-type HomeIdeaId = (typeof HOME_IDEA_IDS)[number];
+const RESUME_ASSET_VERSION = '20260807-minimax-h3-1';
+const HOME_ASSET_VERSION = '20260807-minimax-h3-1';
 
 interface VideoTransition {
   endTime: number;
@@ -78,13 +70,9 @@ const removeLeadingEmoji = (value: string) => value.replace(/^[^\p{L}\p{N}]+/u, 
 
 export default function ImmersiveResume({ assetPrefix, initialLocale, localizations }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const homeVideoARef = useRef<HTMLVideoElement>(null);
-  const homeVideoBRef = useRef<HTMLVideoElement>(null);
-  const homeActiveSlotRef = useRef<HomeVideoSlot>(0);
-  const homeReadyRef = useRef<[boolean, boolean]>([false, false]);
-  const homePendingSlotRef = useRef<HomeVideoSlot | null>(null);
-  const homeAmbientActiveRef = useRef(true);
-  const lastHomeIdeaIdRef = useRef<HomeIdeaId | null>(null);
+  const homeVideoRef = useRef<HTMLVideoElement>(null);
+  const timelineLogosSettledRef = useRef(new Set<string>());
+  const stageImagesSettledRef = useRef(new Set<string>());
   const visualSectionRef = useRef(0);
   const transitionRef = useRef<VideoTransition | null>(null);
   const wheelAccumulatorRef = useRef(0);
@@ -100,24 +88,40 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
   const [videoReady, setVideoReady] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [videoTransitioning, setVideoTransitioning] = useState(false);
-  const [homeActiveSlot, setHomeActiveSlot] = useState<HomeVideoSlot>(0);
-  const [homeIdeaId, setHomeIdeaId] = useState<HomeIdeaId>(HOME_IDEA_IDS[0]);
-  const [homeReady, setHomeReady] = useState<[boolean, boolean]>([false, false]);
+  const [homeVideoReady, setHomeVideoReady] = useState(false);
+  const [homeVideoError, setHomeVideoError] = useState(false);
+  const [stageImagesReady, setStageImagesReady] = useState(false);
+  const [timelineLogosReady, setTimelineLogosReady] = useState(false);
   const [timelineOffset, setTimelineOffset] = useState(0);
 
   const { experiences, profile } = localizations[activeLocale];
+  const timelineLogoUrls = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          Object.values(localizations).flatMap(({ experiences: localizedExperiences }) =>
+            localizedExperiences.map(({ logo }) => `${assetPrefix}${logo}`)
+          )
+        )
+      ),
+    [assetPrefix, localizations]
+  );
   const isChinese = activeLocale === Locale.ZH;
   const otherLocale = isChinese ? Locale.EN : Locale.ZH;
-  const videoUrl = `${assetPrefix}/static/resume/video/ryan-resume-landscape.mp4?v=${RESUME_ASSET_VERSION}`;
+  const videoBaseUrl = `${assetPrefix}/static/resume/video/ryan-resume-landscape`;
+  const homeVideoBaseUrl = `${assetPrefix}/static/resume/home/home-idle-loop`;
   const posterUrl = `${assetPrefix}/static/resume/stages/video-endpoints/${STAGE_IMAGE_NAMES[0]}?v=${RESUME_ASSET_VERSION}`;
-  const homeAmbientActive = activeSection === 0 && !videoTransitioning;
-  const homeClipIds = [HOME_IDLE_ID, homeIdeaId] as const;
-  homeAmbientActiveRef.current = homeAmbientActive;
+  const pageReady =
+    (videoReady || videoError) &&
+    (homeVideoReady || homeVideoError) &&
+    stageImagesReady &&
+    timelineLogosReady;
+  const homeAmbientActive = pageReady && activeSection === 0 && !videoTransitioning;
   const sections = useMemo(
     () => [
       { id: 'profile', label: isChinese ? '关于我' : 'Profile' },
       ...experiences.map((experience, index) => ({
-        id: `${experience.org}-${index}`,
+        id: `experience-${index}`,
         label: experience.org,
       })),
     ],
@@ -125,6 +129,7 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
   );
 
   useLayoutEffect(() => {
+    if (!pageReady) return;
     const viewport = timelineViewportRef.current;
     const activeItem = timelineItemRefs.current[activeSection];
     if (!viewport || !activeItem) return;
@@ -151,7 +156,7 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
       cancelAnimationFrame(animationFrame);
       resizeObserver.disconnect();
     };
-  }, [activeLocale, activeSection]);
+  }, [activeLocale, activeSection, pageReady]);
 
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow;
@@ -186,13 +191,50 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
     window.history.pushState(window.history.state, '', `${assetPrefix}/${otherLocale}/about`);
   }, [assetPrefix, otherLocale]);
 
+  const handleTimelineLogoSettled = useCallback(
+    (logoUrl: string) => {
+      const settledLogos = timelineLogosSettledRef.current;
+      if (settledLogos.has(logoUrl)) return;
+      settledLogos.add(logoUrl);
+      if (settledLogos.size >= timelineLogoUrls.length) setTimelineLogosReady(true);
+    },
+    [timelineLogoUrls.length]
+  );
+
+  useEffect(() => {
+    if (timelineLogoUrls.length === 0) setTimelineLogosReady(true);
+  }, [timelineLogoUrls.length]);
+
+  useEffect(() => {
+    timelineViewportRef.current
+      ?.querySelectorAll<HTMLImageElement>('img[data-timeline-logo]')
+      .forEach((logoImage) => {
+        if (logoImage.complete && logoImage.dataset.timelineLogo) {
+          handleTimelineLogoSettled(`${assetPrefix}${logoImage.dataset.timelineLogo}`);
+        }
+      });
+  }, [assetPrefix, handleTimelineLogoSettled]);
+
+  const handleStageImageSettled = useCallback((imageName: string) => {
+    const settledImages = stageImagesSettledRef.current;
+    if (settledImages.has(imageName)) return;
+    settledImages.add(imageName);
+    if (settledImages.size >= STAGE_IMAGE_NAMES.length) setStageImagesReady(true);
+  }, []);
+
   useEffect(() => {
     setVideoReady(false);
     setVideoError(false);
     setVideoTransitioning(false);
     setLoadingProgress(0);
     videoRef.current?.load();
-  }, [videoUrl]);
+  }, [videoBaseUrl]);
+
+  useEffect(() => {
+    setHomeVideoReady(false);
+    setHomeVideoError(false);
+    homeVideoRef.current?.load();
+  }, [homeVideoBaseUrl]);
 
   const playVideo = useCallback((video: HTMLVideoElement) => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -202,122 +244,16 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
     void video.play().catch(() => undefined);
   }, []);
 
-  const getHomeVideo = useCallback(
-    (slot: HomeVideoSlot) => (slot === 0 ? homeVideoARef.current : homeVideoBRef.current),
-    []
-  );
-
-  const setHomeSlotReady = useCallback((slot: HomeVideoSlot, ready: boolean) => {
-    homeReadyRef.current = homeReadyRef.current.map((current, index) =>
-      index === slot ? ready : current
-    ) as [boolean, boolean];
-    setHomeReady(homeReadyRef.current);
-  }, []);
-
-  const pickNextHomeIdea = useCallback(() => {
-    const candidates = HOME_IDEA_IDS.filter((id) => id !== lastHomeIdeaIdRef.current);
-    const nextIdea = candidates[Math.floor(Math.random() * candidates.length)];
-    lastHomeIdeaIdRef.current = nextIdea;
-    return nextIdea;
-  }, []);
-
-  const activateHomeSlot = useCallback(
-    (nextSlot: HomeVideoSlot, finishedSlot: HomeVideoSlot) => {
-      const finishedVideo = getHomeVideo(finishedSlot);
-      if (finishedVideo) {
-        finishedVideo.pause();
-        finishedVideo.currentTime = 0;
-      }
-
-      homePendingSlotRef.current = null;
-      homeActiveSlotRef.current = nextSlot;
-      setHomeActiveSlot(nextSlot);
-
-      requestAnimationFrame(() => {
-        const video = getHomeVideo(nextSlot);
-        if (video && homeAmbientActiveRef.current) playVideo(video);
-      });
-    },
-    [getHomeVideo, playVideo]
-  );
-
-  const handleHomeVideoLoaded = useCallback(
-    (slot: HomeVideoSlot) => {
-      const video = getHomeVideo(slot);
-      if (!video) return;
-      video.pause();
-      video.currentTime = 0;
-      setHomeSlotReady(slot, true);
-
-      if (homePendingSlotRef.current === slot) {
-        activateHomeSlot(slot, slot === 0 ? 1 : 0);
-        return;
-      }
-
-      if (slot === homeActiveSlotRef.current && homeAmbientActiveRef.current) playVideo(video);
-    },
-    [activateHomeSlot, getHomeVideo, playVideo, setHomeSlotReady]
-  );
-
-  const handleHomeVideoEnded = useCallback(
-    (slot: HomeVideoSlot) => {
-      if (slot !== homeActiveSlotRef.current) return;
-      const nextSlot: HomeVideoSlot = slot === 0 ? 1 : 0;
-      if (homeReadyRef.current[nextSlot]) {
-        activateHomeSlot(nextSlot, slot);
-      } else {
-        homePendingSlotRef.current = nextSlot;
-      }
-
-      if (slot === 1) {
-        setHomeSlotReady(1, false);
-        setHomeIdeaId(pickNextHomeIdea());
-      }
-    },
-    [activateHomeSlot, pickNextHomeIdea, setHomeSlotReady]
-  );
-
   useEffect(() => {
-    const idleVideo = homeVideoARef.current;
-    if (!idleVideo) return;
-
-    if (idleVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-      handleHomeVideoLoaded(0);
+    const homeVideo = homeVideoRef.current;
+    if (!homeVideo) return;
+    if (homeAmbientActive && homeVideoReady) {
+      playVideo(homeVideo);
     } else {
-      idleVideo.load();
+      homeVideo.pause();
+      homeVideo.currentTime = 0;
     }
-  }, [handleHomeVideoLoaded]);
-
-  useEffect(() => {
-    setHomeIdeaId(pickNextHomeIdea());
-  }, [pickNextHomeIdea]);
-
-  useEffect(() => {
-    const ideaVideo = homeVideoBRef.current;
-    if (!ideaVideo) return;
-    setHomeSlotReady(1, false);
-    ideaVideo.load();
-  }, [homeIdeaId, setHomeSlotReady]);
-
-  useEffect(() => {
-    const activeVideo = getHomeVideo(homeActiveSlotRef.current);
-    const inactiveVideo = getHomeVideo(homeActiveSlotRef.current === 0 ? 1 : 0);
-    inactiveVideo?.pause();
-
-    if (!homeAmbientActive) {
-      homePendingSlotRef.current = null;
-      homeActiveSlotRef.current = 0;
-      setHomeActiveSlot(0);
-      ([homeVideoARef.current, homeVideoBRef.current] as const).forEach((video) => {
-        if (!video) return;
-        video.pause();
-        video.currentTime = 0;
-      });
-      return;
-    }
-
-    if (activeVideo && homeReadyRef.current[homeActiveSlotRef.current]) playVideo(activeVideo);
-  }, [getHomeVideo, homeAmbientActive, playVideo]);
+  }, [homeAmbientActive, homeVideoReady, playVideo]);
 
   const seekVideoToHold = useCallback((index: number) => {
     const video = videoRef.current;
@@ -382,12 +318,14 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
     video.currentTime = HOLD_START_TIMES[activeSection] + SEEK_PADDING;
     video.pause();
     setVideoTransitioning(false);
-    setLoadingProgress(100);
     setVideoReady(true);
   }, [activeSection]);
 
   useEffect(() => {
-    if (videoReady || videoError) return;
+    if (pageReady) {
+      setLoadingProgress(100);
+      return;
+    }
 
     const interval = window.setInterval(() => {
       setLoadingProgress((current) => {
@@ -398,7 +336,7 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
     }, 120);
 
     return () => window.clearInterval(interval);
-  }, [videoError, videoReady]);
+  }, [pageReady]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -432,7 +370,7 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
 
   const navigateByDirection = useCallback(
     (direction: -1 | 1) => {
-      if (transitionRef.current) return;
+      if (!pageReady || transitionRef.current) return;
 
       const currentSection = visualSectionRef.current;
       const nextSection = Math.min(sections.length - 1, Math.max(0, currentSection + direction));
@@ -447,7 +385,7 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
 
       if (!startVideoTransition(currentSection, nextSection)) seekVideoToHold(nextSection);
     },
-    [sections.length, seekVideoToHold, startVideoTransition]
+    [pageReady, sections.length, seekVideoToHold, startVideoTransition]
   );
 
   const navigateTowardSection = useCallback(
@@ -460,6 +398,8 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
   );
 
   useEffect(() => {
+    if (!pageReady) return;
+
     const resetWheelGesture = () => {
       if (wheelResetTimeoutRef.current) clearTimeout(wheelResetTimeoutRef.current);
       wheelAccumulatorRef.current = 0;
@@ -536,12 +476,17 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
       window.removeEventListener('blur', resetWheelGesture);
       resetWheelGesture();
     };
-  }, [navigateByDirection]);
+  }, [navigateByDirection, pageReady]);
 
   const homeHref = `${assetPrefix}/${activeLocale}`;
 
   return (
-    <div className="dark fixed inset-0 z-[60] overflow-hidden bg-[#101611] text-white">
+    <div
+      className="dark fixed inset-0 z-[60] overflow-hidden bg-[#101611] text-white"
+      data-resume-ready={pageReady ? 'true' : 'false'}
+      data-active-section={activeSection}
+      aria-busy={!pageReady}
+    >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_34%,rgba(193,207,168,0.52),transparent_38%),linear-gradient(135deg,#78866b_0%,#536251_52%,#273129_100%)]" />
       <div className="pointer-events-none absolute inset-0 z-[2] bg-[linear-gradient(0deg,rgba(8,13,10,0.92)_0%,rgba(8,13,10,0.62)_30%,transparent_64%)]" />
       <div className="resume-grain pointer-events-none absolute inset-0 z-10 opacity-[0.16]" />
@@ -556,6 +501,9 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
           priority
           unoptimized
           sizes="100vw"
+          data-stage-image={imageName}
+          onLoad={() => handleStageImageSettled(imageName)}
+          onError={() => handleStageImageSettled(imageName)}
           className={`pointer-events-none absolute inset-0 z-[1] object-cover transition-opacity duration-150 motion-reduce:transition-none ${
             index === activeSection ? 'opacity-100' : 'opacity-0'
           }`}
@@ -563,39 +511,28 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
         />
       ))}
 
-      {homeClipIds.map((clipId, index) => {
-        const slot = index as HomeVideoSlot;
-        const active = homeAmbientActive && slot === homeActiveSlot && homeReady[slot];
-        const homeVideoBaseUrl = `${assetPrefix}/static/resume/home/${clipId}`;
-
-        return (
-          <video
-            key={`home-video-slot-${slot}`}
-            ref={slot === 0 ? homeVideoARef : homeVideoBRef}
-            poster={posterUrl}
-            muted
-            playsInline
-            preload="auto"
-            className={`pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover ${
-              active ? 'opacity-100' : 'opacity-0'
-            }`}
-            onLoadedData={() => handleHomeVideoLoaded(slot)}
-            onEnded={() => handleHomeVideoEnded(slot)}
-            onError={() => setHomeSlotReady(slot, false)}
-            data-home-clip={clipId}
-            data-home-slot={slot}
-            data-home-active={active ? 'true' : 'false'}
-            aria-hidden="true"
-          >
-            <source src={`${homeVideoBaseUrl}.webm?v=${HOME_ASSET_VERSION}`} type="video/webm" />
-            <source src={`${homeVideoBaseUrl}.mp4?v=${HOME_ASSET_VERSION}`} type="video/mp4" />
-          </video>
-        );
-      })}
+      <video
+        ref={homeVideoRef}
+        poster={posterUrl}
+        muted
+        playsInline
+        loop
+        preload="auto"
+        className={`pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover ${
+          homeAmbientActive && homeVideoReady ? 'opacity-100' : 'opacity-0'
+        }`}
+        onLoadedData={() => setHomeVideoReady(true)}
+        onError={() => setHomeVideoError(true)}
+        data-home-clip="home-idle-loop"
+        data-home-active={homeAmbientActive ? 'true' : 'false'}
+        aria-hidden="true"
+      >
+        <source src={`${homeVideoBaseUrl}.webm?v=${HOME_ASSET_VERSION}`} type="video/webm" />
+        <source src={`${homeVideoBaseUrl}.mp4?v=${HOME_ASSET_VERSION}`} type="video/mp4" />
+      </video>
 
       <video
         ref={videoRef}
-        src={videoUrl}
         poster={posterUrl}
         muted
         playsInline
@@ -610,9 +547,18 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
           setVideoTransitioning(false);
         }}
         aria-hidden="true"
-      />
+      >
+        <source src={`${videoBaseUrl}.webm?v=${RESUME_ASSET_VERSION}`} type="video/webm" />
+        <source src={`${videoBaseUrl}.mp4?v=${RESUME_ASSET_VERSION}`} type="video/mp4" />
+      </video>
 
-      <header className="pointer-events-none absolute top-0 right-0 left-0 z-30 flex items-center justify-between px-4 py-4 sm:px-7 sm:py-6 lg:px-10">
+      <header
+        className={`pointer-events-none absolute top-0 right-0 left-0 z-30 flex items-center justify-between px-4 py-4 transition-opacity duration-300 sm:px-7 sm:py-6 lg:px-10 ${
+          pageReady ? 'opacity-100' : 'opacity-0'
+        }`}
+        inert={!pageReady}
+        aria-hidden={!pageReady}
+      >
         <a
           href={homeHref}
           className="pointer-events-auto inline-flex items-center gap-3 rounded-full border border-white/15 bg-black/15 px-3 py-2 text-xs font-medium tracking-[0.16em] text-white/80 uppercase backdrop-blur-md transition hover:border-white/30 hover:bg-white/10 hover:text-white"
@@ -633,22 +579,6 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
         </button>
       </header>
 
-      {!videoReady && !videoError && (
-        <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center">
-          <div className="flex w-40 flex-col items-center gap-3">
-            <span className="text-3xl font-light tracking-tight text-white/85 tabular-nums">
-              {Math.round(loadingProgress)}%
-            </span>
-            <div className="h-px w-full overflow-hidden bg-white/15">
-              <div
-                className="h-full bg-white/75 transition-[width] duration-300"
-                style={{ width: `${loadingProgress}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
       {videoError && (
         <div className="pointer-events-none absolute top-20 left-1/2 z-30 -translate-x-1/2 rounded-full border border-amber-200/20 bg-amber-950/35 px-4 py-2 text-center text-xs text-amber-50/85 backdrop-blur-md">
           {isChinese
@@ -659,7 +589,11 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
 
       <aside
         ref={timelineViewportRef}
-        className="pointer-events-auto absolute inset-y-0 right-0 left-0 z-20 h-[100svh] w-full overflow-clip text-left drop-shadow-[0_2px_20px_rgba(0,0,0,0.76)] [overflow-anchor:none] md:left-[55vw] md:w-[45vw]"
+        className={`absolute inset-y-0 right-0 left-0 z-20 h-[100svh] w-full overflow-clip text-left drop-shadow-[0_2px_20px_rgba(0,0,0,0.76)] transition-opacity duration-300 [overflow-anchor:none] md:left-[55vw] md:w-[45vw] ${
+          pageReady ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+        inert={!pageReady}
+        aria-hidden={!pageReady}
         aria-live="polite"
       >
         <div
@@ -721,77 +655,83 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
                   }`}
                 />
 
-                {active ? (
-                  index === 0 ? (
-                    <div className="resume-panel-enter max-w-md">
-                      <p className="mb-3 text-[9px] font-medium tracking-[0.26em] text-white/55 uppercase">
-                        {isChinese ? '个人简介' : 'Profile'}
+                {index === 0 ? (
+                  <div className={active ? 'resume-panel-enter max-w-md' : 'hidden'}>
+                    <p className="mb-3 text-[9px] font-medium tracking-[0.26em] text-white/55 uppercase">
+                      {isChinese ? '个人简介' : 'Profile'}
+                    </p>
+                    <h1 className="text-4xl leading-none font-semibold tracking-[-0.045em] text-[#F4F1E8] sm:text-5xl">
+                      {profile.name}
+                    </h1>
+                    <p className="mt-3 text-xs font-medium tracking-[0.04em] text-white/78 sm:text-sm">
+                      {profile.occupation}
+                      {profile.company ? ` · ${profile.company}` : ''}
+                    </p>
+                    {profile.summary && (
+                      <p className="mt-3 max-w-sm text-xs leading-5 text-white/64 sm:text-[13px] sm:leading-6">
+                        {profile.summary}
                       </p>
-                      <h1 className="text-4xl leading-none font-semibold tracking-[-0.045em] text-[#F4F1E8] sm:text-5xl">
-                        {profile.name}
-                      </h1>
-                      <p className="mt-3 text-xs font-medium tracking-[0.04em] text-white/78 sm:text-sm">
-                        {profile.occupation}
-                        {profile.company ? ` · ${profile.company}` : ''}
-                      </p>
-                      {profile.summary && (
-                        <p className="mt-3 max-w-sm text-xs leading-5 text-white/64 sm:text-[13px] sm:leading-6">
-                          {profile.summary}
-                        </p>
-                      )}
-                      <div className="mt-4 flex justify-start gap-3 text-white/82">
-                        <SocialIcon kind="mail" href={`mailto:${profile.email}`} />
-                        <SocialIcon kind="github" href={profile.github} />
-                        <SocialIcon kind="linkedin" href={profile.linkedin} />
-                        <SocialIcon kind="x" href={profile.twitter} />
-                        <SocialIcon kind="bluesky" href={profile.bluesky} />
-                      </div>
+                    )}
+                    <div className="mt-4 flex justify-start gap-3 text-white/82">
+                      <SocialIcon kind="mail" href={`mailto:${profile.email}`} />
+                      <SocialIcon kind="github" href={profile.github} />
+                      <SocialIcon kind="linkedin" href={profile.linkedin} />
+                      <SocialIcon kind="x" href={profile.twitter} />
+                      <SocialIcon kind="bluesky" href={profile.bluesky} />
                     </div>
-                  ) : experience ? (
-                    <div className="resume-panel-enter max-w-md">
-                      <p className="mb-3 text-[9px] font-medium tracking-[0.26em] text-white/55 uppercase">
-                        {experience.start} — {experience.end}
-                      </p>
-                      <a
-                        href={experience.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:text-primary-400 group inline-flex items-center gap-3 text-[#F4F1E8] outline-offset-4 transition-colors duration-300"
-                      >
-                        <NextImage
-                          src={`${assetPrefix}${experience.logo}`}
-                          alt={`${experience.org} logo`}
-                          width={48}
-                          height={48}
-                          className="group-hover:border-primary-400/80 group-hover:shadow-primary-400/20 h-9 w-9 shrink-0 rounded-md border border-white/25 bg-white/90 object-contain p-1 transition duration-300 group-hover:-translate-y-0.5 group-hover:-rotate-1 group-hover:bg-white group-hover:shadow-[0_0_0_3px] sm:h-10 sm:w-10"
-                        />
-                        <h2 className="after:bg-primary-400/85 relative text-xl leading-tight font-medium tracking-[-0.025em] after:absolute after:right-0 after:-bottom-1 after:left-0 after:h-px after:origin-left after:scale-x-0 after:transition-transform after:duration-300 group-hover:after:scale-x-100 sm:text-2xl">
-                          {experience.org}
-                        </h2>
-                      </a>
+                  </div>
+                ) : experience ? (
+                  <div className={active ? 'resume-panel-enter max-w-md' : 'hidden'}>
+                    <p className="mb-3 text-[9px] font-medium tracking-[0.26em] text-white/55 uppercase">
+                      {experience.start} — {experience.end}
+                    </p>
+                    <a
+                      href={experience.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-primary-400 group inline-flex items-center gap-3 text-[#F4F1E8] outline-offset-4 transition-colors duration-300"
+                    >
+                      <NextImage
+                        src={`${assetPrefix}${experience.logo}`}
+                        alt={`${experience.org} logo`}
+                        width={48}
+                        height={48}
+                        priority
+                        data-timeline-logo={experience.logo}
+                        onLoad={() => handleTimelineLogoSettled(`${assetPrefix}${experience.logo}`)}
+                        onError={() =>
+                          handleTimelineLogoSettled(`${assetPrefix}${experience.logo}`)
+                        }
+                        className="group-hover:border-primary-400/80 group-hover:shadow-primary-400/20 h-9 w-9 shrink-0 rounded-md border border-white/25 bg-white/90 object-contain p-1 transition duration-300 group-hover:-translate-y-0.5 group-hover:-rotate-1 group-hover:bg-white group-hover:shadow-[0_0_0_3px] sm:h-10 sm:w-10"
+                      />
+                      <h2 className="after:bg-primary-400/85 relative text-xl leading-tight font-medium tracking-[-0.025em] after:absolute after:right-0 after:-bottom-1 after:left-0 after:h-px after:origin-left after:scale-x-0 after:transition-transform after:duration-300 group-hover:after:scale-x-100 sm:text-2xl">
+                        {experience.org}
+                      </h2>
+                    </a>
 
-                      <p className="mt-3 flex items-start gap-2 text-xs leading-5 font-medium text-white/78 sm:text-[13px]">
-                        <span aria-hidden="true" className="text-[#C1CFA8]/70">
-                          -
-                        </span>
-                        <span>{removeLeadingEmoji(experience.title)}</span>
-                      </p>
+                    <p className="mt-3 flex items-start gap-2 text-xs leading-5 font-medium text-white/78 sm:text-[13px]">
+                      <span aria-hidden="true" className="text-[#C1CFA8]/70">
+                        -
+                      </span>
+                      <span>{removeLeadingEmoji(experience.title)}</span>
+                    </p>
 
-                      {experience.highlights && (
-                        <ul className="mt-3 max-w-md list-none space-y-1.5 p-0">
-                          {experience.highlights.map((highlight) => (
-                            <li
-                              key={highlight}
-                              className="relative pl-3.5 text-[11px] leading-[1.55] text-white/58 before:absolute before:top-[0.68em] before:left-0 before:h-px before:w-1.5 before:bg-[#C1CFA8]/55 sm:text-xs"
-                            >
-                              {highlight}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  ) : null
-                ) : (
+                    {experience.highlights && (
+                      <ul className="mt-3 max-w-md list-none space-y-1.5 p-0">
+                        {experience.highlights.map((highlight) => (
+                          <li
+                            key={highlight}
+                            className="relative pl-3.5 text-[11px] leading-[1.55] text-white/58 before:absolute before:top-[0.68em] before:left-0 before:h-px before:w-1.5 before:bg-[#C1CFA8]/55 sm:text-xs"
+                          >
+                            {highlight}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ) : null}
+
+                {!active && (
                   <div className="flex h-28 items-start gap-3 pt-px text-white/62 sm:h-32">
                     <span className="shrink-0 text-[8px] font-medium tracking-[0.2em] uppercase">
                       {index === 0
@@ -810,6 +750,27 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
           })}
         </div>
       </aside>
+
+      {!pageReady && (
+        <div
+          className="absolute inset-0 z-50 grid place-items-center bg-[#101611]"
+          role="status"
+          aria-live="polite"
+          aria-label={isChinese ? '正在加载简历' : 'Loading résumé'}
+        >
+          <div className="flex w-40 flex-col items-center gap-3">
+            <span className="text-3xl font-light tracking-tight text-white/85 tabular-nums">
+              {Math.round(loadingProgress)}%
+            </span>
+            <div className="h-px w-full overflow-hidden bg-white/15">
+              <div
+                className="h-full bg-white/75 transition-[width] duration-300"
+                style={{ width: `${loadingProgress}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

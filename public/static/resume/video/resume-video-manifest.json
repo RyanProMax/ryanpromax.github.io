@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "assetVersion": "20260807-minimax-h3-1",
+  "source": {
+    "provider": "fal",
+    "model": "minimax/h3/reference-to-video",
+    "requestId": "019fdca5-7f28-77e3-9667-c7784e482807",
+    "masterDurationSeconds": 9.416667,
+    "masterResolution": "2544x1456",
+    "masterFps": 24,
+    "masterFrames": 226
+  },
+  "runtimeMaster": {
+    "mp4": "ryan-resume-landscape.mp4",
+    "mp4Sha256": "57d6c703ee0fd3d5c5bf119e57b4d3a8790ffd14db75d37906a8b27e37793f87",
+    "webm": "ryan-resume-landscape.webm",
+    "webmSha256": "69cd29f576017576519e21c57b053e9cec589224d9c4bb8e161dd948ecd9c93e",
+    "durationSeconds": 12,
+    "resolution": "1920x1080",
+    "fps": 24,
+    "frames": 288,
+    "audio": false
+  },
+  "segments": [
+    {
+      "id": "landing-to-bytedance",
+      "forwardStartSeconds": 0,
+      "reverseStartSeconds": 6,
+      "durationSeconds": 1.5,
+      "sourceFrames": [0, 48]
+    },
+    {
+      "id": "bytedance-to-gainertech",
+      "forwardStartSeconds": 1.5,
+      "reverseStartSeconds": 7.5,
+      "durationSeconds": 1.5,
+      "sourceFrames": [48, 96]
+    },
+    {
+      "id": "gainertech-to-china-unicom",
+      "forwardStartSeconds": 3,
+      "reverseStartSeconds": 9,
+      "durationSeconds": 1.5,
+      "sourceFrames": [96, 120]
+    },
+    {
+      "id": "china-unicom-to-sysu",
+      "forwardStartSeconds": 4.5,
+      "reverseStartSeconds": 10.5,
+      "durationSeconds": 1.5,
+      "sourceFrames": [120, 168]
+    }
+  ],
+  "reversePolicy": "Each reverse segment is the exact frame reversal of its normalized forward segment."
+}
