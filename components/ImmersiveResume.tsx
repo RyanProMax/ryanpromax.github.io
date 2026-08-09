@@ -31,7 +31,7 @@ interface Props {
   localizations: Record<Locale, ResumeLocalization>;
 }
 
-const TRANSITION_DURATION = 1.5;
+const TRANSITION_DURATION = 2;
 const STAGE_IMAGE_NAMES = [
   'h-1-main.png',
   'h-2-douyin.png',
@@ -39,8 +39,6 @@ const STAGE_IMAGE_NAMES = [
   'h-4-unicom.png',
   'h-5-sysu.png',
 ];
-const HOLD_START_TIMES = STAGE_IMAGE_NAMES.map(() => 0);
-const TRANSITION_OFFSET = 0;
 const EXPECTED_VIDEO_DURATION = (STAGE_IMAGE_NAMES.length - 1) * 2 * TRANSITION_DURATION;
 const SEEK_PADDING = 1 / 24;
 const TRANSITION_SEEK_EPSILON = 1 / 240;
@@ -48,8 +46,7 @@ const WHEEL_SNAP_THRESHOLD = 72;
 const WHEEL_GESTURE_IDLE_DELAY = 160;
 const TOUCH_SNAP_THRESHOLD = 52;
 const TIMELINE_NODE_OPACITY = [1, 0.52, 0.36, 0.26, 0.2];
-const RESUME_ASSET_VERSION = '20260807-minimax-h3-1';
-const HOME_ASSET_VERSION = '20260807-minimax-h3-1';
+const RESUME_ASSET_VERSION = '20260809-video-compressed-1';
 
 interface VideoTransition {
   endTime: number;
@@ -60,9 +57,8 @@ interface VideoTransition {
 }
 
 const getTransitionStartTime = (from: number, to: number) => {
-  if (to === from + 1) return TRANSITION_OFFSET + from * TRANSITION_DURATION;
-  if (to === from - 1)
-    return TRANSITION_OFFSET + (STAGE_IMAGE_NAMES.length - 1 + to) * TRANSITION_DURATION;
+  if (to === from + 1) return from * TRANSITION_DURATION;
+  if (to === from - 1) return (STAGE_IMAGE_NAMES.length - 1 + to) * TRANSITION_DURATION;
   return null;
 };
 
@@ -70,7 +66,6 @@ const removeLeadingEmoji = (value: string) => value.replace(/^[^\p{L}\p{N}]+/u, 
 
 export default function ImmersiveResume({ assetPrefix, initialLocale, localizations }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const homeVideoRef = useRef<HTMLVideoElement>(null);
   const timelineLogosSettledRef = useRef(new Set<string>());
   const stageImagesSettledRef = useRef(new Set<string>());
   const visualSectionRef = useRef(0);
@@ -88,8 +83,6 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
   const [videoReady, setVideoReady] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [videoTransitioning, setVideoTransitioning] = useState(false);
-  const [homeVideoReady, setHomeVideoReady] = useState(false);
-  const [homeVideoError, setHomeVideoError] = useState(false);
   const [stageImagesReady, setStageImagesReady] = useState(false);
   const [timelineLogosReady, setTimelineLogosReady] = useState(false);
   const [timelineOffset, setTimelineOffset] = useState(0);
@@ -109,14 +102,8 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
   const isChinese = activeLocale === Locale.ZH;
   const otherLocale = isChinese ? Locale.EN : Locale.ZH;
   const videoBaseUrl = `${assetPrefix}/static/resume/video/ryan-resume-landscape`;
-  const homeVideoBaseUrl = `${assetPrefix}/static/resume/home/home-idle-loop`;
   const posterUrl = `${assetPrefix}/static/resume/stages/video-endpoints/${STAGE_IMAGE_NAMES[0]}?v=${RESUME_ASSET_VERSION}`;
-  const pageReady =
-    (videoReady || videoError) &&
-    (homeVideoReady || homeVideoError) &&
-    stageImagesReady &&
-    timelineLogosReady;
-  const homeAmbientActive = pageReady && activeSection === 0 && !videoTransitioning;
+  const pageReady = (videoReady || videoError) && stageImagesReady && timelineLogosReady;
   const sections = useMemo(
     () => [
       { id: 'profile', label: isChinese ? '关于我' : 'Profile' },
@@ -177,8 +164,7 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
   useEffect(() => {
     const handlePopState = () => {
       const matchedLocale = window.location.pathname.match(/\/(en|zh)\/about\/?$/)?.[1] as
-        | Locale
-        | undefined;
+        Locale | undefined;
       if (matchedLocale && localizations[matchedLocale]) setActiveLocale(matchedLocale);
     };
 
@@ -230,12 +216,6 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
     videoRef.current?.load();
   }, [videoBaseUrl]);
 
-  useEffect(() => {
-    setHomeVideoReady(false);
-    setHomeVideoError(false);
-    homeVideoRef.current?.load();
-  }, [homeVideoBaseUrl]);
-
   const playVideo = useCallback((video: HTMLVideoElement) => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       video.pause();
@@ -244,17 +224,6 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
     void video.play().catch(() => undefined);
   }, []);
 
-  useEffect(() => {
-    const homeVideo = homeVideoRef.current;
-    if (!homeVideo) return;
-    if (homeAmbientActive && homeVideoReady) {
-      playVideo(homeVideo);
-    } else {
-      homeVideo.pause();
-      homeVideo.currentTime = 0;
-    }
-  }, [homeAmbientActive, homeVideoReady, playVideo]);
-
   const seekVideoToHold = useCallback((index: number) => {
     const video = videoRef.current;
     if (!video || video.readyState < HTMLMediaElement.HAVE_METADATA) return;
@@ -262,7 +231,6 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
     transitionRef.current = null;
     visualSectionRef.current = index;
     setVideoTransitioning(false);
-    video.currentTime = HOLD_START_TIMES[index] + SEEK_PADDING;
     video.pause();
     if (wheelGestureIdleRef.current) {
       wheelAccumulatorRef.current = 0;
@@ -315,7 +283,6 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
     if (!video) return;
     transitionRef.current = null;
     visualSectionRef.current = activeSection;
-    video.currentTime = HOLD_START_TIMES[activeSection] + SEEK_PADDING;
     video.pause();
     setVideoTransitioning(false);
     setVideoReady(true);
@@ -501,7 +468,6 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
           priority
           unoptimized
           sizes="100vw"
-          data-stage-image={imageName}
           onLoad={() => handleStageImageSettled(imageName)}
           onError={() => handleStageImageSettled(imageName)}
           className={`pointer-events-none absolute inset-0 z-[1] object-cover transition-opacity duration-150 motion-reduce:transition-none ${
@@ -510,26 +476,6 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
           aria-hidden="true"
         />
       ))}
-
-      <video
-        ref={homeVideoRef}
-        poster={posterUrl}
-        muted
-        playsInline
-        loop
-        preload="auto"
-        className={`pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover ${
-          homeAmbientActive && homeVideoReady ? 'opacity-100' : 'opacity-0'
-        }`}
-        onLoadedData={() => setHomeVideoReady(true)}
-        onError={() => setHomeVideoError(true)}
-        data-home-clip="home-idle-loop"
-        data-home-active={homeAmbientActive ? 'true' : 'false'}
-        aria-hidden="true"
-      >
-        <source src={`${homeVideoBaseUrl}.webm?v=${HOME_ASSET_VERSION}`} type="video/webm" />
-        <source src={`${homeVideoBaseUrl}.mp4?v=${HOME_ASSET_VERSION}`} type="video/mp4" />
-      </video>
 
       <video
         ref={videoRef}
