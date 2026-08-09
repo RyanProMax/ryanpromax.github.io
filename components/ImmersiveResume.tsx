@@ -554,7 +554,7 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
 
       <aside
         ref={timelineViewportRef}
-        className={`absolute inset-y-0 right-0 left-0 z-20 h-[100svh] w-full overflow-clip text-left drop-shadow-[0_2px_20px_rgba(0,0,0,0.76)] transition-opacity duration-300 [overflow-anchor:none] md:left-[55vw] md:w-[45vw] ${
+        className={`resume-timeline absolute inset-y-0 right-0 left-0 z-20 h-[100svh] w-full overflow-clip text-left drop-shadow-[0_2px_20px_rgba(0,0,0,0.76)] transition-opacity duration-300 [overflow-anchor:none] md:left-[55vw] md:w-[45vw] ${
           pageReady ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         }`}
         inert={!pageReady}
@@ -621,19 +621,19 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
                 />
 
                 {index === 0 ? (
-                  <div className={active ? 'resume-panel-enter max-w-md' : 'hidden'}>
-                    <p className="mb-3 text-[9px] font-medium tracking-[0.26em] text-white/55 uppercase">
+                  <div className={active ? 'resume-panel-enter resume-timeline-panel' : 'hidden'}>
+                    <p className="resume-timeline-eyebrow mb-3 font-medium tracking-[0.26em] text-white/55 uppercase">
                       {isChinese ? '个人简介' : 'Profile'}
                     </p>
-                    <h1 className="text-4xl leading-none font-semibold tracking-[-0.045em] text-[#F4F1E8] sm:text-5xl">
+                    <h1 className="resume-timeline-profile-name leading-none font-semibold tracking-[-0.045em] text-[#F4F1E8]">
                       {profile.name}
                     </h1>
-                    <p className="mt-3 text-xs font-medium tracking-[0.04em] text-white/78 sm:text-sm">
+                    <p className="resume-timeline-body mt-3 font-medium tracking-[0.04em] text-white/78">
                       {profile.occupation}
                       {profile.company ? ` · ${profile.company}` : ''}
                     </p>
                     {profile.summary && (
-                      <p className="mt-3 max-w-sm text-xs leading-5 text-white/64 sm:text-[13px] sm:leading-6">
+                      <p className="resume-timeline-body mt-3 max-w-sm text-white/64">
                         {profile.summary}
                       </p>
                     )}
@@ -646,8 +646,8 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
                     </div>
                   </div>
                 ) : experience ? (
-                  <div className={active ? 'resume-panel-enter max-w-md' : 'hidden'}>
-                    <p className="mb-3 text-[9px] font-medium tracking-[0.26em] text-white/55 uppercase">
+                  <div className={active ? 'resume-panel-enter resume-timeline-panel' : 'hidden'}>
+                    <p className="resume-timeline-eyebrow mb-3 font-medium tracking-[0.26em] text-white/55 uppercase">
                       {experience.start} — {experience.end}
                     </p>
                     <a
@@ -669,12 +669,12 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
                         }
                         className="group-hover:border-primary-400/80 group-hover:shadow-primary-400/20 h-9 w-9 shrink-0 rounded-md border border-white/25 bg-white/90 object-contain p-1 transition duration-300 group-hover:-translate-y-0.5 group-hover:-rotate-1 group-hover:bg-white group-hover:shadow-[0_0_0_3px] sm:h-10 sm:w-10"
                       />
-                      <h2 className="after:bg-primary-400/85 relative text-xl leading-tight font-medium tracking-[-0.025em] after:absolute after:right-0 after:-bottom-1 after:left-0 after:h-px after:origin-left after:scale-x-0 after:transition-transform after:duration-300 group-hover:after:scale-x-100 sm:text-2xl">
+                      <h2 className="after:bg-primary-400/85 resume-timeline-heading relative leading-tight font-medium tracking-[-0.025em] after:absolute after:right-0 after:-bottom-1 after:left-0 after:h-px after:origin-left after:scale-x-0 after:transition-transform after:duration-300 group-hover:after:scale-x-100">
                         {experience.org}
                       </h2>
                     </a>
 
-                    <p className="mt-3 flex items-start gap-2 text-xs leading-5 font-medium text-white/78 sm:text-[13px]">
+                    <p className="resume-timeline-body mt-3 flex items-start gap-2 font-medium text-white/78">
                       <span aria-hidden="true" className="text-[#C1CFA8]/70">
                         -
                       </span>
@@ -686,7 +686,7 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
                         {experience.highlights.map((highlight) => (
                           <li
                             key={highlight}
-                            className="relative pl-3.5 text-[11px] leading-[1.55] text-white/58 before:absolute before:top-[0.68em] before:left-0 before:h-px before:w-1.5 before:bg-[#C1CFA8]/55 sm:text-xs"
+                            className="resume-timeline-small relative pl-3.5 text-white/58 before:absolute before:top-[0.68em] before:left-0 before:h-px before:w-1.5 before:bg-[#C1CFA8]/55"
                           >
                             {highlight}
                           </li>
@@ -698,14 +698,14 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
 
                 {!active && (
                   <div className="flex h-28 items-start gap-3 pt-px text-white/62 sm:h-32">
-                    <span className="shrink-0 text-[8px] font-medium tracking-[0.2em] uppercase">
+                    <span className="resume-timeline-compact-date shrink-0 font-medium tracking-[0.2em] uppercase">
                       {index === 0
                         ? isChinese
                           ? '个人简介'
                           : 'Profile'
                         : `${experience?.start} — ${experience?.end}`}
                     </span>
-                    <span className="truncate text-[11px] leading-none font-medium tracking-[0.02em]">
+                    <span className="resume-timeline-compact-label truncate leading-none font-medium tracking-[0.02em]">
                       {index === 0 ? profile.name : experience?.org}
                     </span>
                   </div>
