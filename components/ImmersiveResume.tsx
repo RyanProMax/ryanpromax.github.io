@@ -459,23 +459,41 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
       <div className="resume-grain pointer-events-none absolute inset-0 z-10 opacity-[0.16]" />
       <div className="resume-vignette pointer-events-none absolute inset-0 z-10" />
 
-      {STAGE_IMAGE_NAMES.map((imageName, index) => (
-        <NextImage
-          key={imageName}
-          src={`${assetPrefix}/static/resume/stages/video-endpoints/${imageName}?v=${RESUME_ASSET_VERSION}`}
-          alt=""
-          fill
-          priority
-          unoptimized
-          sizes="100vw"
-          onLoad={() => handleStageImageSettled(imageName)}
-          onError={() => handleStageImageSettled(imageName)}
-          className={`pointer-events-none absolute inset-0 z-[1] object-cover transition-opacity duration-150 motion-reduce:transition-none ${
-            index === activeSection ? 'opacity-100' : 'opacity-0'
-          }`}
-          aria-hidden="true"
-        />
-      ))}
+      {STAGE_IMAGE_NAMES.map((imageName, index) => {
+        const stageImageUrl = `${assetPrefix}/static/resume/stages/video-endpoints/${imageName}?v=${RESUME_ASSET_VERSION}`;
+
+        return (
+          <div
+            key={imageName}
+            className={`pointer-events-none absolute inset-0 z-[1] overflow-hidden transition-opacity duration-150 motion-reduce:transition-none ${
+              index === activeSection ? 'opacity-100' : 'opacity-0'
+            }`}
+            aria-hidden="true"
+          >
+            <NextImage
+              src={stageImageUrl}
+              alt=""
+              fill
+              unoptimized
+              sizes="100vw"
+              data-resume-media-layer="blur"
+              className="resume-media-backdrop pointer-events-none absolute inset-0"
+            />
+            <NextImage
+              src={stageImageUrl}
+              alt=""
+              fill
+              priority
+              unoptimized
+              sizes="100vw"
+              data-resume-media-layer="frame"
+              onLoad={() => handleStageImageSettled(imageName)}
+              onError={() => handleStageImageSettled(imageName)}
+              className="resume-media-frame pointer-events-none absolute inset-0"
+            />
+          </div>
+        );
+      })}
 
       <video
         ref={videoRef}
@@ -484,7 +502,8 @@ export default function ImmersiveResume({ assetPrefix, initialLocale, localizati
         playsInline
         autoPlay
         preload="auto"
-        className={`pointer-events-none absolute inset-0 z-[3] h-full w-full object-cover ${
+        data-resume-media-layer="transition"
+        className={`resume-media-frame pointer-events-none absolute inset-0 z-[3] h-full w-full ${
           videoTransitioning ? 'opacity-100' : 'opacity-0'
         }`}
         onLoadedData={handleVideoReady}

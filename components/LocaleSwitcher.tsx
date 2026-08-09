@@ -1,11 +1,12 @@
 'use client';
 
 import clsx from 'clsx';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@headlessui/react';
 import { DEFAULT_LOCALE, Locale, SupportedLanguages } from '@/locales/config';
 
 export default function LocaleSwitcher() {
+  const router = useRouter();
   const { locale = DEFAULT_LOCALE } = useParams();
   const nextLocale = locale === Locale.EN ? Locale.ZH : Locale.EN;
 
@@ -39,7 +40,7 @@ export default function LocaleSwitcher() {
       const { basePath, pathnameWithoutLocale } = parseCurrentPath();
       const pathSuffix = pathnameWithoutLocale === '/' ? '' : pathnameWithoutLocale;
       const targetPath = `${basePath}/${nextLocale}${pathSuffix}${window.location.search}${window.location.hash}`;
-      window.location.assign(targetPath);
+      router.push(targetPath);
     } catch (e) {
       console.error('Failed to save language preference:', e);
     }

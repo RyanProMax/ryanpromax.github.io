@@ -7,7 +7,8 @@
 /* Core theme configuration */
 @theme {
   /* Font families */
-  --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+  --font-sans:
+    var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
     'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
   /* Colors */
@@ -183,6 +184,25 @@ input:-webkit-autofill:focus {
 
 .resume-vignette {
   box-shadow: inset 0 0 16vw rgba(0, 0, 0, 0.5);
+}
+
+.resume-media-backdrop {
+  filter: blur(16px) saturate(1.08);
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.88;
+  transform: scale(1.05);
+}
+
+.resume-media-frame {
+  object-fit: cover;
+  object-position: center;
+}
+
+@media (min-aspect-ratio: 4 / 3) {
+  .resume-media-frame {
+    object-fit: contain;
+  }
 }
 
 .resume-panel-enter {

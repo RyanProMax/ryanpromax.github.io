@@ -9,12 +9,12 @@
 ### Development
 
 ```bash
-yarn
+pnpm install
 
 # If use Windows, you need to run:
 $env:PWD = $(Get-Location).Path
 
-yarn dev
+pnpm dev
 ```
 
 ### Deploy
@@ -34,7 +34,7 @@ See [Next.js on Netlify](https://docs.netlify.com/integrations/frameworks/next-j
 - Runtime: Next.js
 - Base directory: (Not set)
 - Package directory: (Not set)
-- Build command: yarn build
+- Build command: pnpm build
 - Publish directory: .next
 - Functions directory: (Not set)
 - Deploy log visibility: Public logs
