@@ -2,17 +2,22 @@
 
 import Lenis from 'lenis';
 import NextImage from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Asterisk, X } from 'lucide-react';
 import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { Experience } from '@/components/Experience';
+import ScrambleText from '@/components/ScrambleText';
 import { Locale } from '@/locales/config';
 
 import styles from './EditorialResume.module.css';
 
 interface Profile {
+  email?: string;
+  github?: string;
   name: string;
   occupation?: string;
+  summary?: string;
 }
 
 export interface ResumeLocalization {
@@ -57,15 +62,17 @@ const snapMaskInset = (value: number) => {
 };
 const removeLeadingEmoji = (value: string) => value.replace(/^[^\p{L}\p{N}]+/u, '');
 const scrollEasing = (value: number) => (value === 1 ? 1 : 1 - Math.pow(2, -10 * value));
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export default function EditorialResume({ assetPrefix, initialLocale, localizations }: Props) {
+  const router = useRouter();
   const [activeLocale, setActiveLocale] = useState(initialLocale);
   const [activeWork, setActiveWork] = useState(-1);
   const [landingInteractive, setLandingInteractive] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [hoverColor, setHoverColor] = useState('#0b0b0b');
   const [settledLogos, setSettledLogos] = useState<Set<string>>(() => new Set());
-  const rootRef = useRef<HTMLElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const lenisRef = useRef<Lenis | null>(null);
   const introRef = useRef<HTMLDivElement>(null);
@@ -81,6 +88,9 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
   const { experiences, profile } = localizations[activeLocale];
   const isChinese = activeLocale === Locale.ZH;
   const otherLocale = isChinese ? Locale.EN : Locale.ZH;
+  const homePath = `/${activeLocale}`;
+  const homeUrl = `${assetPrefix}${homePath}`;
+  const projectsUrl = `${assetPrefix}/${activeLocale}/projects`;
 
   const works = useMemo<Work[]>(
     () =>
@@ -91,17 +101,14 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
         period: `${experience.start} — ${experience.end}`,
         details: experience.highlights ?? [],
         logo: `${assetPrefix}${experience.logo}`,
-        theme: WORK_THEMES[index],
+        theme: WORK_THEMES[index % WORK_THEMES.length],
         url: experience.url,
       })),
     [assetPrefix, experiences]
   );
 
-  const pageReady = works.every((work) => settledLogos.has(work.logo));
-  const settledLogoCount = works.filter((work) => settledLogos.has(work.logo)).length;
-  const loadingTarget = pageReady
-    ? 100
-    : Math.min(92, Math.round((settledLogoCount / works.length) * 92));
+  const pageReady = works.length === 0 || settledLogos.has(works[0].logo);
+  const loadingTarget = pageReady ? 100 : 82;
   const interfaceReady = pageReady && loadingProgress === 100;
 
   const markLogoSettled = useCallback((logo: string) => {
@@ -134,13 +141,9 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
 
     const viewportHeight = root.clientHeight;
     const scrollTop = root.scrollTop;
-    const maxScroll = Math.max(0, root.scrollHeight - viewportHeight);
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reducedMotion = prefersReducedMotion();
     const topLandingVisibility = 1 - clamp(scrollTop / (viewportHeight * 0.82));
-    const bottomLandingVisibility = clamp(
-      (scrollTop - (maxScroll - viewportHeight * 0.9)) / (viewportHeight * 0.75)
-    );
-    const landingVisibility = Math.max(topLandingVisibility, bottomLandingVisibility);
+    const landingVisibility = topLandingVisibility;
     const nextLandingInteractive = landingVisibility > 0.6;
 
     if (introRef.current) {
@@ -212,13 +215,14 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
     const root = rootRef.current;
     const content = contentRef.current;
     if (!root || !content || !interfaceReady) return;
+    if (prefersReducedMotion()) return;
 
     const lenis = new Lenis({
       wrapper: root,
       content,
       eventsTarget: root,
       autoRaf: true,
-      duration: window.matchMedia('(max-width: 900px)').matches ? 3 : 5,
+      duration: window.matchMedia('(max-width: 900px)').matches ? 1.05 : 1.35,
       easing: scrollEasing,
       gestureOrientation: 'vertical',
       orientation: 'vertical',
@@ -270,11 +274,51 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
     };
   }, []);
 
+  useEffect(() => {
+    const pageMain = rootRef.current?.parentElement;
+    const shell = pageMain?.parentElement;
+    if (!pageMain || !shell) return;
+
+    const shellSiblings = Array.from(shell.children).filter(
+      (element): element is HTMLElement => element instanceof HTMLElement && element !== pageMain
+    );
+    const previousStates = shellSiblings.map((element) => ({
+      element,
+      ariaHidden: element.getAttribute('aria-hidden'),
+      inert: element.inert,
+    }));
+
+    shellSiblings.forEach((element) => {
+      element.inert = true;
+      element.setAttribute('aria-hidden', 'true');
+    });
+
+    return () => {
+      previousStates.forEach(({ element, ariaHidden, inert }) => {
+        element.inert = inert;
+        if (ariaHidden === null) element.removeAttribute('aria-hidden');
+        else element.setAttribute('aria-hidden', ariaHidden);
+      });
+    };
+  }, []);
+
+  useEffect(() => {
+    if (interfaceReady) rootRef.current?.focus({ preventScroll: true });
+  }, [interfaceReady]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') router.push(homePath);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [homePath, router]);
+
   const rootStyle = { '--resume-background': hoverColor } as CSSProperties;
   const activeWorkItem = activeWork >= 0 ? works[activeWork] : undefined;
   const counter = activeWorkItem?.index ?? '00';
   const total = String(works.length).padStart(2, '0');
-  const homeUrl = `${assetPrefix}/${activeLocale}`;
 
   const switchLanguage = useCallback(() => {
     setActiveLocale(otherLocale);
@@ -286,18 +330,21 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
     if (!root) return;
     const target = root.clientHeight * 1.2;
     if (lenisRef.current) {
-      lenisRef.current.scrollTo(target, { duration: 1.8, easing: scrollEasing });
+      lenisRef.current.scrollTo(target, { duration: 1.15, easing: scrollEasing });
       return;
     }
-    root.scrollTo({ top: target, behavior: 'smooth' });
+    root.scrollTo({ top: target, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   }, []);
 
   const scrollToTop = useCallback(() => {
     if (lenisRef.current) {
-      lenisRef.current.scrollTo(0, { duration: 1.8, easing: scrollEasing });
+      lenisRef.current.scrollTo(0, { duration: 1.15, easing: scrollEasing });
       return;
     }
-    rootRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    rootRef.current?.scrollTo({
+      top: 0,
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+    });
   }, []);
 
   const scrollToWork = useCallback((index: number) => {
@@ -308,37 +355,48 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
     const target =
       root.scrollTop + work.getBoundingClientRect().top - root.getBoundingClientRect().top;
     if (lenisRef.current) {
-      lenisRef.current.scrollTo(target, { duration: 1.8, easing: scrollEasing });
+      lenisRef.current.scrollTo(target, { duration: 1.15, easing: scrollEasing });
       return;
     }
-    root.scrollTo({ top: target, behavior: 'smooth' });
+    root.scrollTo({ top: target, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   }, []);
 
   return (
-    <main
+    <div
       ref={rootRef}
       className={styles.resume}
       style={rootStyle}
       data-ready={interfaceReady ? 'true' : 'false'}
       data-section={activeWork + 1}
+      role="main"
+      aria-label={isChinese ? 'Ryan 的个人简介与经历' : "Ryan's profile and experience"}
       aria-busy={!interfaceReady}
+      tabIndex={-1}
     >
       <div className={styles.background} aria-hidden="true" />
 
       <header className={`${styles.header} ${interfaceReady ? styles.ready : ''}`}>
-        <a className={styles.identity} href={homeUrl}>
-          <span>RYAN</span>
+        <a
+          className={styles.identity}
+          href={homeUrl}
+          aria-label={isChinese ? '返回 Ryan 的网站首页' : "Return to Ryan's homepage"}
+        >
+          <ScrambleText text="RYAN" hover />
           <Asterisk aria-hidden="true" size={14} strokeWidth={1.5} />
         </a>
         <div className={styles.headerActions}>
           <span aria-hidden="true">
             {counter} / {total}
           </span>
-          <button type="button" onClick={switchLanguage}>
-            {otherLocale.toUpperCase()}
+          <button
+            type="button"
+            onClick={switchLanguage}
+            aria-label={isChinese ? '切换到英文' : 'Switch to Chinese'}
+          >
+            <ScrambleText text={otherLocale.toUpperCase()} hover />
           </button>
-          <a href={homeUrl}>
-            <span>{isChinese ? '退出' : 'CLOSE'}</span>
+          <a href={homeUrl} aria-label={isChinese ? '关闭简介并返回首页' : 'Close profile'}>
+            <ScrambleText text={isChinese ? '退出' : 'CLOSE'} hover />
             <X aria-hidden="true" size={14} strokeWidth={1.5} />
           </a>
         </div>
@@ -348,6 +406,11 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
         className={`${styles.timeline} ${activeWork >= 0 ? styles.timelineVisible : ''}`}
         aria-label={isChinese ? '经历时间线' : 'Experience timeline'}
       >
+        {activeWorkItem && (
+          <span className={styles.timelineStatus} aria-live="polite">
+            {counter} · {activeWorkItem.title} · {activeWorkItem.period}
+          </span>
+        )}
         {works.map((work, index) => (
           <button
             key={work.index}
@@ -370,27 +433,91 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
           aria-hidden={!landingInteractive}
           inert={!landingInteractive ? true : undefined}
         >
-          <div className={styles.introRow}>
-            <h1>{profile.name.toUpperCase()}</h1>
+          <div className={styles.introName}>
+            <h1>
+              <ScrambleText
+                key={`name-${activeLocale}`}
+                text={profile.name.toUpperCase()}
+                play={interfaceReady}
+                delay={500}
+                duration={560}
+              />
+            </h1>
             <Asterisk aria-hidden="true" size={17} strokeWidth={1.35} />
           </div>
-          <p>{(profile.occupation ?? '').toUpperCase()}</p>
-          <div className={styles.introRow}>
-            <span>2016</span>
-            <span>—</span>
-            <span>{isChinese ? '至今' : 'PRESENT'}</span>
+          <p className={styles.introOccupation}>
+            <ScrambleText
+              key={`occupation-${activeLocale}`}
+              text={(profile.occupation ?? '').toUpperCase()}
+              play={interfaceReady}
+              delay={610}
+              duration={480}
+            />
+          </p>
+          {profile.summary && (
+            <p className={styles.introSummary}>
+              <ScrambleText
+                key={`summary-${activeLocale}`}
+                text={profile.summary}
+                play={interfaceReady}
+                delay={700}
+                duration={720}
+              />
+            </p>
+          )}
+          <div className={styles.introMeta}>
+            <span>
+              <ScrambleText
+                key={`career-${activeLocale}`}
+                text={isChinese ? '工程职业生涯' : 'ENGINEERING CAREER'}
+                play={interfaceReady}
+                delay={830}
+                duration={500}
+              />
+            </span>
+            <span>
+              <ScrambleText
+                key={`period-${activeLocale}`}
+                text={`2016 — ${isChinese ? '至今' : 'PRESENT'}`}
+                play={interfaceReady}
+                delay={890}
+                duration={460}
+              />
+            </span>
           </div>
-          <div className={`${styles.introRow} ${styles.introLinks}`}>
-            <span>{isChinese ? '职业轨迹' : 'CAREER TIMELINE'}</span>
+          <div className={styles.introLinks}>
             <button type="button" onClick={scrollToExperience}>
-              {isChinese ? '完整履历' : 'FULL PROFILE'}
+              <ScrambleText
+                key={`explore-${activeLocale}`}
+                text={isChinese ? '浏览经历' : 'EXPLORE EXPERIENCE'}
+                play={interfaceReady}
+                hover
+                delay={970}
+                duration={460}
+              />
             </button>
+            <a href={projectsUrl}>
+              <ScrambleText
+                key={`selected-${activeLocale}`}
+                text={isChinese ? '精选作品' : 'SELECTED WORK'}
+                play={interfaceReady}
+                hover
+                delay={1030}
+                duration={460}
+              />
+            </a>
           </div>
         </div>
 
         <figure className={styles.introTrack}>
           <p ref={promptRef} className={styles.scrollPrompt}>
-            {isChinese ? '向下滚动探索' : 'SCROLL TO EXPLORE'}
+            <ScrambleText
+              key={`prompt-${activeLocale}`}
+              text={isChinese ? '向下滚动探索' : 'SCROLL TO EXPLORE'}
+              play={interfaceReady}
+              delay={1110}
+              duration={480}
+            />
           </p>
         </figure>
 
@@ -410,15 +537,17 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
                 className={styles.work}
               >
                 <div className={styles.titleStage}>
-                  <div className={styles.titleIndex}>{work.index}</div>
+                  <div className={styles.titleMeta}>
+                    <span>{work.index}</span>
+                    <span>{work.period}</span>
+                  </div>
                   <h2 className={styles.workTitle}>
                     <a href={work.url} target="_blank" rel="noopener noreferrer">
                       {work.title}
                     </a>
                   </h2>
+                  <p className={styles.titleRole}>{work.role}</p>
                   <div className={styles.srOnly}>
-                    <p>{work.period}</p>
-                    <p>{work.role}</p>
                     {work.details.map((detail) => (
                       <p key={detail}>{detail}</p>
                     ))}
@@ -463,10 +592,11 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
                             }}
                             src={work.logo}
                             alt=""
-                            width={720}
-                            height={720}
-                            loading="eager"
-                            unoptimized
+                            width={384}
+                            height={384}
+                            sizes="(max-width: 900px) 32vw, 13rem"
+                            preload={index === 0}
+                            loading={index === 0 ? undefined : 'lazy'}
                             className={styles.logo}
                             onLoad={() => markLogoSettled(work.logo)}
                             onError={() => markLogoSettled(work.logo)}
@@ -496,16 +626,47 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
           })}
         </div>
 
-        <figure className={styles.outroTrack}>
-          <button type="button" className={styles.scrollUp} onClick={scrollToTop}>
-            {isChinese ? '返回顶部' : 'SCROLL UP'}
-          </button>
-        </figure>
+        <section className={styles.outroTrack}>
+          <div className={styles.outroPanel}>
+            <h2>
+              {isChinese
+                ? '继续看作品，或聊聊桌面端、直播与 AI 工程。'
+                : 'Explore the work, or talk desktop, live streaming, and AI engineering.'}
+            </h2>
+            {profile.summary && <p>{profile.summary}</p>}
+            <div className={styles.outroLinks}>
+              <a href={projectsUrl}>
+                <ScrambleText text={isChinese ? '查看精选作品' : 'VIEW SELECTED WORK'} hover />
+              </a>
+              {profile.github && (
+                <a href={profile.github} target="_blank" rel="noopener noreferrer">
+                  <ScrambleText text="GITHUB" hover />
+                </a>
+              )}
+              {profile.email && (
+                <a href={`mailto:${profile.email}`}>
+                  <ScrambleText text="EMAIL" hover />
+                </a>
+              )}
+            </div>
+            <button type="button" className={styles.scrollUp} onClick={scrollToTop}>
+              <ScrambleText text={isChinese ? '返回顶部' : 'BACK TO TOP'} hover />
+            </button>
+          </div>
+        </section>
       </div>
 
-      <div className={`${styles.loader} ${interfaceReady ? styles.loaderHidden : ''}`}>
+      <div
+        className={`${styles.loader} ${interfaceReady ? styles.loaderHidden : ''}`}
+        role="progressbar"
+        aria-label={isChinese ? '简介加载进度' : 'Profile loading progress'}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={loadingProgress}
+        aria-hidden={interfaceReady}
+      >
         <span>{String(loadingProgress).padStart(2, '0')}%</span>
       </div>
-    </main>
+    </div>
   );
 }
