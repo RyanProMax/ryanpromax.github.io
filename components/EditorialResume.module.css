@@ -1,0 +1,683 @@
+.resume {
+  --resume-background: #0b0b0b;
+  --experience-pink: #ff5f87;
+  position: fixed;
+  z-index: 70;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-anchor: none;
+  overscroll-behavior: none;
+  background: #0b0b0b;
+  color: #f3f2ed;
+  font-family: var(--font-space-grotesk), sans-serif;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.resume::-webkit-scrollbar {
+  display: none;
+}
+
+.resume:global(.lenis-smooth) iframe {
+  pointer-events: none;
+}
+
+.resume[data-ready='false'] {
+  overflow: hidden;
+}
+
+.background {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  background: var(--resume-background);
+  transition: background-color 600ms cubic-bezier(0.32, 0, 0.67, 0);
+  pointer-events: none;
+}
+
+.header {
+  position: fixed;
+  z-index: 80;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.55rem 2rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms ease;
+}
+
+.ready {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.identity,
+.headerActions,
+.headerActions a {
+  display: flex;
+  align-items: center;
+}
+
+.identity {
+  gap: 0.55rem;
+}
+
+.headerActions {
+  gap: 1.4rem;
+}
+
+.headerActions a {
+  gap: 0.45rem;
+}
+
+.header,
+.scrollPrompt,
+.scrollUp,
+.titleIndex,
+.posterPeriod {
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.identity,
+.headerActions button,
+.headerActions a,
+.introLinks button,
+.scrollUp {
+  transition: opacity 220ms ease;
+}
+
+.identity:hover,
+.headerActions button:hover,
+.headerActions a:hover,
+.introLinks button:hover,
+.scrollUp:hover {
+  opacity: 0.55;
+}
+
+.identity:focus-visible,
+.headerActions button:focus-visible,
+.headerActions a:focus-visible,
+.introLinks button:focus-visible,
+.scrollUp:focus-visible,
+.timeline button:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 5px;
+}
+
+.timeline {
+  position: fixed;
+  z-index: 75;
+  top: 50%;
+  left: 2rem;
+  display: grid;
+  width: max-content;
+  gap: 2.1rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(-0.55rem, -50%, 0);
+  transition:
+    opacity 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.timeline::before {
+  position: absolute;
+  z-index: 0;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  left: 0.1875rem;
+  width: 1px;
+  background: currentColor;
+  content: '';
+  opacity: 0.2;
+}
+
+.timelineVisible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate3d(0, -50%, 0);
+}
+
+.timeline button {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #f3f2ed;
+  opacity: 0.38;
+  text-align: left;
+  white-space: nowrap;
+  transition: opacity 220ms ease;
+}
+
+.timeline button:hover,
+.timelineActive {
+  opacity: 1 !important;
+}
+
+.timelineDot {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  flex: 0 0 auto;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: #0b0b0b;
+  transition:
+    border-color 220ms ease,
+    background-color 220ms ease,
+    transform 220ms ease;
+}
+
+.timelineActive .timelineDot {
+  border-color: var(--experience-pink);
+  background: var(--experience-pink);
+  transform: scale(1.2);
+}
+
+.timelinePeriod {
+  font-size: 0.55rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.content {
+  position: relative;
+  z-index: 10;
+  min-height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms ease 160ms;
+}
+
+.content.ready {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.introPanel {
+  position: fixed;
+  z-index: 70;
+  top: 50%;
+  left: 50%;
+  width: 15.8em;
+  transform: translate3d(-50%, -50%, 0) scale(1);
+  transform-origin: center;
+  font-size: 1rem;
+  line-height: 1.35;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.landingInteractive {
+  pointer-events: auto;
+}
+
+.introPanel h1,
+.introPanel p,
+.introPanel span,
+.introPanel button {
+  font-size: inherit;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: inherit;
+}
+
+.introRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.introLinks {
+  margin-top: 2rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+.introLinks button {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.introTrack {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 120svh;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 20svh;
+}
+
+.scrollPrompt {
+  position: fixed;
+  z-index: 12;
+  bottom: 2rem;
+  will-change: opacity;
+}
+
+.works {
+  position: relative;
+  z-index: 20;
+}
+
+.work {
+  position: relative;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.titleStage {
+  position: relative;
+  display: flex;
+  height: 100svh;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2rem;
+}
+
+.titleIndex {
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  opacity: 0.55;
+}
+
+.workTitle {
+  width: 86vw;
+  font-size: min(10.5vw, 8.8rem);
+  font-weight: 400;
+  letter-spacing: -0.075em;
+  line-height: 0.82;
+  text-align: center;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.workTitle a {
+  pointer-events: auto;
+  transition:
+    color 280ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 220ms ease;
+}
+
+.workTitle a:hover {
+  color: var(--experience-pink);
+}
+
+.workTitle a:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 0.12em;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.imageTrack {
+  position: relative;
+  z-index: 60;
+  display: flex;
+  height: 40svh;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.imageHitArea {
+  display: block;
+  width: min(33.333vw, 28rem);
+  aspect-ratio: 1;
+}
+
+.fixedVisual {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2rem;
+  pointer-events: none;
+}
+
+.imageClip {
+  display: flex;
+  width: min(41.6667vw, 35rem);
+  aspect-ratio: 1;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  clip-path: inset(100% 0 0 0);
+  will-change: clip-path;
+}
+
+.compactVisual {
+  aspect-ratio: 16 / 9;
+}
+
+.poster {
+  --poster-background: #eeeeea;
+  --poster-accent: #171715;
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--poster-accent) 26%, transparent);
+  background: var(--poster-background);
+  color: var(--poster-accent);
+  transform: scale(1);
+  transform-origin: center;
+  will-change: transform;
+}
+
+.logo {
+  position: absolute;
+  z-index: 2;
+  top: 20%;
+  right: 11%;
+  width: 36%;
+  height: auto;
+  max-height: 26%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  filter: grayscale(0.28) saturate(0.62);
+  opacity: 0.42;
+}
+
+.posterExperience {
+  position: absolute;
+  z-index: 3;
+  top: 58%;
+  left: 50%;
+  width: 78%;
+  text-align: left;
+  transform: translateX(-50%);
+}
+
+.posterRole {
+  color: var(--experience-pink);
+  font-size: clamp(0.78rem, 1.25vw, 1.05rem);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.posterRoleCompact {
+  font-size: clamp(0.68rem, 1.08vw, 0.92rem);
+}
+
+.posterDetails {
+  max-width: 48ch;
+  margin: 0.65rem 0 0;
+  padding: 0;
+  color: var(--poster-accent);
+  font-size: clamp(0.58rem, 0.75vw, 0.72rem);
+  list-style: none;
+  line-height: 1.42;
+  opacity: 0.58;
+}
+
+.posterDetails li {
+  position: relative;
+  padding-left: 0.8rem;
+}
+
+.posterDetails li::before {
+  position: absolute;
+  top: 0.68em;
+  left: 0;
+  width: 0.35rem;
+  height: 1px;
+  background: currentColor;
+  content: '';
+}
+
+.posterDetails li + li {
+  margin-top: 0.2rem;
+}
+
+.posterPeriod {
+  position: absolute;
+  z-index: 3;
+}
+
+.posterPeriod {
+  top: 49%;
+  right: 11%;
+  width: 36%;
+  opacity: 0.65;
+  text-align: center;
+}
+
+.outroTrack {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  height: 180svh;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 3svh;
+}
+
+.scrollUp {
+  position: sticky;
+  bottom: 2rem;
+  pointer-events: auto;
+}
+
+.loader {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0b0b0b;
+  color: #f3f2ed;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 700ms cubic-bezier(0.32, 0, 0.67, 0) 180ms,
+    visibility 0s linear 880ms;
+}
+
+.loader span {
+  min-width: 4ch;
+  font-size: clamp(3rem, 9vw, 8rem);
+  font-weight: 400;
+  letter-spacing: -0.065em;
+  line-height: 1;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.loaderHidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@media (max-width: 900px) {
+  .header {
+    padding: 1rem;
+  }
+
+  .headerActions {
+    gap: 1rem;
+  }
+
+  .timeline {
+    left: 0.7rem;
+    gap: 1.25rem;
+  }
+
+  .timeline button {
+    width: 1rem;
+    height: 1.2rem;
+  }
+
+  .timelinePeriod {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .introPanel {
+    font-size: 0.94rem;
+  }
+
+  .titleStage {
+    height: 70svh;
+    padding: 0 1rem;
+  }
+
+  .titleIndex {
+    top: 1rem;
+    left: 1rem;
+  }
+
+  .workTitle {
+    width: 100%;
+    font-size: 11.5vw;
+    line-height: 0.86;
+  }
+
+  .imageHitArea {
+    width: 83.333vw;
+    aspect-ratio: 1;
+  }
+
+  .fixedVisual {
+    height: 100svh;
+    padding: 0 1rem;
+  }
+
+  .imageClip {
+    width: 83.333vw;
+    aspect-ratio: 1;
+  }
+
+  .imageClip.compactVisual,
+  .imageHitArea.compactVisual {
+    aspect-ratio: 16 / 9;
+  }
+
+  .logo {
+    top: 15%;
+    right: 10%;
+    width: 34%;
+    max-height: 18%;
+  }
+
+  .posterExperience {
+    top: 63%;
+    width: 82%;
+    transform: translate(-50%, -50%);
+  }
+
+  .posterRole {
+    font-size: clamp(0.62rem, 2.65vw, 0.8rem);
+  }
+
+  .posterRoleCompact {
+    font-size: clamp(0.56rem, 2.35vw, 0.72rem);
+  }
+
+  .posterDetails {
+    margin-top: 0.55rem;
+    font-size: 0.54rem;
+    line-height: 1.38;
+  }
+
+  .posterPeriod {
+    display: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .header {
+    justify-content: flex-end;
+    padding: 0.85rem;
+  }
+
+  .identity,
+  .headerActions > span,
+  .headerActions a span {
+    display: none;
+  }
+
+  .introPanel {
+    width: min(15.8em, calc(100vw - 3rem));
+    font-size: 0.86rem;
+  }
+
+  .introLinks {
+    margin-top: 1.5rem;
+    font-size: 0.64rem;
+  }
+
+  .scrollPrompt,
+  .scrollUp {
+    bottom: 1.25rem;
+  }
+
+  .titleStage {
+    padding: 0 0.85rem;
+  }
+
+  .titleIndex {
+    top: 0.85rem;
+    left: 0.85rem;
+  }
+
+  .workTitle {
+    font-size: 11vw;
+    letter-spacing: -0.065em;
+  }
+
+  .imageClip,
+  .imageHitArea {
+    width: calc(100vw - 3rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .background,
+  .header,
+  .content,
+  .loader {
+    transition: none !important;
+  }
+
+  .resume {
+    scroll-behavior: auto;
+  }
+}

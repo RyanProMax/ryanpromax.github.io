@@ -1,7 +1,8 @@
 import { allAuthors, type Authors } from 'contentlayer/generated';
 import { genPageMetadata } from 'app/[locale]/seo';
+
+import EditorialResume, { type ResumeLocalization } from '@/components/EditorialResume';
 import { EXPERIENCES } from '@/components/Experience';
-import ImmersiveResume, { type ResumeLocalization } from '@/components/ImmersiveResume';
 import { DEFAULT_LOCALE, Locale, SupportedLanguages } from '@/locales/config';
 
 export const metadata = genPageMetadata({ title: 'About' });
@@ -21,13 +22,6 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
           profile: {
             name: author.name,
             occupation: author.occupation,
-            company: author.company,
-            summary: author.summary,
-            email: author.email,
-            github: author.github,
-            linkedin: author.linkedin,
-            twitter: author.twitter,
-            bluesky: author.bluesky,
           },
         },
       ];
@@ -35,7 +29,7 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
   ) as Record<Locale, ResumeLocalization>;
 
   return (
-    <ImmersiveResume
+    <EditorialResume
       assetPrefix={process.env.BASE_PATH || ''}
       initialLocale={locale}
       localizations={localizations}

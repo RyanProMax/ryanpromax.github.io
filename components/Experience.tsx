@@ -20,9 +20,9 @@ export const EXPERIENCES: Record<Locale, Experience[]> = {
       end: 'PRESENT',
       title: '🧑‍💻​Owner of Game & AI Coding Directions at Douyin Live Studio',
       highlights: [
-        'Lead the Game and AI Coding directions for Douyin Live Studio.',
-        'Build bullet-screen gameplay, dual-screen streaming, game-linking, PC game capture, and mobile-screen casting.',
-        'Advance AI Friendly and E2E engineering across the main repository.',
+        'Lead Core Feature Development and Iteration: Responsible for the design and optimization of key modules such as bullet-screen gameplay, dual-screen streaming, and game-linking to enhance user experience.',
+        'Establish Stability Metrics Framework: Develop and refine key performance indicators for PC game capture and mobile-screen casting functionalities to ensure high system availability.',
+        'Drive AI Friendly & Harness Engineering: Lead main-repository improvements around agent-ready context, collaboration conventions, validation loops, and task orchestration to make AI-assisted development more reliable and repeatable.',
       ],
     },
     {
@@ -62,13 +62,13 @@ export const EXPERIENCES: Record<Locale, Experience[]> = {
       end: '至今',
       title: '🧑‍💻抖音直播伴侣 - 游戏方向 / AI Coding 方向负责人',
       highlights: [
-        '负责抖音直播伴侣游戏方向与 AI Coding 方向。',
-        '建设弹幕玩法、双屏直播、游戏连屏、PC 游戏采集与手机投屏等关键能力。',
-        '推进主仓库 AI Friendly 与 E2E 工程建设。',
+        '主导核心功能开发与迭代：负责弹幕玩法、双屏直播、游戏连屏等关键模块的设计与优化，提升用户体验。',
+        '稳定性指标体系构建：建立并完善 PC 游戏采集与手机投屏等功能的关键性能指标，确保系统高可用性。',
+        'AI Friendly & Harness 工程建设：负责主仓库面向 AI 协作的上下文组织、协作规范、验证闭环与任务编排能力建设，提升 AI 辅助研发的稳定性、可恢复性与可重复执行能力。',
       ],
     },
     {
-      org: '汇锦科技',
+      org: '深圳汇锦',
       url: 'http://www.gainer-tech.com/',
       logo: '/static/images/timeline/gainer.png',
       start: '2020/06',
