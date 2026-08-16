@@ -50,6 +50,11 @@ const WORK_THEMES: WorkTheme[] = [
 ];
 
 const clamp = (value: number, min = 0, max = 1) => Math.min(max, Math.max(min, value));
+const snapMaskInset = (value: number) => {
+  if (value < 0.5) return 0;
+  if (value > 99.5) return 100;
+  return value;
+};
 const removeLeadingEmoji = (value: string) => value.replace(/^[^\p{L}\p{N}]+/u, '');
 const scrollEasing = (value: number) => (value === 1 ? 1 : 1 - Math.pow(2, -10 * value));
 
@@ -170,8 +175,8 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
 
       const rect = track.getBoundingClientRect();
       const progress = clamp((viewportHeight - rect.top) / (viewportHeight + rect.height));
-      const topInset = Math.max(0, (0.5 - progress) * 2) * 100;
-      const bottomInset = Math.max(0, (progress - 0.5) * 2) * 100;
+      const topInset = snapMaskInset(Math.max(0, (0.5 - progress) * 2) * 100);
+      const bottomInset = snapMaskInset(Math.max(0, (progress - 0.5) * 2) * 100);
       const scale = reducedMotion ? 1 : 1 + progress * 0.2;
 
       clip.style.clipPath = `inset(${topInset}% 0 ${bottomInset}% 0)`;
@@ -450,35 +455,39 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
                       className={styles.poster}
                       style={posterStyle}
                     >
-                      <NextImage
-                        ref={(node) => {
-                          if (node?.complete) markLogoSettled(work.logo);
-                        }}
-                        src={work.logo}
-                        alt=""
-                        width={720}
-                        height={720}
-                        loading="eager"
-                        unoptimized
-                        className={styles.logo}
-                        onLoad={() => markLogoSettled(work.logo)}
-                        onError={() => markLogoSettled(work.logo)}
-                      />
-                      <div className={styles.posterExperience}>
-                        <p
-                          className={`${styles.posterRole} ${index === 0 ? styles.posterRoleCompact : ''}`}
-                        >
-                          {work.role}
-                        </p>
-                        {work.details.length > 0 && (
-                          <ul className={styles.posterDetails}>
-                            {work.details.map((detail) => (
-                              <li key={detail}>{detail}</li>
-                            ))}
-                          </ul>
-                        )}
+                      <div className={styles.posterComposition}>
+                        <div className={styles.posterBrand}>
+                          <NextImage
+                            ref={(node) => {
+                              if (node?.complete) markLogoSettled(work.logo);
+                            }}
+                            src={work.logo}
+                            alt=""
+                            width={720}
+                            height={720}
+                            loading="eager"
+                            unoptimized
+                            className={styles.logo}
+                            onLoad={() => markLogoSettled(work.logo)}
+                            onError={() => markLogoSettled(work.logo)}
+                          />
+                          <span className={styles.posterPeriod}>{work.period}</span>
+                        </div>
+                        <div className={styles.posterExperience}>
+                          <p
+                            className={`${styles.posterRole} ${index === 0 ? styles.posterRoleCompact : ''}`}
+                          >
+                            {work.role}
+                          </p>
+                          {work.details.length > 0 && (
+                            <ul className={styles.posterDetails}>
+                              {work.details.map((detail) => (
+                                <li key={detail}>{detail}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
                       </div>
-                      <span className={styles.posterPeriod}>{work.period}</span>
                     </div>
                   </div>
                 </figure>

@@ -394,14 +394,34 @@
   will-change: transform;
 }
 
-.logo {
+.posterComposition {
   position: absolute;
   z-index: 2;
-  top: 20%;
-  right: 11%;
+  inset: 10% 11%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(0.9rem, 2.25vw, 1.5rem);
+}
+
+.posterBrand {
+  display: flex;
   width: 36%;
+  min-height: 0;
+  flex-shrink: 1;
+  flex-direction: column;
+  align-items: center;
+  align-self: flex-end;
+  gap: 0.45rem;
+}
+
+.logo {
+  position: static;
+  width: 100%;
   height: auto;
-  max-height: 26%;
+  min-height: 0;
+  flex-shrink: 1;
+  max-height: clamp(3.5rem, 18vw, 8rem);
   object-fit: contain;
   mix-blend-mode: multiply;
   filter: grayscale(0.28) saturate(0.62);
@@ -409,13 +429,18 @@
 }
 
 .posterExperience {
-  position: absolute;
+  position: static;
   z-index: 3;
-  top: 58%;
-  left: 50%;
-  width: 78%;
+  width: 100%;
   text-align: left;
-  transform: translateX(-50%);
+}
+
+.imageClip.compactVisual .posterComposition {
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+}
+
+.imageClip.compactVisual .logo {
+  max-height: clamp(2.25rem, 10vw, 5rem);
 }
 
 .posterRole {
@@ -438,7 +463,7 @@
   color: var(--poster-accent);
   font-size: clamp(0.58rem, 0.75vw, 0.72rem);
   list-style: none;
-  line-height: 1.42;
+  line-height: 1.68;
   opacity: 0.58;
 }
 
@@ -458,18 +483,12 @@
 }
 
 .posterDetails li + li {
-  margin-top: 0.2rem;
+  margin-top: 0.5rem;
 }
 
 .posterPeriod {
-  position: absolute;
   z-index: 3;
-}
-
-.posterPeriod {
-  top: 49%;
-  right: 11%;
-  width: 36%;
+  width: 100%;
   opacity: 0.65;
   text-align: center;
 }
@@ -555,7 +574,7 @@
   }
 
   .titleStage {
-    height: 70svh;
+    height: 100svh;
     padding: 0 1rem;
   }
 
@@ -590,17 +609,13 @@
     aspect-ratio: 16 / 9;
   }
 
-  .logo {
-    top: 15%;
-    right: 10%;
-    width: 34%;
-    max-height: 18%;
+  .posterComposition {
+    inset: 9%;
+    gap: clamp(0.8rem, 3vw, 1.25rem);
   }
 
-  .posterExperience {
-    top: 63%;
-    width: 82%;
-    transform: translate(-50%, -50%);
+  .posterBrand {
+    width: 34%;
   }
 
   .posterRole {
@@ -612,9 +627,17 @@
   }
 
   .posterDetails {
-    margin-top: 0.55rem;
+    margin-top: 0.65rem;
     font-size: 0.54rem;
-    line-height: 1.38;
+    line-height: 1.55;
+  }
+
+  .posterDetails li + li {
+    margin-top: 0.42rem;
+  }
+
+  .imageClip.compactVisual .posterComposition {
+    gap: 0.75rem;
   }
 
   .posterPeriod {
