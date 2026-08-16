@@ -1,0 +1,348 @@
+---
+title: 'DeepSeek Harness: The Agent Framework Where Everything Is a Plugin'
+date: '2026-08-16'
+tags: ['AI', 'Agent', 'DeepSeek']
+draft: false
+summary: DeepSeek Harness (dsh) takes "everything is a plugin" to the extreme — even the Agent Loop itself is a replaceable plugin. This post breaks down its architecture and features, how it differs from LangChain / LangGraph, and its pros, cons, and use cases.
+language: en
+---
+
+<TOCInline toc={props.toc} asDisclosure />
+
+---
+
+## What It Is
+
+[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh` for short) is an open-source agent harness developed by DeepSeek AI, MIT licensed.
+
+Its core idea, summed up in one line from the repo:
+
+> Everything is a Plugin.
+
+The official positioning of "harness" is blunt: **"Model + Harness = Agent."**
+
+The model is the "soul" and the harness is the "body" — the harness connects the model to the real world: reading files, running commands, calling tools, writing logs, and requesting approvals.
+
+One line to remember the difference: **LangGraph lets you draw graphs on a hard-coded engine, while `dsh` makes even the engine itself a plugin.**
+
+- **LangChain (LCEL)**: a chain pipeline — string together `A | B | C` for linear flows (RAG, simple Q&A). Topology is fixed; no loops.
+- **LangGraph**: gives you "graph + state" — nodes and edges are yours to define, with loops, branching, and resume. But its **execution engine is hard-coded** — you can change the graph, not "how the graph runs."
+- **`dsh`**: "how the graph runs" (the Agent Loop), the tool registry, the session log, the approval policy, and the sandbox are all replaceable plugins. **Nothing is hard-coded.**
+
+A few key facts:
+
+| Dimension            | Value                                                                                        |
+| -------------------- | -------------------------------------------------------------------------------------------- |
+| Positioning          | A locally-running AI agent working system (agent harness)                                    |
+| License              | MIT                                                                                          |
+| Current status       | Developer preview (v0.1.0-rc.5), with **breaking changes** announced                         |
+| Underlying framework | [Cordis](https://github.com/cordiverse/cordis) (the plugin kernel from the Koishi ecosystem) |
+| Code size            | TypeScript monorepo (pnpm) + Python, 221 sub-packages under `packages/`                      |
+| Quick start          | `npx @deepseek-ai/dsh web`, defaults to `http://127.0.0.1:3080`                              |
+
+> [!WARNING]
+> It's a **developer preview**. The official README is blunt: `THERE WILL BE COMPATIBILITY-BREAKING CHANGES.` The current API and config formats can change at any time — always check the release notes before upgrading.
+
+## Core Idea: No Privileged Core to Patch
+
+To understand `dsh`, the key is how it differs from frameworks like LangGraph in its **extension model**.
+
+`dsh` goes the opposite way — it has no boundary between "engine" and "plugin"; even the engine itself is a plugin. The architecture doc puts it plainly:
+
+> There is no privileged core to patch: you extend dsh by mounting a plugin beside the others, and registrations are effects that unwind when their plugin unloads.
+
+Specifically, the official project turns all of these into plugins:
+
+- model adapter
+- tool registry
+- session log
+- approval policy
+- sandbox and filesystem
+- **the Agent Loop itself**
+
+That means "swap the search engine", "bring your own model service", "change the approval policy" — all config changes, no framework code edits. This is the most fundamental difference from LangGraph.
+
+**An example to feel what "everything is a plugin" means.** Suppose you want a rule: "any command that deletes files must ask me to confirm first."
+
+- **LangGraph**: you have to draw this approval logic into your graph — add a `human_review` node, use `interrupt_before` to pause for confirmation. As for "how to recognize dangerous commands" and "how to block them at the OS level", the framework doesn't provide that — you write and wire it yourself. It works, but approval is your "business code", not a framework "capability".
+- **dsh**: the approval policy is a built-in plugin, and the OS-level sandbox is built-in too. Write a new approval plugin to replace the default, or attach a listener to the `tools/pre-execute` event that checks "is this command deleting something?" and blocks for confirmation if so. It sits at the same level as every other plugin — a "capability", not a "patch".
+
+"Swapping models" works the same way: both dsh and LangGraph support BYO models, but dsh turns the model adapter itself into a replaceable plugin — connecting a private model is the "front door", not a "detour".
+
+What makes all this possible is the underlying [Cordis](https://github.com/cordiverse/cordis) framework: Cordis is the plugin kernel from the Koishi ecosystem, whose design is described in the paper [_A Programming Paradigm for Spatiotemporal Composability_](https://github.com/cordiverse/paper).
+
+Its core abstraction: plugins contribute "services, typed events, and reversible effects" to a shared context; registration and teardown come in pairs, natively supporting dynamic loading and rollback.
+
+## Architecture: A Plugin Tree Assembled at Boot
+
+Every time `dsh` boots, it doesn't "run a hard-coded program" — it **composes a plugin tree layer by layer**. The architecture doc puts it well:
+
+> A running dsh is a plugin tree composed at boot from ordered layers.
+
+This layering mechanism is built on three concepts:
+
+### Profile / Bundle / Patch
+
+- **Profile**: a named composition stored under the Harness home directory. It lists which bundles it stacks, which out-of-tree plugins it installs, and the user's own `cordis.patch.yml`.
+- **Bundle**: a distribution format for Cordis config rows plus the code they mount, so whatever it inserts stays patchable by the layers above it.
+- **Patch**: replace an entire config row by id, or insert new rows.
+
+**A food-ordering analogy**: a bundle is a preset **combo** (`dsh-base` is the "base combo", `dsh-web-app` adds "a web UI"); a profile is the **name** you give the combo (`web`, `headless`); a patch is the **note** on your order — "base combo, no spice, add an egg". The note comes last and has the highest priority, so it can override the combo's defaults. You don't redo the whole combo; you just write which item to change.
+
+Layer precedence, from low to high:
+
+```plaintext
+(empty entry list)
+  └─ each bundle (in profile order)
+       └─ the profile's cordis.patch.yml
+            └─ the home-level cordis.patch.yml
+                 └─ the CLI --patch overlay   ← highest priority
+```
+
+![Plugin tree layering](/static/images/deepseek-harness-analysis/plugin-tree.png)
+
+The later the layer, the higher its priority. The official project ships two template profiles:
+
+- `dsh-base`: the first layer of every profile — model adapters, tools, persistence, sandbox, approval policy, settings, credentials, telemetry.
+- `dsh-web-app`: stacks the browser app on top of base.
+- `dsh-headless`: stacks a **server-less one-shot runner** (single-run tasks).
+
+To see the tree your machine actually boots, the official command is:
+
+```bash
+dsh --profile web --dump-config
+```
+
+Every config row it prints can be overridden by your own patch. That's the engineering payoff of "change behavior without touching code".
+
+> [!NOTE]
+> A clarification that's easy to mix up: **a profile has no "execution order", only an "assembly order"**. A profile is a static composition at boot time — it decides "which plugins to load and in what order to stack them", which is the diagram above. What actually has an "execution order" is the runtime **event listeners**, expanded right below.
+
+### Runtime: Waterfall Events and the Onion Model
+
+Seeing "layer nested in layer, the outer overriding the inner", Node folks will think of middleware's **onion model**. That instinct is right, and `dsh` actually hides **two layers of onion**.
+
+**The first layer is the "static onion" — the layering above.** It's like onion skins: bundles are the inner layers, patches are the outer layers, the outer overrides the inner, and order is priority. This resembles how Koa middleware "strings into a chain by registration order".
+
+**The second layer is the "dynamic onion" — runtime waterfall events.** This is the one that really matches the Koa onion model we usually mean. The architecture doc states that `agent/pre-step`, `agent/request`, `llm/stream`, and the three `tools/*` events are all **waterfalls**:
+
+> `agent/pre-step`, `agent/request`, `llm/stream`, and the three `tools/*` events are waterfalls, whose listeners must call `next()` to delegate.
+
+The "listener" here is not a profile — it's a **callback a plugin registers on an event via `ctx.on()`**. The same event (say `agent/request`) can have several plugins each registering a listener; they string into a chain in **registration order**, and `next()` hands control to the **next listener** on that chain, not to the "next profile".
+
+Registration order is determined by plugin load order — the Cordis Primer's dispatch-modes table is explicit: waterfall-event listeners run in registration order. So the relationship between profile and `next()` is **indirect**:
+
+> profile decides which plugins to load → plugin load order decides listener registration order → registration order decides the `next()` chain order. A profile is an "assembly unit", not an "execution unit".
+
+Two more things worth noting: plugin load order isn't "which line it's on in the patch" — it's derived from service dependencies declared via `inject` (load order is expressed through service requirements); and in a waterfall, a listener that returns without calling `next()` **short-circuits** — later listeners never run.
+
+This `next()` is semantically the same thing as Koa middleware's `await next()`:
+
+```js
+// Koa / Node BFF middleware: the onion model
+app.use(async (ctx, next) => {
+  // on the way in: handle request
+  await next();
+  // on the way back: handle response
+});
+```
+
+![Waterfall event onion flow](/static/images/deepseek-harness-analysis/waterfall-onion.png)
+
+Mapping to `dsh`: a plugin can listen to `agent/request`, rewrite the request **before** `next()`, and post-process the returned stream **after** `next()` — exactly the "before / after" two execution opportunities of middleware.
+
+**Make it concrete with three listeners you'd actually write.** Suppose three plugins each register a listener on `agent/request`, strung into a chain by load order:
+
+```js
+// Listener A: logging (order 1)
+ctx.on('agent/request', (req, next) => {
+  log('before request', req);
+  const res = next(); // hand off to B
+  log('after response', res); // runs only after B and C finish
+  return res;
+});
+
+// Listener B: prompt redaction (order 2)
+ctx.on('agent/request', (req, next) => {
+  req.prompt = mask(req.prompt); // before: mask phone numbers
+  return next(); // hand off to C
+});
+
+// Listener C: token cost accounting (order 3)
+ctx.on('agent/request', (req, next) => {
+  budget.before(req);
+  const res = next(); // finally triggers the actual model request
+  budget.after(res); // on the way back, record actual spend
+  return res;
+});
+```
+
+The flow of one request is: **A before → B before → C before → model → C after → B after → A after**. That's the onion in the diagram: C is the "innermost", A is the "outermost", and `next()` is the thread that passes control inward and then threads it back out. Who runs first is decided by the order they're loaded (registered), not by which patch file they're written in.
+
+So the two are "similar", but be precise about where: **layering is like the onion's "skin" (structural nesting), while waterfall events are like the onion's "flow" (execution nesting, passing control via `next()`).** The former decides "what the final assembly looks like"; the latter decides "how one request flows".
+
+### Capability Seams
+
+`dsh` has an interesting concept called a **seam** — a swappable capability made of three roles:
+
+1. **Service Definition**: declares the interface;
+2. **Service Provider**: implements the interface;
+3. **Consumer**: uses the interface (usually a model-facing tool).
+
+The architecture doc nails the value of a seam:
+
+> Seams are why one provider swap changes the whole product. Filesystem and subprocess providers share one execution world, so pointing them at a remote sandbox moves Bash, PTY, and LSP with them, with no provider forks.
+
+In other words, running locally versus throwing it into a remote sandbox are just two providers behind the same abstraction in `dsh` — switching costs almost nothing.
+
+**A concrete scenario**: during development you want the Agent to edit files and run commands on your own machine; in production, you want that same Agent to run in an isolated remote sandbox and never touch the real machine. In `dsh`, these are just two providers of the "filesystem / subprocess" seam — **change one line of config to point the provider from "local" to "remote sandbox"**, and Bash, PTY, and LSP all move with it, with zero changes to the Agent's code. That's the seam's "one provider swap changes the whole product".
+
+### Session Log: Model-Visible Means Logged
+
+`dsh`'s session log is an append-only `SessionEvent` stream, and the context the model sees is projected from this stream. The architecture doc has a hard invariant:
+
+> Model-visible means logged. Anything that reaches a model request must be reconstructable from the log, and a runtime invariant asserts it.
+
+This constraint has big engineering value: fork, resume, transcript export, telemetry, and persistence all derive from the same log stream. It guarantees **session reproducibility** — something many comparable tools can't offer.
+
+In plain terms: `dsh` records "every piece of content sent to the model" as ledger entries, and enforces in code that anything that reaches the model's eyes must be findable in that ledger. So "can this session fork into a branch like git", "can it resume exactly after interruption", and "can I export the full record for audit afterwards" all come for free. With LangGraph, the checkpointer stores State snapshots and can resume from them, but "what exactly did the model see" isn't forced and fully recorded the way `dsh`'s event stream is.
+
+## What dsh Gets Right
+
+Boiling down the architecture above, `dsh`'s standout traits:
+
+1. **Everything is a plugin, no privileged core**: model, tools, session log, sandbox, approval policy, and the Agent Loop are all plugins, replaceable at the config level.
+
+2. **Layered patch composition**: profile → bundle → patch → `--patch` multi-layer stacking, changing behavior without forking code.
+
+3. **BYO model**: the framework ships no model. Plug in DeepSeek, Anthropic, OpenAI catalog providers, or any OpenAI-compatible endpoint; even declare vision capability via `input: [text, image]`.
+
+4. **Capability-seam abstraction**: filesystem / subprocess / subagent all sit behind one seam abstraction; swap a provider to switch the whole execution environment.
+
+5. **Strong observability and reproducibility**: append-only session log plus the "model-visible means logged" runtime invariant power fork / resume / audit.
+
+6. **Complete built-in Agent capabilities**: tools, skills, subagents, workflows, goals, an MCP client, and process sandboxing.
+
+7. **Multiple entry points**: Web UI (the primary onboarding path), headless CLI (one-shot tasks), Python SDK (in-process driving).
+
+8. **OS-level sandboxing**: Landlock / bubblewrap on Linux, Seatbelt on macOS, ACL restricted tokens on Windows.
+
+## How It Differs from LangChain / LangGraph
+
+First, a comparison table:
+
+| Dimension          | DeepSeek Harness                                | LangGraph                                          | LangChain (LCEL)              |
+| ------------------ | ----------------------------------------------- | -------------------------------------------------- | ----------------------------- |
+| Core abstraction   | plugin tree + events                            | graph (nodes + edges) + State                      | chain (Runnable pipe)         |
+| Control flow       | implicit (events + listener registration order) | explicit (graph topology, incl. conditional edges) | explicit (fixed DAG, acyclic) |
+| Loops / branching  | built-in Agent Loop (replaceable)               | cyclic graph, conditional routing                  | acyclic                       |
+| State management   | append-only session log                         | explicit State + checkpointer                      | no shared state               |
+| Engine replaceable | yes (no privileged core)                        | no                                                 | no                            |
+| Sandbox / approval | built-in OS sandbox + approval plugin           | DIY                                                | DIY                           |
+| Maturity           | developer preview                               | production-grade                                   | production-grade              |
+| Primary language   | TypeScript + Python                             | Python (+ JS)                                      | Python (+ JS)                 |
+
+### The Core Difference: Can You Change the "Graph", or the "Engine"?
+
+LangGraph's core mental model is "draw the Agent as a graph":
+
+```python
+from langgraph.graph import StateGraph, START, END
+from typing import TypedDict
+
+class AgentState(TypedDict):
+    messages: list
+
+def call_llm(state): ...   # node: call the model
+def call_tool(state): ...  # node: call a tool
+def route(state):          # conditional edge: decide next step from model output
+    return "call_tool" if state["messages"][-1].tool_calls else END
+
+graph = StateGraph(AgentState)
+graph.add_node("llm", call_llm)
+graph.add_node("call_tool", call_tool)
+graph.add_edge(START, "llm")
+graph.add_conditional_edges("llm", route)   # runtime routing
+graph.add_edge("call_tool", "llm")          # back to the model after tools → forms a loop
+app = graph.compile()
+```
+
+This code freely defines nodes, edges, conditional routing, and loops — **but how `StateGraph` compiles, how nodes are scheduled, and how state is checkpointed are hard-coded in the LangGraph library**. You're building a graph "on top of" the engine, not "inside" it.
+
+`dsh` flips this: `core/agent-loop` is just a "default driver", and the tool registry, session log, approval policy, and sandbox are all plugins. You're not drawing a graph on a hard-coded engine — **you can swap the engine itself**.
+
+### Control Flow: Explicit Graphs vs Implicit Events
+
+LangGraph's control flow is **explicit**: who connects to whom, when to loop, when to branch — all written out in the graph, so you can see the whole topology at a glance.
+
+`dsh`'s control flow is **implicit**: there's no "graph". Behavior is decided by "events + listener registration order" — which listeners an `agent/request` passes through, and in what order, depends on which plugins listen to it and in what order they registered. The upside is extreme composability (a new plugin automatically joins the flow); the cost is that "the overall flow" isn't as clear as a LangGraph diagram.
+
+### State: State Object vs Session Log
+
+- LangGraph uses an **explicit State object** (TypedDict) for all intermediate data, with a checkpointer for persistence, resume, and time-travel.
+- `dsh` uses an **append-only session log** (`SessionEvent` stream) as the single source of truth; the model context is projected from the log, and fork / resume / audit all derive from it.
+
+Both solve "stateful, resumable", but in opposite directions: LangGraph "puts state on the table", while dsh "records the full history".
+
+### One-Line Distinction
+
+> LangChain is a "chain", LangGraph is a "graph", `dsh` is a "plugin tree". The former lets you freely orchestrate on a hard-coded engine; the latter lets you swap the engine itself. LangGraph is mature and has a big ecosystem; `dsh` is lower-level and more open, but still in developer preview.
+
+## Pros and Cons
+
+### Pros
+
+1. **Extreme composability and replaceability**: no privileged core + layered patch, changing behavior without forking code — its biggest moat over LangGraph.
+2. **Model-agnostic**: BYO model; private deployments, self-hosted gateways, and internal model services are all "native" paths.
+3. **Reproducible and auditable**: append-only session log + runtime invariant; fork / resume / audit all hold naturally.
+4. **Multiple entry points**: Web UI for onboarding, headless CLI for one-shot tasks, Python SDK for in-process driving — one capability set, three ways to use it.
+5. **OS-level sandbox**: real Landlock / Seatbelt / ACL sandboxing across three platforms, not just a "directory allowlist".
+6. **MIT open source**: no licensing worries, deep modification possible.
+
+### Cons
+
+1. **Developer preview, unstable API**: breaking changes announced; today's plugin and config formats may break next release — not for critical production paths.
+2. **Steep learning curve**: to get real value you need to understand Cordis, the plugin tree, and patch stacking; anyone wanting "code out of the box" will be put off.
+3. **Early ecosystem**: few plugins, few tutorials, community just starting; limited reference practice when you hit a wall.
+4. **Less productized**: UI polish, default capability tuning, and docs maturity all trail LangChain / LangGraph.
+5. **Output depends on the model you plug in**: it ships no model; however good the harness is, the ceiling on output quality is set by the model you connect.
+
+## Where It Fits
+
+Given its traits, the scenarios worth watching for `dsh` today are these, rather than "replacing Claude Code for daily coding":
+
+### 1. Coding Agents Driven by Private / Self-Hosted Models
+
+If your team needs to run a coding agent behind a self-hosted model or an internal gateway for compliance or cost, `dsh`'s BYO model + built-in sandbox + replaceable approval is an easier path than "build your own approval and sandbox inside LangGraph".
+
+### 2. Embedding Agent Capabilities into Your Own Product
+
+The Python SDK drives the bundled runtime over JSON-RPC on stdio, so you can drop `dsh` into your tooling, platform, or service as an "Agent engine" and reuse the same plugin capabilities without reinventing the wheel.
+
+### 3. Teams That Need Deep Customization of the Loop / Tools / Approval
+
+When your needs exceed what "draw a graph, add a few nodes" can cover — custom loop semantics, custom approval flows, swapping the entire execution environment — `dsh`'s plugin tree + capability seams is the only clean open-source option.
+
+### 4. Scenarios Requiring Strong Auditability and Reproducibility
+
+The "model-visible means logged" invariant makes `dsh` a natural fit for traceability-sensitive domains: finance, compliance, and anywhere "if something goes wrong, replay what the Agent was actually thinking".
+
+### 5. Learning Agent-Framework Architecture
+
+If you want to understand how an agent harness should be designed — event systems, capability seams, session logs, layered composition — `dsh` is one of the cleanest open-source samples worth reading.
+
+On the flip side, **if you just need a mature graph-orchestration framework**, LangGraph is still the safer choice: production-grade, big ecosystem, thorough docs. `dsh` today suits developers who want to "control the Agent framework's foundations" as well.
+
+---
+
+> References
+>
+> [DeepSeek Harness official repo](https://github.com/deepseek-ai/deepseek-harness)
+>
+> [DeepSeek Harness architecture docs](https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/architecture.md)
+>
+> [DeepSeek Harness CLI README](https://github.com/deepseek-ai/deepseek-harness/blob/master/apps/cli/README.md)
+>
+> [Cordis framework](https://github.com/cordiverse/cordis)
+>
+> [Official docs site](https://deepseek-harness.github.io/deepseek-harness/)
