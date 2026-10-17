@@ -13,6 +13,10 @@ language: zh
 
 先记住一句话：**页面、JavaScript 上下文、操作系统进程，是三个不同层次。通信方式和数据怎么传，也要分开看。**
 
+![Electron 架构图：宿主与 webview 的界面嵌套，以及主进程、渲染进程和共享服务的职责分工](/static/images/electron/process-and-communication.svg)
+
+_界面里的嵌套关系，不等于运行时的进程边界。_
+
 ## 1. 一个 webContents，不等于一套 Chromium
 
 [Electron 继承了 Chromium 的多进程架构](https://www.electronjs.org/docs/latest/tutorial/process-model)。但不能把每个页面想成一台完整浏览器。
