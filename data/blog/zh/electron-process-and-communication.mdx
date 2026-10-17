@@ -1,0 +1,151 @@
+---
+title: Electron 的进程与通信：把几个容易混淆的概念讲清楚
+date: '2026-10-17'
+tags: ['Electron', 'JavaScript']
+draft: false
+summary: 从 webContents、preload 和 iframe，到 IPC、MessagePort 与共享内存，分清页面、上下文、进程和数据传递的边界。
+language: zh
+---
+
+<TOCInline toc={props.toc} asDisclosure />
+
+写 Electron 时，容易把几个问题混在一起：多一个页面是不是多一套 Chromium？preload 和页面是不是各有一份 DOM？用了 MessagePort，是不是就没有拷贝了？
+
+先记住一句话：**页面、JavaScript 上下文、操作系统进程，是三个不同层次。通信方式和数据怎么传，也要分开看。**
+
+## 1. 一个 webContents，不等于一套 Chromium
+
+[Electron 继承了 Chromium 的多进程架构](https://www.electronjs.org/docs/latest/tutorial/process-model)。但不能把每个页面想成一台完整浏览器。
+
+- `BrowserWindow` 是桌面窗口
+- `webContents` 是管理网页内容的对象，提供导航、执行脚本、收发消息等能力
+- renderer 是执行页面脚本、布局和绘制等工作的渲染进程
+- 应用还有主进程、GPU 进程，以及承载网络等服务的进程
+
+**GPU、网络服务和主进程，不会跟着每个页面完整复制一遍。**
+
+`webContents` 与 renderer 也不是永远一对一。一个页面包含跨站子框架时，可能涉及多个 renderer；进程也可能按 Chromium 的策略复用或在导航时更换。
+
+所以，“几个窗口”“几个 webContents”“几个 renderer”是三次不同的计数。排查内存或卡顿时，要看实际进程和 frame，而不是只数窗口。
+
+## 2. 本地页面里放一个 webview，到底有几份环境？
+
+假设一个 `BrowserWindow` 加载本地 HTML，里面嵌入远端 `webview`。宿主和 guest 都配置了 preload，并开启 `contextIsolation`。
+
+只看这两个顶层页面，忽略额外 iframe 和 Worker，可以这样理解：
+
+| 页面       | 页面脚本            | preload                 | DOM            |
+| ---------- | ------------------- | ----------------------- | -------------- |
+| 本地宿主   | 宿主的 main world   | 宿主的 isolated world   | 本地页面的 DOM |
+| 远端 guest | guest 的 main world | guest 的 isolated world | 远端页面的 DOM |
+
+这里有**两份页面 DOM、四个主要 JavaScript 上下文**，不是四套浏览器引擎。
+
+同一页面的 preload 和页面脚本，通过各自的 JS 包装对象访问同一份底层 DOM。因此，preload 修改一个已有元素的文本，页面能看到；但 preload 写入 `window.foo`，页面不一定能读到。开启隔离后，两边的全局对象和原型环境是分开的。
+
+这正是 [contextIsolation](https://www.electronjs.org/docs/latest/tutorial/context-isolation) 的作用。需要暴露能力时，用 `contextBridge` 提供窄接口，不要把整个 `ipcRenderer` 暴露给远端页面。
+
+再往下一层，[V8 Isolate](https://v8.dev/docs/embed) 有自己的 JS 堆，一个 Isolate 可以包含多个 Context。页面与 preload 的两个 world 通常是同一 renderer 主线程 Isolate 中的两个 Context，并非两套引擎，也不是进程级内存保护。Node.js 不包含 Chromium，两者都使用 V8；主进程的 Node.js 与 renderer 使用不同 Isolate，但集成 Node.js 不必再新增 Isolate，沙箱中的 preload 也不是完整 Node.js 环境。
+
+另外，宿主的 `document.querySelector()` 只能查询自己的文档，不能穿进 `webview` 的 guest DOM。guest preload 操作的是 guest 页面，宿主 preload 操作的是宿主页面。
+
+## 3. iframe、webview、动态组件，不是同一种隔离
+
+**iframe** 有独立的 `document` 和 `window`，但不代表一定有独立进程。Chromium 的站点隔离可以让跨站 iframe 进入独立 renderer，这就是 [OOPIF](https://www.chromium.org/developers/design-documents/oop-iframes/)。跨源访问限制和进程隔离也不是同一个概念。
+
+**webview** 是 Electron 的嵌入机制，有独立的 guest `webContents`，guest 与宿主运行在分开的渲染进程中，不能当成普通 DOM 容器。Electron [目前不推荐新项目使用 webview](https://www.electronjs.org/docs/latest/api/webview-tag)，需要独立网页容器时，可以评估 `WebContentsView`；只需网页内嵌框架时，再考虑 iframe。
+
+**动态加载的 React 模块**，如果直接渲染进当前页面，本质上仍是同一页面里的组件。动态下载代码不会自动创建 iframe，也不会自动增加进程隔离。模块之间还要满足 React 版本兼容、共享运行时实例等约束。
+
+选择前先问：需要的是组件复用、独立文档，还是独立网页容器？
+
+## 4. IPC 和 MessagePort，各自解决什么问题？
+
+`ipcRenderer` / `ipcMain` 是 Electron 面向应用的通信 API。按当前 [原生实现](https://github.com/electron/electron/blob/main/shell/renderer/api/electron_api_ipc_renderer.cc)，常用 renderer–main IPC 建立在 Chromium 的 Mojo 机制之上。
+
+这不表示 Electron 里所有通信都走 Mojo。自己创建的 Node.js socket、管道或其他通道，要看各自实现。
+
+普通业务通常从 IPC 开始：
+
+- `send` / `on`：发送通知
+- `invoke` / `handle`：发起请求，等待结果
+
+如果两个 renderer 要持续交换数据，可以让主进程先分发一对 [MessagePort](https://www.electronjs.org/docs/latest/tutorial/message-ports)，后续由端点收发消息。
+
+```text
+普通转发：renderer A → 主进程的 JS 回调 → renderer B
+端点通信：主进程先分发端口，之后 A 和 B 通过端口交换消息
+```
+
+这里省掉的是**主进程业务 JS 的逐条转发**。不要据此推断“底层完全没有路由”或“物理上直接连接”。
+
+普通 IPC 本来就会复用底层通信设施，并不是每条消息都新建连接。MessagePort 的价值在于端点组织、持续消息流和减少业务转发；是否更快，要按消息大小、频率和处理方式测量。
+
+也不要把下面三件事混为一谈：
+
+| 边界                                          | 常见手段                           |
+| --------------------------------------------- | ---------------------------------- |
+| 同一 renderer 内，页面与 preload 的不同上下文 | `contextBridge`                    |
+| 页面与 Worker 的不同执行线程                  | `postMessage`、MessagePort         |
+| 主进程与 renderer 等不同进程                  | Electron IPC、分发后的 MessagePort |
+
+`postMessage` 是 API 名字，单看名字不能判断它跨的是上下文、线程还是进程。
+
+## 5. 复制、转移、共享：数据怎么交给另一端
+
+通信通道回答“从哪儿到哪儿”，数据传递方式回答“接收方拿到了什么”。
+
+### 复制：各自拿到独立的数据
+
+结构化克隆会重建支持的数据类型和对象关系。普通对象、数组、`Map`、`Date`、循环引用等都可以处理；它比 JSON 序列化保留的信息更多。
+
+```js
+const original = { name: 'panel' };
+original.self = original;
+const copy = structuredClone(original);
+
+console.log(copy !== original); // true：是新对象
+console.log(copy.self === copy); // true：循环关系保留
+```
+
+但它不是把整个 JS 环境搬过去。函数、DOM 节点不能这样克隆，自定义原型链和类方法也不会随数据复制。具体通道还可能有额外限制，例如 Electron 主进程无法接收部分浏览器专属对象。详见 [结构化克隆支持范围](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm)。
+
+一个容易误判的例子：A 修改了 `Array.prototype.includes`，再把数组通过消息克隆到独立环境 B，B 不会因此继承 A 的修改。B 得到的是使用自己环境中数组原型的数组。
+
+但如果只在 **A 自己的环境** 调用 `structuredClone(array)`，原数组和新数组仍使用 A 的数组原型，修改当然还会生效。克隆数据不等于重置运行环境。
+
+### 转移：把使用权交给另一端
+
+在支持 transferable 的 Web API 中，可以转移 `ArrayBuffer`：
+
+```js
+// worker 是已经创建的 Web Worker
+const buffer = new ArrayBuffer(1024);
+worker.postMessage({ buffer }, [buffer]);
+console.log(buffer.byteLength); // 0：发送方的 buffer 已被分离
+```
+
+这是所有权转移，不是双方继续共同使用原对象。它可以减少复制，但 API 语义本身不保证所有跨进程路径都“物理零拷贝”。
+
+尤其注意：**不同 postMessage 的 transfer 参数不通用。** 当前 [`ipcRenderer.postMessage`](https://www.electronjs.org/docs/latest/api/ipc-renderer#ipcrendererpostmessagechannel-message-transfer) 的 transfer 列表是 `MessagePort[]`，不能照搬上面 Web Worker 的 `ArrayBuffer` 用法。
+
+### 共享：两端访问同一块数据
+
+`SharedArrayBuffer` 共享的是 CPU 内存，需要配合 `Atomics` 等方式协调读写。它不是可转移对象，也不是把任意 JS 对象变成共享对象。
+
+在浏览器侧，需要满足安全上下文、跨源隔离等条件，并且双方必须属于允许共享的同一 agent cluster。通常要正确配置 COOP / COEP，并检查 `crossOriginIsolated`。
+
+**配置了 COOP / COEP，不等于任意页面都能共享内存。** [HTML 规范](https://html.spec.whatwg.org/multipage/structured-data.html#restricting-to-the-same-agent-cluster) 对 agent cluster 有额外限制，跨站 iframe 不能靠这两个响应头跨过边界；宿主与 webview 也不能默认直接共享 SAB。
+
+GPU 共享纹理则是另一条路线。它共享的是图形资源，需要处理资源句柄、生产和消费的同步、使用后的释放，以及平台和版本支持。不能把它等同于 SAB，或理解成“用 JS 消息发送一个纹理对象就行”。可参考 Electron 的 [sharedTexture](https://www.electronjs.org/docs/latest/api/shared-texture) 能力。
+
+## 6. 实际写代码时，先回答四个问题
+
+1. **谁和谁通信？** 同一个页面的两个上下文、Worker，还是不同进程？
+2. **有没有必要隔离？** 组件复用不等于要再开一份网页环境
+3. **接收方要什么？** 一份副本、资源的使用权，还是共享内存？
+4. **瓶颈到底在哪？** 序列化、数据复制、业务转发，还是接收方处理不过来？
+
+先把边界画清楚，再选 API。对大多数功能，窄接口的 `contextBridge` 加普通 IPC 已经足够；确有持续数据流或大块数据需求，再评估 MessagePort、transfer 或共享资源。
+
+> 本文按撰写时的官方文档整理。Electron 的进程分配和底层实现可能随版本变化，落地时应结合项目使用的 Electron / Chromium 版本验证。
