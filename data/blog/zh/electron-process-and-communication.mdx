@@ -51,9 +51,9 @@ _界面里的嵌套关系，不等于运行时的进程边界。_
 
 再往下一层，[V8 Isolate](https://v8.dev/docs/embed) 有自己的 JS 堆，一个 Isolate 可以包含多个 Context。页面与 preload 的两个 world 通常是同一 renderer 主线程 Isolate 中的两个 Context，并非两套引擎，也不是进程级内存保护。Node.js 不包含 Chromium，两者都使用 V8；主进程的 Node.js 与 renderer 使用不同 Isolate，但集成 Node.js 不必再新增 Isolate，沙箱中的 preload 也不是完整 Node.js 环境。
 
-![Chromium 模块协作时序：任务调度、V8、DOM 渲染与网络服务从点击、fetch 请求到回调更新页面的调用顺序](/static/images/electron/chromium-module-sequence.svg)
+![Chromium 核心架构全景：从实例、进程、线程与线程池，到 Blink、V8、合成、GPU 和网络服务的职责模块](/static/images/electron/chromium-process-thread-architecture.svg)
 
-_沿时间向下看模块协作：点击发起请求，网络响应后执行微任务回调，再在渲染机会更新画面。_
+_从外到内看常见桌面核心架构：实例 → 进程 → 线程与线程池 → 职责模块；具体线程与模块位置随平台、版本和配置调整。[查看原图](/static/images/electron/chromium-process-thread-architecture.svg)。_
 
 另外，宿主的 `document.querySelector()` 只能查询自己的文档，不能穿进 `webview` 的 guest DOM。guest preload 操作的是 guest 页面，宿主 preload 操作的是宿主页面。
 

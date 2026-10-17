@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="2040" viewBox="0 0 2400 2040"><rect width="2400" height="2040" fill="#FAFBFD"/>
+<text x="80" y="100" font-family="Noto Sans CJK SC, sans-serif" font-size="50" fill="#142B43" font-weight="700">Chromium 实例：进程、线程与模块全景</text>
+<text x="82" y="158" font-family="Noto Sans CJK SC, sans-serif" font-size="29" fill="#718095" font-weight="400">从外到内读：实例 → 进程 → 线程 / 线程池 → 职责模块</text>
+<rect x="50" y="210" width="2300" height="1740" rx="27" fill="#F6F8FB" stroke="#DCE4EE" stroke-width="1.7"/>
+<text x="85" y="267" font-family="Noto Sans CJK SC, sans-serif" font-size="27" fill="#142B43" font-weight="600">核心线程视图</text>
+<text x="1620" y="267" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#718095" font-weight="400">线程数量与模块位置随平台、版本和配置调整</text>
+<rect x="85" y="300" width="500" height="920" rx="23" fill="#EFF4FB" stroke="#D2DFEE" stroke-width="1.7"/>
+<text x="115" y="353" font-family="Noto Sans CJK SC, sans-serif" font-size="34" fill="#4079CC" font-weight="700">Browser 主控进程</text>
+<text x="115" y="395" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">管理实例、界面、导航与权限</text>
+<rect x="115" y="420" width="440" height="240" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="137" y="445" width="7" height="29" rx="3" fill="#4079CC" stroke="#4079CC" stroke-width="1.7"/>
+<text x="159" y="469" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#4079CC" font-weight="600">UI 主线程</text>
+<text x="143" y="514" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">窗口 / 标签页界面</text>
+<text x="143" y="553" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">导航与进程生命周期</text>
+<text x="143" y="592" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">输入路由 · 权限与安全</text>
+<rect x="115" y="690" width="440" height="165" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="137" y="715" width="7" height="29" rx="3" fill="#4079CC" stroke="#4079CC" stroke-width="1.7"/>
+<text x="159" y="739" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#4079CC" font-weight="600">IO 线程</text>
+<text x="143" y="784" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">IPC / Mojo 通道</text>
+<text x="143" y="823" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">跨进程消息与异步 I/O</text>
+<rect x="115" y="885" width="440" height="290" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="137" y="910" width="7" height="29" rx="3" fill="#4079CC" stroke="#4079CC" stroke-width="1.7"/>
+<text x="159" y="934" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#4079CC" font-weight="600">ThreadPool 线程池</text>
+<text x="143" y="979" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">文件 / 数据库等阻塞任务</text>
+<text x="143" y="1018" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">后台计算与数据处理</text>
+<text x="143" y="1057" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">按优先级调度工作线程</text>
+<text x="143" y="1136" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">任务按序列组织，线程可复用</text>
+<rect x="625" y="300" width="1150" height="1570" rx="23" fill="#EFF4FB" stroke="#D2DFEE" stroke-width="1.7"/>
+<text x="655" y="353" font-family="Noto Sans CJK SC, sans-serif" font-size="34" fill="#4079CC" font-weight="700">Renderer 渲染进程 × N</text>
+<text x="655" y="395" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">每个进程有自己的主线程；页面与 frame 按进程隔离策略分配</text>
+<rect x="655" y="420" width="1090" height="600" rx="20" fill="white" stroke="#BDD0EB" stroke-width="1.7"/>
+<rect x="677" y="445" width="7" height="29" rx="3" fill="#4079CC" stroke="#4079CC" stroke-width="1.7"/>
+<text x="699" y="469" font-family="Noto Sans CJK SC, sans-serif" font-size="31" fill="#4079CC" font-weight="700">页面主线程</text>
+<text x="1110" y="469" font-family="Noto Sans CJK SC, sans-serif" font-size="24" fill="#718095" font-weight="400">JS、DOM 与页面生命周期依次运行</text>
+<rect x="685" y="495" width="1030" height="88" rx="12" fill="#F3F6FA" stroke="#F3F6FA" stroke-width="1.7"/>
+<text x="708" y="533" font-family="Noto Sans CJK SC, sans-serif" font-size="27" fill="#142B43" font-weight="600">任务调度</text>
+<text x="930" y="533" font-family="Noto Sans CJK SC, sans-serif" font-size="26" fill="#142B43" font-weight="400">任务队列 · 事件循环 · 微任务检查点</text>
+<text x="930" y="565" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">输入事件分发 · 渲染时机调度</text>
+<rect x="685" y="600" width="1030" height="145" rx="12" fill="#F3F6FA" stroke="#F3F6FA" stroke-width="1.7"/>
+<text x="708" y="641" font-family="Noto Sans CJK SC, sans-serif" font-size="29" fill="#142B43" font-weight="600">Blink</text>
+<text x="930" y="641" font-family="Noto Sans CJK SC, sans-serif" font-size="26" fill="#142B43" font-weight="400">HTML / CSS 解析 · DOM / Canvas API</text>
+<text x="930" y="683" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">Style 样式 → Layout 布局 → Paint 绘制记录</text>
+<text x="930" y="721" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">生成绘制列表与属性树，提交给合成线程</text>
+<rect x="685" y="765" width="1030" height="225" rx="14" fill="#EDF5F2" stroke="#D5E9E2" stroke-width="1.7"/>
+<text x="710" y="806" font-family="Noto Sans CJK SC, sans-serif" font-size="29" fill="#158E88" font-weight="700">V8 Isolate</text>
+<text x="945" y="806" font-family="Noto Sans CJK SC, sans-serif" font-size="26" fill="#158E88" font-weight="400">主线程上的 JS 虚拟机实例</text>
+<text x="710" y="850" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="600">Context 执行环境</text>
+<text x="1060" y="850" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">各自的全局对象与内置对象</text>
+<text x="710" y="890" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="600">执行引擎 + 调用栈</text>
+<text x="1060" y="890" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">解释 / 编译代码，记录函数调用</text>
+<text x="710" y="930" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="600">Heap + GC</text>
+<text x="1060" y="930" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">存放对象，回收无用内存</text>
+<text x="710" y="969" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">多个 Context 共用该 Isolate 的堆与执行时间</text>
+<rect x="655" y="1050" width="520" height="235" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="677" y="1075" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="699" y="1099" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#158E88" font-weight="600">Compositor 合成线程</text>
+<text x="683" y="1144" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">输入命中 · 滚动 / 合成动画</text>
+<text x="683" y="1183" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">图层与属性树 · 帧调度</text>
+<text x="683" y="1222" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">协调栅格任务，提交合成帧</text>
+<rect x="1205" y="1050" width="540" height="235" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="1227" y="1075" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="1249" y="1099" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#158E88" font-weight="600">Raster / 合成辅助线程</text>
+<text x="1233" y="1144" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">图像解码 · 栅格任务调度</text>
+<text x="1233" y="1183" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">协调 GPU 栅格化 / CPU 回退</text>
+<text x="1233" y="1222" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">工作线程数量按设备能力调整</text>
+<rect x="655" y="1315" width="520" height="185" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="677" y="1340" width="7" height="29" rx="3" fill="#4079CC" stroke="#4079CC" stroke-width="1.7"/>
+<text x="699" y="1364" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#4079CC" font-weight="600">IO 线程</text>
+<text x="683" y="1409" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">IPC 通道 · 消息收发</text>
+<text x="683" y="1448" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">把工作转交对应线程</text>
+<rect x="1205" y="1315" width="540" height="250" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="1227" y="1340" width="7" height="29" rx="3" fill="#4079CC" stroke="#4079CC" stroke-width="1.7"/>
+<text x="1249" y="1364" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#4079CC" font-weight="600">Web Worker 线程 × N</text>
+<text x="1233" y="1409" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">独立任务循环 · 后台 JS</text>
+<text x="1233" y="1448" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">各自的 V8 Isolate 与 JS 堆</text>
+<text x="1233" y="1487" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">消息传递 · Worker API</text>
+<text x="1233" y="1535" font-family="Noto Sans CJK SC, sans-serif" font-size="22" fill="#718095" font-weight="400">Dedicated / Shared / Service 按需创建</text>
+<rect x="655" y="1530" width="520" height="300" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="677" y="1555" width="7" height="29" rx="3" fill="#4079CC" stroke="#4079CC" stroke-width="1.7"/>
+<text x="699" y="1579" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#4079CC" font-weight="600">进程内 ThreadPool</text>
+<text x="683" y="1624" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">V8 后台编译 / 优化辅助</text>
+<text x="683" y="1663" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">部分 GC 并发 / 并行任务</text>
+<text x="683" y="1702" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">其他后台计算与阻塞任务</text>
+<text x="683" y="1785" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">GC 也包含暂停 JS 的阶段</text>
+<rect x="1205" y="1595" width="540" height="235" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="1227" y="1620" width="7" height="29" rx="3" fill="#4079CC" stroke="#4079CC" stroke-width="1.7"/>
+<text x="1249" y="1644" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#4079CC" font-weight="600">媒体与其他辅助线程</text>
+<text x="1233" y="1689" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">音视频解复用 · 解码 · 同步</text>
+<text x="1233" y="1728" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">Canvas / 图像处理辅助</text>
+<text x="1233" y="1767" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">按页面功能与平台创建</text>
+<rect x="85" y="1260" width="500" height="610" rx="23" fill="#EFF4FB" stroke="#D2DFEE" stroke-width="1.7"/>
+<text x="115" y="1313" font-family="Noto Sans CJK SC, sans-serif" font-size="34" fill="#158E88" font-weight="700">其他 Utility 进程 × N</text>
+<text x="115" y="1355" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">音频 / 视频解码 / 数据解码等</text>
+<rect x="115" y="1390" width="440" height="190" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="137" y="1415" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="159" y="1439" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#158E88" font-weight="600">服务主线程</text>
+<text x="143" y="1484" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">运行对应服务模块</text>
+<text x="143" y="1523" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">响应 Mojo 请求</text>
+<rect x="115" y="1610" width="440" height="200" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="137" y="1635" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="159" y="1659" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#158E88" font-weight="600">工作线程 / 线程池</text>
+<text x="143" y="1704" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">服务专用计算与 I/O</text>
+<text x="143" y="1743" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">线程组织由服务实现决定</text>
+<rect x="1815" y="300" width="500" height="790" rx="23" fill="#EFF4FB" stroke="#D2DFEE" stroke-width="1.7"/>
+<text x="1845" y="353" font-family="Noto Sans CJK SC, sans-serif" font-size="34" fill="#158E88" font-weight="700">GPU / Viz 进程</text>
+<text x="1845" y="395" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">汇总各进程画面并访问 GPU</text>
+<rect x="1845" y="420" width="440" height="170" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="1867" y="445" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="1889" y="469" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#158E88" font-weight="600">GPU 主线程</text>
+<text x="1873" y="514" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">GPU 服务 · 命令缓冲</text>
+<text x="1873" y="553" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">图形资源 · GPU 栅格化</text>
+<rect x="1845" y="620" width="440" height="175" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="1867" y="645" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="1889" y="669" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#158E88" font-weight="600">Viz 显示合成线程</text>
+<text x="1873" y="714" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">聚合各 Renderer / UI 的帧</text>
+<text x="1873" y="753" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">显示合成调度 · 帧呈现</text>
+<rect x="1845" y="825" width="440" height="210" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="1867" y="850" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="1889" y="874" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#158E88" font-weight="600">IO / 辅助线程</text>
+<text x="1873" y="919" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">IO：通道与消息处理</text>
+<text x="1873" y="958" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">DrDC：独立 GPU 绘制线程</text>
+<text x="1873" y="997" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">辅助线程随后端配置启用</text>
+<rect x="1815" y="1130" width="500" height="740" rx="23" fill="#EFF4FB" stroke="#D2DFEE" stroke-width="1.7"/>
+<text x="1845" y="1183" font-family="Noto Sans CJK SC, sans-serif" font-size="34" fill="#158E88" font-weight="700">Network Service</text>
+<text x="1845" y="1225" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">通常位于独立 Utility 进程</text>
+<rect x="1845" y="1250" width="440" height="270" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="1867" y="1275" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="1889" y="1299" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#158E88" font-weight="600">网络 IO 线程</text>
+<text x="1873" y="1344" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">URLLoader · NetworkContext</text>
+<text x="1873" y="1383" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">HTTP / HTTPS · WebSocket</text>
+<text x="1873" y="1422" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">连接 / Socket · DNS 协调</text>
+<text x="1873" y="1461" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">Cookie · 网络缓存</text>
+<rect x="1845" y="1550" width="440" height="180" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="1867" y="1575" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="1889" y="1599" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#158E88" font-weight="600">辅助线程 / 线程池</text>
+<text x="1873" y="1644" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">阻塞解析 / 磁盘缓存等</text>
+<text x="1873" y="1683" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">根据具体实现调度</text>
+<text x="1845" y="1775" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">运行位置按平台与配置选择</text>
+<text x="1845" y="1815" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">部分配置位于 Browser 进程内</text>
+<text x="85" y="1915" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#718095" font-weight="400">协作方式：进程间使用 Mojo / IPC；线程间通过任务投递；渲染结果以合成帧交给 Viz</text>
+<text x="82" y="2000" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#718095" font-weight="400">范围：常见桌面多进程配置的核心架构；功能线程按需创建，图中聚焦主要职责与归属</text>
+</svg>
