@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1580" viewBox="0 0 1800 1580"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M1 1 L7 4 L1 7" stroke="#A3B1C1" stroke-width="1.5" fill="none"/></marker></defs><rect width="1800" height="1580" fill="#FAFBFD"/>
+<text x="80" y="92" font-family="Noto Sans CJK SC, sans-serif" font-size="48" fill="#142B43" font-weight="700">一次点击，如何经过 V8 更新页面</text>
+<text x="82" y="147" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#718095" font-weight="400">职责放在上面，执行顺序沿编号向下读</text>
+<rect x="70" y="195" width="1660" height="1315" rx="26" fill="#F4F7FB" stroke="#DCE4EE" stroke-width="1.5"/>
+<text x="110" y="251" font-family="Noto Sans CJK SC, sans-serif" font-size="36" fill="#142B43" font-weight="700">Chromium 实例</text>
+<text x="110" y="297" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#718095" font-weight="400">简化视图：选取一个渲染进程的页面主线程，并展示与网络服务的协作</text>
+<rect x="110" y="330" width="1580" height="354" rx="20" fill="white" stroke="#DFE6EE" stroke-width="1.5"/>
+<text x="140" y="379" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#142B43" font-weight="600">一个渲染进程 · 页面主线程</text>
+<rect x="140" y="407" width="370" height="245" rx="16" fill="#EBF5F2" stroke="#EBF5F2" stroke-width="1.5"/>
+<text x="168" y="453" font-family="Noto Sans CJK SC, sans-serif" font-size="31" fill="#158E88" font-weight="700">任务调度</text>
+<text x="168" y="499" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">事件循环选取任务</text>
+<text x="168" y="541" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">在检查点处理微任务</text>
+<text x="168" y="596" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#158E88" font-weight="600">决定何时调用 JS</text>
+<rect x="535" y="407" width="690" height="245" rx="16" fill="#EDF3FD" stroke="#EDF3FD" stroke-width="1.5"/>
+<text x="563" y="453" font-family="Noto Sans CJK SC, sans-serif" font-size="31" fill="#4079CC" font-weight="700">V8 执行</text>
+<text x="760" y="453" font-family="Noto Sans CJK SC, sans-serif" font-size="24" fill="#4079CC" font-weight="400">Isolate：一个 JS 虚拟机实例</text>
+<text x="563" y="501" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#4079CC" font-weight="600">Context</text>
+<text x="733" y="501" font-family="Noto Sans CJK SC, sans-serif" font-size="24" fill="#142B43" font-weight="400">提供各自的全局环境与内置对象</text>
+<text x="563" y="543" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#4079CC" font-weight="600">调用栈</text>
+<text x="733" y="543" font-family="Noto Sans CJK SC, sans-serif" font-size="24" fill="#142B43" font-weight="400">记录函数调用；执行引擎运行代码</text>
+<text x="563" y="585" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#4079CC" font-weight="600">Heap</text>
+<text x="733" y="585" font-family="Noto Sans CJK SC, sans-serif" font-size="24" fill="#142B43" font-weight="400">存放对象；GC 回收无用数据</text>
+<text x="563" y="626" font-family="Noto Sans CJK SC, sans-serif" font-size="22" fill="#718095" font-weight="400">多个 Context 共用该实例的堆与 JS 执行时间</text>
+<rect x="1250" y="407" width="410" height="245" rx="16" fill="#EBF5F2" stroke="#EBF5F2" stroke-width="1.5"/>
+<text x="1278" y="453" font-family="Noto Sans CJK SC, sans-serif" font-size="31" fill="#158E88" font-weight="700">页面渲染</text>
+<text x="1278" y="499" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">DOM 保存页面结构</text>
+<text x="1278" y="541" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">计算样式与布局</text>
+<text x="1278" y="583" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#142B43" font-weight="400">在渲染机会更新画面</text>
+<text x="140" y="736" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#142B43" font-weight="600">执行顺序</text>
+<text x="325" y="736" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="#718095" font-weight="400">点击 → 发请求 → 等待 → 回调 → 修改 DOM → 更新画面</text>
+<path d="M150 828 V880" fill="none" stroke="#A3B1C1" stroke-width="2.5" marker-end="url(#a)"/>
+<rect x="120" y="780" width="60" height="48" rx="13" fill="#158E88" stroke="#158E88" stroke-width="1.5"/>
+<text x="132" y="814" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="white" font-weight="700">01</text>
+<rect x="210" y="775" width="1450" height="96" rx="14" fill="white" stroke="#E3E9F1" stroke-width="1.5"/>
+<rect x="235" y="798" width="215" height="44" rx="22" fill="#EBF5F2" stroke="none" stroke-width="1.5"/>
+<text x="256" y="829" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#158E88" font-weight="600">任务调度</text>
+<text x="480" y="814" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#142B43" font-weight="600">选中点击任务</text>
+<text x="480" y="851" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">派发点击事件，调用对应的 JS 处理函数</text>
+<path d="M150 938 V990" fill="none" stroke="#A3B1C1" stroke-width="2.5" marker-end="url(#a)"/>
+<rect x="120" y="890" width="60" height="48" rx="13" fill="#4079CC" stroke="#4079CC" stroke-width="1.5"/>
+<text x="132" y="924" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="white" font-weight="700">02</text>
+<rect x="210" y="885" width="1450" height="96" rx="14" fill="white" stroke="#E3E9F1" stroke-width="1.5"/>
+<rect x="235" y="908" width="215" height="44" rx="22" fill="#EDF3FD" stroke="none" stroke-width="1.5"/>
+<text x="256" y="939" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#4079CC" font-weight="600">V8 执行</text>
+<text x="480" y="924" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#142B43" font-weight="600">运行 JS，发起 fetch</text>
+<text x="480" y="961" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">把请求交给网络服务，继续执行剩余同步代码，然后返回</text>
+<path d="M150 1048 V1100" fill="none" stroke="#A3B1C1" stroke-width="2.5" marker-end="url(#a)"/>
+<rect x="120" y="1000" width="60" height="48" rx="13" fill="#158E88" stroke="#158E88" stroke-width="1.5"/>
+<text x="132" y="1034" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="white" font-weight="700">03</text>
+<rect x="210" y="995" width="1450" height="96" rx="14" fill="white" stroke="#E3E9F1" stroke-width="1.5"/>
+<rect x="235" y="1018" width="215" height="44" rx="22" fill="#EBF5F2" stroke="none" stroke-width="1.5"/>
+<text x="256" y="1049" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#158E88" font-weight="600">网络服务</text>
+<text x="480" y="1034" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#142B43" font-weight="600">异步等待响应</text>
+<text x="480" y="1071" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">网络服务在页面主线程外处理请求；页面可继续检查微任务、处理其他任务</text>
+<path d="M150 1158 V1210" fill="none" stroke="#A3B1C1" stroke-width="2.5" marker-end="url(#a)"/>
+<rect x="120" y="1110" width="60" height="48" rx="13" fill="#4079CC" stroke="#4079CC" stroke-width="1.5"/>
+<text x="132" y="1144" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="white" font-weight="700">04</text>
+<rect x="210" y="1105" width="1450" height="96" rx="14" fill="white" stroke="#E3E9F1" stroke-width="1.5"/>
+<rect x="235" y="1128" width="215" height="44" rx="22" fill="#EDF3FD" stroke="none" stroke-width="1.5"/>
+<text x="256" y="1159" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#4079CC" font-weight="600">调度 → V8</text>
+<text x="480" y="1144" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#142B43" font-weight="600">处理结果，执行 Promise 回调</text>
+<text x="480" y="1181" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">网络结果任务使 Promise 完成；到微任务检查点，由 V8 执行 then 回调</text>
+<path d="M150 1268 V1320" fill="none" stroke="#A3B1C1" stroke-width="2.5" marker-end="url(#a)"/>
+<rect x="120" y="1220" width="60" height="48" rx="13" fill="#4079CC" stroke="#4079CC" stroke-width="1.5"/>
+<text x="132" y="1254" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="white" font-weight="700">05</text>
+<rect x="210" y="1215" width="1450" height="96" rx="14" fill="white" stroke="#E3E9F1" stroke-width="1.5"/>
+<rect x="235" y="1238" width="215" height="44" rx="22" fill="#EDF3FD" stroke="none" stroke-width="1.5"/>
+<text x="256" y="1269" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#4079CC" font-weight="600">V8 → DOM</text>
+<text x="480" y="1254" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#142B43" font-weight="600">回调修改页面内容</text>
+<text x="480" y="1291" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">JS 调用 DOM API，更新页面结构或样式</text>
+<rect x="120" y="1330" width="60" height="48" rx="13" fill="#158E88" stroke="#158E88" stroke-width="1.5"/>
+<text x="132" y="1364" font-family="Noto Sans CJK SC, sans-serif" font-size="25" fill="white" font-weight="700">06</text>
+<rect x="210" y="1325" width="1450" height="96" rx="14" fill="white" stroke="#E3E9F1" stroke-width="1.5"/>
+<rect x="235" y="1348" width="215" height="44" rx="22" fill="#EBF5F2" stroke="none" stroke-width="1.5"/>
+<text x="256" y="1379" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#158E88" font-weight="600">页面渲染</text>
+<text x="480" y="1364" font-family="Noto Sans CJK SC, sans-serif" font-size="28" fill="#142B43" font-weight="600">遇到渲染机会，更新画面</text>
+<text x="480" y="1401" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">Chromium 根据渲染时机与页面状态处理视觉更新</text>
+<text x="210" y="1470" font-family="Noto Sans CJK SC, sans-serif" font-size="23" fill="#718095" font-weight="400">微任务检查点会持续处理微任务，直到队列为空</text>
+</svg>

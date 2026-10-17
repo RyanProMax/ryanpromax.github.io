@@ -51,6 +51,10 @@ _界面里的嵌套关系，不等于运行时的进程边界。_
 
 再往下一层，[V8 Isolate](https://v8.dev/docs/embed) 有自己的 JS 堆，一个 Isolate 可以包含多个 Context。页面与 preload 的两个 world 通常是同一 renderer 主线程 Isolate 中的两个 Context，并非两套引擎，也不是进程级内存保护。Node.js 不包含 Chromium，两者都使用 V8；主进程的 Node.js 与 renderer 使用不同 Isolate，但集成 Node.js 不必再新增 Isolate，沙箱中的 preload 也不是完整 Node.js 环境。
 
+![V8 职责与执行流程：Chromium 中的任务调度、Isolate、Context、调用栈、堆，以及从点击到更新页面的六步过程](/static/images/electron/v8-responsibilities-and-execution.svg)
+
+_从一次点击看分工：任务调度决定何时调用 JS，V8 执行代码，页面渲染负责更新画面。_
+
 另外，宿主的 `document.querySelector()` 只能查询自己的文档，不能穿进 `webview` 的 guest DOM。guest preload 操作的是 guest 页面，宿主 preload 操作的是宿主页面。
 
 ## 3. iframe、webview、动态组件，不是同一种隔离
@@ -98,6 +102,10 @@ _界面里的嵌套关系，不等于运行时的进程边界。_
 ## 5. 复制、转移、共享：数据怎么交给另一端
 
 通信通道回答“从哪儿到哪儿”，数据传递方式回答“接收方拿到了什么”。
+
+![数据从 A 到 B 的四种方式：复制、转移所有权、共享 CPU 内存和共享 GPU 纹理，并列出各自的典型例子](/static/images/electron/data-transfer-methods.svg)
+
+_先选数据交付方式，再检查所用通道是否支持；共享 CPU 内存与共享 GPU 纹理的条件不同。_
 
 ### 复制：各自拿到独立的数据
 
