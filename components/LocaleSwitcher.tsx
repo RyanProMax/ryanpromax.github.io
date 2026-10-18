@@ -21,9 +21,10 @@ export default function LocaleSwitcher({ availablePaths }: { availablePaths: str
       aria-label={nextLocale === Locale.ZH ? '切换到中文' : 'Switch to English'}
       onClick={(event) => {
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        if (equivalent && (window.location.search || window.location.hash)) {
+        // Translated headings have different IDs, so do not carry article fragments.
+        if (equivalent && window.location.search) {
           event.preventDefault();
-          router.push(`${target}${window.location.search}${window.location.hash}`);
+          router.push(`${target}${window.location.search}`);
         }
         try {
           localStorage.setItem('preferred-locale', nextLocale);
