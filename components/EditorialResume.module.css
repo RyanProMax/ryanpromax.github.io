@@ -304,9 +304,9 @@
   z-index: 20;
 }
 
+/* Keep every fixed card above all scrolling titles, including the next section. */
 .work {
   position: relative;
-  z-index: 20;
   pointer-events: none;
 }
 
