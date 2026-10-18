@@ -33,8 +33,8 @@ const generateRss = (config, posts, language = DEFAULT_LOCALE, page = 'feed.xml'
     <channel>
       <title>${escape(config.title)}</title>
       <link>${config.siteUrl}/${language}/blog</link>
-      <description>${escape(config.description)}</description>
-      <language>${config.language}</language>
+      <description>${escape(config.descriptions?.[language] || config.description)}</description>
+      <language>${language === Locale.ZH ? 'zh-CN' : 'en-US'}</language>
       <managingEditor>${config.email} (${config.author})</managingEditor>
       <webMaster>${config.email} (${config.author})</webMaster>
       <lastBuildDate>${new Date(posts[0].date).toUTCString()}</lastBuildDate>
@@ -58,7 +58,9 @@ async function generateRSS(config, allBlogs, language = DEFAULT_LOCALE, page = '
 
   if (publishPosts.length > 0) {
     for (const tag of Object.keys(tagData[language])) {
-      const filteredPosts = allBlogs.filter((post) => post.tags.map((t) => slug(t)).includes(tag));
+      const filteredPosts = publishPosts.filter((post) =>
+        post.tags.map((t) => slug(t)).includes(tag)
+      );
       const rss = generateRss(config, filteredPosts, language, `tags/${tag}/${page}`);
       const rssPath = path.join(outputFolder, language, 'tags', tag);
       mkdirSync(rssPath, { recursive: true });

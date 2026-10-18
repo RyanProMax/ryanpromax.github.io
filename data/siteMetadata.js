@@ -11,8 +11,8 @@ const siteMetadata = {
   },
   language: 'en-US',
   theme: 'system', // system, dark or light
-  siteUrl: 'https://ryanpromax.github.io/blog',
-  siteRepo: 'https://github.com/RyanProMax/blog/',
+  siteUrl: 'https://ryanzh.me',
+  siteRepo: 'https://github.com/RyanProMax/ryanpromax.github.io',
   siteLogo: `${process.env.BASE_PATH || ''}/static/images/logo.png`,
   socialBanner: `${process.env.BASE_PATH || ''}/static/images/twitter-card.png`,
   mastodon: 'https://mastodon.social/@mastodonuser',
