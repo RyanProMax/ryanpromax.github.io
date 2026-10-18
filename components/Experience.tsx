@@ -18,11 +18,11 @@ export const EXPERIENCES: Record<Locale, Experience[]> = {
       logo: '/static/images/timeline/bytedance.svg',
       start: 'Jul 2021',
       end: 'PRESENT',
-      title: 'Engineering Lead, Game Experiences & AI-assisted Development',
+      title: 'Front-end Engineer, Douyin Live Companion',
       highlights: [
-        'Led the design and iteration of bullet-screen gameplay, dual-screen streaming, and cross-device game interactions.',
-        'Built stability metrics for PC game capture and mobile screen casting to make quality visible and actionable.',
-        'Improved repository context, collaboration conventions, validation loops, and task orchestration for more reliable AI-assisted development.',
+        'Develop Electron client features for multi-screen streaming, game capture, beauty effects, and interactive gameplay.',
+        'Improve performance and reliability across screen casting, capture, and native SDK integrations.',
+        'Lead cloud device orchestration and Agent + MCP-driven end-to-end testing for real desktop clients.',
       ],
     },
     {
@@ -32,7 +32,9 @@ export const EXPERIENCES: Record<Locale, Experience[]> = {
       start: 'Jun 2020',
       end: 'Jul 2021',
       title: '🧑‍💻Front-end Group Lead',
-      highlights: ['Led the front-end team and delivery across desktop and web projects.'],
+      highlights: [
+        'Developed and maintained front-end systems, with ongoing iteration and performance optimization.',
+      ],
     },
     {
       org: 'China Unicom',
@@ -40,8 +42,10 @@ export const EXPERIENCES: Record<Locale, Experience[]> = {
       logo: '/static/images/timeline/china-unicom.svg',
       start: 'Jul 2016',
       end: 'May 2020',
-      title: '🧑‍💻Front-end Engineer',
-      highlights: ['Built operations tooling and front-end systems for China Unicom.'],
+      title: '🧑‍💻Operations Engineer & Front-end Developer',
+      highlights: [
+        'Maintained wireless and metro network equipment before transitioning to front-end development in 2019.',
+      ],
     },
     {
       org: 'Sun Yat-sen University',
@@ -60,11 +64,11 @@ export const EXPERIENCES: Record<Locale, Experience[]> = {
       logo: '/static/images/timeline/bytedance.svg',
       start: '2021/07',
       end: '至今',
-      title: '抖音直播伴侣 — 游戏体验与 AI 辅助研发负责人',
+      title: '抖音直播伴侣 — 前端开发',
       highlights: [
-        '主导弹幕玩法、双屏直播、游戏连屏等核心能力的设计与迭代，持续改善直播互动体验。',
-        '建立 PC 游戏采集与手机投屏的稳定性指标体系，让质量问题可观察、可定位。',
-        '推进主仓库的上下文组织、协作规范、验证闭环与任务编排建设，提高 AI 辅助研发的稳定性与可重复性。',
+        '负责 Electron 客户端的多屏直播、游戏采集、美颜特效与小玩法开发。',
+        '围绕投屏、采集与原生 SDK 接入，持续优化客户端性能与稳定性。',
+        '主导云端设备调度与 Agent + MCP 端到端测试，让自动化验证覆盖真实客户端。',
       ],
     },
     {
@@ -74,7 +78,7 @@ export const EXPERIENCES: Record<Locale, Experience[]> = {
       start: '2020/06',
       end: '2021/07',
       title: '🧑‍💻前端组长',
-      highlights: ['负责前端团队管理，以及桌面端与 Web 项目的研发交付。'],
+      highlights: ['负责各系统的前端开发、维护迭代与性能优化。'],
     },
     {
       org: '中国联通',
@@ -83,7 +87,7 @@ export const EXPERIENCES: Record<Locale, Experience[]> = {
       start: '2016/07',
       end: '2020/05',
       title: '🧑‍💻运维工程师 & 前端开发',
-      highlights: ['负责中国联通运维工具与前端系统建设。'],
+      highlights: ['先后从事无线网与城域网设备维护，并于 2019 年转向前端开发。'],
     },
     {
       org: '中山大学',
