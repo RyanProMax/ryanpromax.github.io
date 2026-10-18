@@ -65,16 +65,14 @@
   text-transform: uppercase;
 }
 
-.introLinks button:active,
-.introLinks a:active,
+.introMeta:active,
 .workTitle a:active,
 .outroLinks a:active,
 .scrollUp:active {
   transform: translateY(1px);
 }
 
-.introLinks button:focus-visible,
-.introLinks a:focus-visible,
+.introMeta:focus-visible,
 .workTitle a:focus-visible,
 .outroLinks a:focus-visible,
 .scrollUp:focus-visible,
@@ -235,7 +233,13 @@
 
 .introMeta {
   display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
+  cursor: pointer;
+  text-align: left;
   padding: 0.85rem 0;
   border-top: 1px solid color-mix(in srgb, var(--site-text) 22%, transparent);
   border-bottom: 1px solid color-mix(in srgb, var(--site-text) 22%, transparent);
@@ -248,37 +252,19 @@
   text-transform: uppercase;
 }
 
-.introLinks {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  margin-top: 1.25rem;
+.introMeta > span:nth-child(2) {
+  margin-left: auto;
+  white-space: nowrap;
 }
 
-.introLinks button,
-.introLinks a {
-  display: inline-flex;
-  min-height: 2.75rem;
-  align-items: center;
-  border-bottom: 1px solid currentColor;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  line-height: 1.2;
-  text-transform: uppercase;
-  transition:
-    color 180ms ease,
-    opacity 220ms ease,
-    transform 220ms ease;
+.introMeta > svg {
+  flex-shrink: 0;
 }
 
-.introLinks button:hover,
-.introLinks a:hover {
+.introMeta:hover {
   color: var(--experience-pink);
-  opacity: 1;
 }
 
-.introLinks [data-scrambling='true'],
 .outroLinks [data-scrambling='true'],
 .scrollUp [data-scrambling='true'] {
   color: var(--experience-pink);
@@ -856,11 +842,6 @@
     margin-top: 1.5rem;
   }
 
-  .introLinks {
-    gap: 1rem;
-    margin-top: 1rem;
-  }
-
   .scrollPrompt,
   .scrollUp {
     bottom: 1.25rem;
@@ -910,6 +891,10 @@
 
   .resume {
     scroll-behavior: auto;
+  }
+
+  .introMeta:active {
+    transform: none;
   }
 
   .introPanel,

@@ -2,7 +2,7 @@
 
 import Lenis from 'lenis';
 import NextImage from 'next/image';
-import { Asterisk, ArrowUpRight } from 'lucide-react';
+import { Asterisk, ArrowDown } from 'lucide-react';
 import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { Experience } from '@/components/Experience';
@@ -422,7 +422,16 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
               />
             </p>
           )}
-          <div className={styles.introMeta}>
+          <button
+            type="button"
+            className={styles.introMeta}
+            onClick={scrollToExperience}
+            aria-label={
+              isChinese
+                ? '浏览工程职业生涯：2016 年至今'
+                : 'Explore engineering career: 2016 to present'
+            }
+          >
             <span>
               <ScrambleText
                 key={`career-${activeLocale}`}
@@ -441,29 +450,8 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
                 duration={460}
               />
             </span>
-          </div>
-          <div className={styles.introLinks}>
-            <button type="button" onClick={scrollToExperience}>
-              <ScrambleText
-                key={`explore-${activeLocale}`}
-                text={isChinese ? '浏览经历' : 'EXPLORE EXPERIENCE'}
-                play={interfaceReady}
-                hover
-                delay={970}
-                duration={460}
-              />
-            </button>
-            <a href={projectsUrl}>
-              <ScrambleText
-                key={`selected-${activeLocale}`}
-                text={isChinese ? '精选作品' : 'SELECTED WORK'}
-                play={interfaceReady}
-                hover
-                delay={1030}
-                duration={460}
-              />
-            </a>
-          </div>
+            <ArrowDown aria-hidden="true" size={14} strokeWidth={1.5} />
+          </button>
         </div>
 
         <figure className={styles.introTrack}>
