@@ -509,6 +509,27 @@
   gap: clamp(0.9rem, 2.25vw, 1.5rem);
 }
 
+.imageClip:not(.compactVisual) {
+  height: auto;
+  aspect-ratio: auto;
+}
+
+.imageClip:not(.compactVisual) .poster {
+  height: auto;
+}
+
+.imageClip:not(.compactVisual) .posterComposition {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+  gap: 1rem;
+}
+
+.imageClip:not(.compactVisual) .logo {
+  max-height: clamp(3rem, 8vw, 5rem);
+}
+
 .posterBrand {
   display: flex;
   width: 28%;

@@ -20,9 +20,9 @@ export const EXPERIENCES: Record<Locale, Experience[]> = {
       end: 'PRESENT',
       title: 'Front-end Engineer, Douyin Live Companion',
       highlights: [
-        'Develop Electron client features for multi-screen streaming, game capture, beauty effects, and interactive gameplay.',
-        'Improve performance and reliability across screen casting, capture, and native SDK integrations.',
-        'Lead cloud device orchestration and Agent + MCP-driven end-to-end testing for real desktop clients.',
+        'Desktop engineering: build Electron clients with IPC, native SDK integration, business plugins, and version management.',
+        'Audio/video: work with streaming protocols, multi-screen streaming, frame capture, beauty effects, and mini-game systems, improving performance and reliability.',
+        'AI4SE: lead cloud device orchestration and Agent + MCP-driven end-to-end testing for real desktop clients.',
       ],
     },
     {
@@ -66,9 +66,9 @@ export const EXPERIENCES: Record<Locale, Experience[]> = {
       end: '至今',
       title: '抖音直播伴侣 — 前端开发',
       highlights: [
-        '负责 Electron 客户端的多屏直播、游戏采集、美颜特效与小玩法开发。',
-        '围绕投屏、采集与原生 SDK 接入，持续优化客户端性能与稳定性。',
-        '主导云端设备调度与 Agent + MCP 端到端测试，让自动化验证覆盖真实客户端。',
+        '桌面端工程：负责 Electron 客户端开发，涵盖跨进程通信、原生 SDK 接入、业务插件化与版本管理。',
+        '音视频业务：熟悉流媒体协议，负责多屏直播、画面采集、美颜特效与小玩法体系，持续优化性能与稳定性。',
+        'AI4SE：主导云端设备调度与 Agent + MCP 端到端测试，让自动化验证覆盖真实客户端。',
       ],
     },
     {
