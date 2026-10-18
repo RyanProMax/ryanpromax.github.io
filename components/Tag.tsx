@@ -1,19 +1,15 @@
+'use client';
+
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { slug } from 'github-slugger';
+import { DEFAULT_LOCALE } from '@/locales/config';
 
-interface Props {
-  text: string;
-}
-
-const Tag = ({ text }: Props) => {
+export default function Tag({ text }: { text: string }) {
+  const { locale = DEFAULT_LOCALE } = useParams();
   return (
-    <Link
-      href={`/tags/${slug(text)}`}
-      className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 mr-3 text-sm font-medium uppercase"
-    >
+    <Link href={`/${locale}/tags/${slug(text)}`} className="editorial-tag">
       {text.split(' ').join('-')}
     </Link>
   );
-};
-
-export default Tag;
+}

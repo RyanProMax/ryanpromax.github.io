@@ -18,7 +18,7 @@ export const EXPERIENCES: Record<Locale, Experience[]> = {
       logo: '/static/images/timeline/bytedance.svg',
       start: 'Jul 2021',
       end: 'PRESENT',
-      title: 'Front-end Engineer, Douyin Live Companion',
+      title: 'Electron Client & Full-Stack Engineer, Douyin Live Companion',
       highlights: [
         'Desktop engineering: build Electron clients with IPC, native SDK integration, business plugins, and version management.',
         'Audio/video: work with streaming protocols, multi-screen streaming, frame capture, beauty effects, and mini-game systems, improving performance and reliability.',
@@ -64,7 +64,7 @@ export const EXPERIENCES: Record<Locale, Experience[]> = {
       logo: '/static/images/timeline/bytedance.svg',
       start: '2021/07',
       end: '至今',
-      title: '抖音直播伴侣 — 前端开发',
+      title: '抖音直播伴侣 — Electron 客户端 & 全栈开发',
       highlights: [
         '桌面端工程：负责 Electron 客户端开发，涵盖跨进程通信、原生 SDK 接入、业务插件化与版本管理。',
         '音视频业务：熟悉流媒体协议，负责多屏直播、画面采集、美颜特效与小玩法体系，持续优化性能与稳定性。',

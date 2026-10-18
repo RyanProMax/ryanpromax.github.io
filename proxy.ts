@@ -22,10 +22,6 @@ function getPreferredLocale(request: NextRequest): Locale {
   if (cookieLocale && SupportedLanguages.includes(cookieLocale)) {
     return cookieLocale;
   }
-  const acceptLanguage = request.headers.get('accept-language');
-  if (acceptLanguage && acceptLanguage.includes('zh')) {
-    return Locale.ZH;
-  }
   return DEFAULT_LOCALE;
 }
 

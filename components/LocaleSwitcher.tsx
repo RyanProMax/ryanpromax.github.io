@@ -1,65 +1,37 @@
 'use client';
 
-import clsx from 'clsx';
-import { useParams, useRouter } from 'next/navigation';
-import { Button } from '@headlessui/react';
-import { DEFAULT_LOCALE, Locale, SupportedLanguages } from '@/locales/config';
+import { useParams, usePathname, useRouter } from 'next/navigation';
+import Link from './Link';
+import { DEFAULT_LOCALE, Locale } from '@/locales/config';
 
-export default function LocaleSwitcher() {
+export default function LocaleSwitcher({ availablePaths }: { availablePaths: string[] }) {
   const router = useRouter();
   const { locale = DEFAULT_LOCALE } = useParams();
+  const pathname = usePathname();
   const nextLocale = locale === Locale.EN ? Locale.ZH : Locale.EN;
-
-  const parseCurrentPath = () => {
-    const pathname = window.location.pathname;
-    const segments = pathname.split('/').filter(Boolean);
-    const localeIndex = segments.findIndex((segment) =>
-      SupportedLanguages.includes(segment as Locale)
-    );
-
-    if (localeIndex === -1) {
-      return {
-        basePath: '',
-        pathnameWithoutLocale: pathname || '/',
-      };
-    }
-
-    const baseSegments = segments.slice(0, localeIndex);
-    const pathSegments = segments.slice(localeIndex + 1);
-    return {
-      basePath: baseSegments.length ? `/${baseSegments.join('/')}` : '',
-      pathnameWithoutLocale: pathSegments.length ? `/${pathSegments.join('/')}` : '/',
-    };
-  };
-
-  const handleLanguageSwitch = () => {
-    try {
-      localStorage.setItem('preferred-locale', nextLocale);
-      document.cookie = `preferred-locale=${nextLocale}; max-age=${365 * 24 * 60 * 60}; path=/; samesite=lax`;
-
-      const { basePath, pathnameWithoutLocale } = parseCurrentPath();
-      const pathSuffix = pathnameWithoutLocale === '/' ? '' : pathnameWithoutLocale;
-      const targetPath = `${basePath}/${nextLocale}${pathSuffix}${window.location.search}${window.location.hash}`;
-      router.push(targetPath);
-    } catch (e) {
-      console.error('Failed to save language preference:', e);
-    }
-  };
-
+  const candidate = pathname.replace(/^\/(en|zh)(?=\/|$)/, `/${nextLocale}`);
+  const normalized = candidate.replace(/\/$/, '');
+  const target = availablePaths.includes(normalized) ? candidate : `/${nextLocale}/blog`;
   return (
-    <Button
-      onClick={handleLanguageSwitch}
-      className={clsx(
-        'inline-flex items-center px-1.5 py-0.5',
-        'rounded-md',
-        'cursor-pointer',
-        'text-sm/6 font-semibold',
-        'hover:border-primary-600 dark:hover:border-primary-400 border border-black dark:border-white',
-        'hover:text-primary-600 dark:hover:text-primary-400 text-black dark:text-white',
-        'bg-transparent'
-      )}
+    <Link
+      href={target}
+      className="locale-switch"
+      lang={nextLocale}
+      aria-label={nextLocale === Locale.ZH ? '切换到中文' : 'Switch to English'}
+      onClick={(event) => {
+        if (window.location.search || window.location.hash) {
+          event.preventDefault();
+          router.push(`${target}${window.location.search}${window.location.hash}`);
+        }
+        try {
+          localStorage.setItem('preferred-locale', nextLocale);
+          document.cookie = `preferred-locale=${nextLocale}; max-age=31536000; path=/; samesite=lax`;
+        } catch {
+          /* Navigation still works when browser storage is unavailable. */
+        }
+      }}
     >
-      {nextLocale.toUpperCase()}
-    </Button>
+      {nextLocale === Locale.ZH ? '中' : 'EN'}
+    </Link>
   );
 }

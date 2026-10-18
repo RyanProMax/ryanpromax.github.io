@@ -56,21 +56,8 @@ const computedFields: ComputedFields = {
   path: {
     type: 'string',
     resolve: (doc) => {
-      // 保持完整路径，但对默认语言不包含语言前缀
-      const fullPath = doc._raw.flattenedPath;
-      // 提取语言和文章路径: blog/en/article -> blog/article, blog/zh/article -> zh/blog/article
-      const match = fullPath.match(/^blog\/(zh|en)\/(.+)$/);
-      if (match) {
-        const [, language, articleSlug] = match;
-        // 默认语言不包含语言前缀
-        if (language === DEFAULT_LOCALE) {
-          return `blog/${articleSlug}`;
-        } else {
-          return `${language}/blog/${articleSlug}`;
-        }
-      }
-      // 如果没有匹配到，返回原路径去掉 blog/ 前缀
-      return fullPath.replace(/^blog\//, '');
+      const match = doc._raw.flattenedPath.match(/^blog\/(zh|en)\/(.+)$/);
+      return match ? `${match[1]}/blog/${match[2]}` : doc._raw.flattenedPath;
     },
   },
   filePath: {
@@ -162,7 +149,7 @@ export const Blog = defineDocumentType(() => ({
         dateModified: doc.lastmod || doc.date,
         description: doc.summary,
         image: doc.images ? doc.images[0] : siteMetadata.socialBanner,
-        url: `${siteMetadata.siteUrl}/${doc._raw.flattenedPath}`,
+        url: `${siteMetadata.siteUrl}/${doc.language || DEFAULT_LOCALE}/blog/${doc._raw.flattenedPath.replace(/^blog\/(en|zh)\//, '')}`,
       }),
     },
   },

@@ -1,90 +1,27 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Loading...</title>
-  <script>
-    (function() {
-      const supportedLanguages = ['en', 'zh'];
-      const defaultLocale = 'en';
-      const pathname = window.location.pathname;
-      const search = window.location.search;
-      
-      console.log('GitHub Pages Route Handler:', { pathname, search });
-      
-      // 解析当前路径中的语言信息（参考middleware逻辑）
-      const localeRegex = new RegExp(`^/(${supportedLanguages.join('|')})(/.*)?$`);
-      const localeMatch = pathname.match(localeRegex);
-      const currentUrlLocale = localeMatch?.[1] || null;
-      const basePath = localeMatch?.[2] || '/';
-      
-      // 获取用户偏好语言（参考middleware的getPreferredLocale）
-      function getPreferredLocale() {
-        // 1. 检查localStorage中的偏好语言
-        try {
-          const savedLocale = localStorage.getItem('preferred-locale');
-          if (savedLocale && supportedLanguages.includes(savedLocale)) {
-            console.log('Found locale from localStorage:', savedLocale);
-            return savedLocale;
-          }
-        } catch (e) {
-          console.error('localStorage error:', e);
-        }
-        
-        // 2. 检查浏览器语言
-        const browserLang = navigator.language || navigator.languages?.[0];
-        if (browserLang && browserLang.includes('zh')) {
-          console.log('Found locale from browser language: zh');
-          return 'zh';
-        }
-        
-        // 3. 返回默认语言
-        console.log('Using default locale:', defaultLocale);
-        return defaultLocale;
-      }
-      
-      const preferredLocale = getPreferredLocale();
-      
-      // 情况1：根路径或无语言前缀 -> 重定向到偏好语言
-      if (pathname === '/' || !currentUrlLocale) {
-        const targetPath = `/${preferredLocale}${pathname === '/' ? '' : pathname}${search}`;
-        console.log('Adding locale prefix, redirecting to:', targetPath);
-        window.location.replace(targetPath);
-        return;
-      }
-      
-      // 情况2：当前语言与偏好语言不匹配 -> 重定向到偏好语言
-      if (currentUrlLocale !== preferredLocale) {
-        const targetPath = `/${preferredLocale}${basePath}${search}`;
-        console.log('Language mismatch, redirecting to:', targetPath);
-        window.location.replace(targetPath);
-        return;
-      }
-      
-      // 情况3：路径末尾有斜杠但不是根路径 -> 去掉斜杠重定向
-      // 特殊处理：/zh/ -> /zh, /en/ -> /en
-      if (pathname.endsWith('/') && pathname !== '/') {
-        const targetPath = pathname.slice(0, -1) + search;
-        console.log('Removing trailing slash, redirecting to:', targetPath);
-        window.location.replace(targetPath);
-        return;
-      }
-      
-      // 情况4：页面确实不存在 -> 重定向到该语言的首页
-      if (basePath !== '/') {
-        const targetPath = `/${currentUrlLocale}/${search}`;
-        console.log('Page not found, redirecting to locale home:', targetPath);
-        window.location.replace(targetPath);
-      }
-    })();
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Page not found | Ryan</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0b0b0b; color: #f3f2ed; font-family: system-ui, sans-serif; }
+    main { padding: 2rem; }
+    p { color: #aaa; }
+    nav { display: flex; gap: 1.5rem; margin-top: 2rem; }
+    a { color: inherit; text-underline-offset: .3em; }
+  </style>
 </head>
 <body>
-  <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: system-ui;">
-    <div style="text-align: center;">
-      <div style="margin-bottom: 16px;">🔄</div>
-      <div>Loading...</div>
-    </div>
-  </div>
+  <main>
+    <p>404</p>
+    <h1>Page not found</h1>
+    <p>This page doesn't exist.</p>
+    <nav aria-label="Return home">
+      <a href="/en" lang="en">Home</a>
+      <a href="/zh" lang="zh">中文首页</a>
+    </nav>
+  </main>
 </body>
-</html> 
+</html>

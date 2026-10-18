@@ -2,8 +2,7 @@
 
 import Lenis from 'lenis';
 import NextImage from 'next/image';
-import { useRouter } from 'next/navigation';
-import { Asterisk, X } from 'lucide-react';
+import { Asterisk, ArrowUpRight } from 'lucide-react';
 import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { Experience } from '@/components/Experience';
@@ -65,12 +64,11 @@ const scrollEasing = (value: number) => (value === 1 ? 1 : 1 - Math.pow(2, -10 *
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export default function EditorialResume({ assetPrefix, initialLocale, localizations }: Props) {
-  const router = useRouter();
-  const [activeLocale, setActiveLocale] = useState(initialLocale);
+  const activeLocale = initialLocale;
   const [activeWork, setActiveWork] = useState(-1);
   const [landingInteractive, setLandingInteractive] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [hoverColor, setHoverColor] = useState('#0b0b0b');
+  const [hoverColor, setHoverColor] = useState<string | null>(null);
   const [settledLogos, setSettledLogos] = useState<Set<string>>(() => new Set());
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -87,9 +85,7 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
 
   const { experiences, profile } = localizations[activeLocale];
   const isChinese = activeLocale === Locale.ZH;
-  const otherLocale = isChinese ? Locale.EN : Locale.ZH;
-  const homePath = `/${activeLocale}`;
-  const homeUrl = `${assetPrefix}${homePath}`;
+  const blogUrl = `${assetPrefix}/${activeLocale}/blog`;
   const projectsUrl = `${assetPrefix}/${activeLocale}/projects`;
 
   const works = useMemo<Work[]>(
@@ -246,17 +242,6 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
   }, [activeLocale, scheduleScrollUpdate]);
 
   useEffect(() => {
-    const handlePopState = () => {
-      const matchedLocale = window.location.pathname.match(/\/(en|zh)\/about\/?$/)?.[1] as
-        Locale | undefined;
-      if (matchedLocale && localizations[matchedLocale]) setActiveLocale(matchedLocale);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [localizations]);
-
-  useEffect(() => {
     document.documentElement.lang = activeLocale;
   }, [activeLocale]);
 
@@ -280,7 +265,8 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
     if (!pageMain || !shell) return;
 
     const shellSiblings = Array.from(shell.children).filter(
-      (element): element is HTMLElement => element instanceof HTMLElement && element !== pageMain
+      (element): element is HTMLElement =>
+        element instanceof HTMLElement && element.tagName === 'FOOTER'
     );
     const previousStates = shellSiblings.map((element) => ({
       element,
@@ -306,24 +292,9 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
     if (interfaceReady) rootRef.current?.focus({ preventScroll: true });
   }, [interfaceReady]);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') router.push(homePath);
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [homePath, router]);
-
-  const rootStyle = { '--resume-background': hoverColor } as CSSProperties;
+  const rootStyle = hoverColor ? ({ '--resume-hover': hoverColor } as CSSProperties) : undefined;
   const activeWorkItem = activeWork >= 0 ? works[activeWork] : undefined;
   const counter = activeWorkItem?.index ?? '00';
-  const total = String(works.length).padStart(2, '0');
-
-  const switchLanguage = useCallback(() => {
-    setActiveLocale(otherLocale);
-    window.history.pushState(window.history.state, '', `${assetPrefix}/${otherLocale}/about`);
-  }, [assetPrefix, otherLocale]);
 
   const scrollToExperience = useCallback(() => {
     const root = rootRef.current;
@@ -368,39 +339,12 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
       style={rootStyle}
       data-ready={interfaceReady ? 'true' : 'false'}
       data-section={activeWork + 1}
-      role="main"
+      role="region"
       aria-label={isChinese ? 'Ryan 的个人简介与经历' : "Ryan's profile and experience"}
       aria-busy={!interfaceReady}
       tabIndex={-1}
     >
       <div className={styles.background} aria-hidden="true" />
-
-      <header className={`${styles.header} ${interfaceReady ? styles.ready : ''}`}>
-        <a
-          className={styles.identity}
-          href={homeUrl}
-          aria-label={isChinese ? '返回 Ryan 的网站首页' : "Return to Ryan's homepage"}
-        >
-          <ScrambleText text="RYAN" hover />
-          <Asterisk aria-hidden="true" size={14} strokeWidth={1.5} />
-        </a>
-        <div className={styles.headerActions}>
-          <span aria-hidden="true">
-            {counter} / {total}
-          </span>
-          <button
-            type="button"
-            onClick={switchLanguage}
-            aria-label={isChinese ? '切换到英文' : 'Switch to Chinese'}
-          >
-            <ScrambleText text={otherLocale.toUpperCase()} hover />
-          </button>
-          <a href={homeUrl} aria-label={isChinese ? '关闭简介并返回首页' : 'Close profile'}>
-            <ScrambleText text={isChinese ? '退出' : 'CLOSE'} hover />
-            <X aria-hidden="true" size={14} strokeWidth={1.5} />
-          </a>
-        </div>
-      </header>
 
       <nav
         className={`${styles.timeline} ${activeWork >= 0 ? styles.timelineVisible : ''}`}
@@ -562,7 +506,7 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
                   onPointerEnter={(event) => {
                     if (event.pointerType === 'mouse') setHoverColor(work.theme.accent);
                   }}
-                  onPointerLeave={() => setHoverColor('#0b0b0b')}
+                  onPointerLeave={() => setHoverColor(null)}
                 >
                   <span
                     className={`${styles.imageHitArea} ${work.details.length <= 1 ? styles.compactVisual : ''}`}

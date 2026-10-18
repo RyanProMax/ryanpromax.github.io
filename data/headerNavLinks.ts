@@ -6,14 +6,12 @@ const headerNavLinks = {
     { href: '/blog', title: 'Blog' },
     { href: '/tags', title: 'Tags' },
     { href: '/projects', title: 'Projects' },
-    { href: '/about', title: 'About' },
   ],
   [Locale.ZH]: [
     { href: '/', title: '首页' },
     { href: '/blog', title: '文章' },
     { href: '/tags', title: '标签' },
     { href: '/projects', title: '作品' },
-    { href: '/about', title: '关于' },
   ],
 };
 

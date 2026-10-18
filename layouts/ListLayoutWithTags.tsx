@@ -11,61 +11,12 @@ import tagData from 'app/tag-data.json';
 import { Locale } from '@/locales/config';
 import { getDateLocale } from '@/locales/utils';
 
-interface PaginationProps {
-  totalPages: number;
-  currentPage: number;
-}
 interface ListLayoutProps {
   posts: CoreContent<Blog>[];
   title: string;
   initialDisplayPosts?: CoreContent<Blog>[];
-  pagination?: PaginationProps;
+  pagination?: { totalPages: number; currentPage: number };
   locale: Locale;
-}
-
-function Pagination({ totalPages, currentPage }: PaginationProps) {
-  const pathname = usePathname();
-  const segments = pathname.split('/');
-  const lastSegment = segments[segments.length - 1];
-  const basePath = pathname
-    .replace(/^\//, '') // Remove leading slash
-    .replace(/\/page\/\d+\/?$/, '') // Remove any trailing /page
-    .replace(/\/$/, ''); // Remove trailing slash
-  const prevPage = currentPage - 1 > 0;
-  const nextPage = currentPage + 1 <= totalPages;
-
-  return (
-    <div className="space-y-2 pt-6 pb-8 md:space-y-5">
-      <nav className="flex justify-between">
-        {!prevPage && (
-          <button className="cursor-auto disabled:opacity-50" disabled={!prevPage}>
-            Previous
-          </button>
-        )}
-        {prevPage && (
-          <Link
-            href={currentPage - 1 === 1 ? `/${basePath}/` : `/${basePath}/page/${currentPage - 1}`}
-            rel="prev"
-          >
-            Previous
-          </Link>
-        )}
-        <span>
-          {currentPage} of {totalPages}
-        </span>
-        {!nextPage && (
-          <button className="cursor-auto disabled:opacity-50" disabled={!nextPage}>
-            Next
-          </button>
-        )}
-        {nextPage && (
-          <Link href={`/${basePath}/page/${currentPage + 1}`} rel="next">
-            Next
-          </Link>
-        )}
-      </nav>
-    </div>
-  );
 }
 
 export default function ListLayoutWithTags({
@@ -76,102 +27,95 @@ export default function ListLayoutWithTags({
   locale,
 }: ListLayoutProps) {
   const pathname = usePathname();
-  const tagCounts = (tagData as Record<Locale, Record<string, number>>)[locale];
-  const tagKeys = Object.keys(tagCounts);
-  const sortedTags = tagKeys.sort((a, b) => tagCounts[b] - tagCounts[a]);
-  const dateLocale = getDateLocale(locale);
-
+  const tagCounts = (tagData as Record<Locale, Record<string, number>>)[locale] || {};
+  const sortedTags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
   const displayPosts = initialDisplayPosts.length > 0 ? initialDisplayPosts : posts;
-
+  const isChinese = locale === Locale.ZH;
+  const basePath = pathname.replace(/\/page\/\d+\/?$/, '').replace(/\/$/, '');
+  const currentPage = pagination?.currentPage || 1;
+  const totalPages = pagination?.totalPages || 1;
   return (
-    <>
-      <div>
-        <div className="pt-6 pb-6">
-          <h1 className="text-3xl leading-9 font-extrabold tracking-tight text-gray-900 sm:hidden sm:text-4xl sm:leading-10 md:text-6xl md:leading-14 dark:text-gray-100">
-            {title}
-          </h1>
-        </div>
-        <div className="flex sm:space-x-24">
-          <div className="hidden h-full max-h-screen max-w-[280px] min-w-[280px] flex-wrap overflow-auto rounded-sm bg-gray-50 pt-5 shadow-md sm:flex dark:bg-gray-900/70 dark:shadow-gray-800/40">
-            <div className="px-6 py-4">
-              {pathname.startsWith('/blog') ? (
-                <h3 className="text-primary-500 font-bold uppercase">
-                  {locale === Locale.ZH ? '全部文章' : 'All Posts'}
-                </h3>
-              ) : (
+    <div className="journal-page">
+      <header className="editorial-page-heading">
+        <p className="editorial-eyebrow">
+          {isChinese ? '笔记与思考' : 'Notes & ideas'} / {String(posts.length).padStart(2, '0')}
+        </p>
+        <h1>{title}</h1>
+        <p>
+          {isChinese
+            ? '关于桌面端工程、游戏直播与 AI4SE 的实践记录。'
+            : 'Field notes on desktop engineering, game live streaming, and AI4SE.'}
+        </p>
+      </header>
+      <div className="journal-grid">
+        <aside className="journal-topics" aria-label={isChinese ? '按标签浏览' : 'Browse by topic'}>
+          <p className="editorial-eyebrow">{isChinese ? '主题' : 'Topics'}</p>
+          <nav>
+            <Link
+              href={`/${locale}/blog`}
+              aria-current={pathname.includes('/blog') ? 'page' : undefined}
+            >
+              {isChinese ? '全部文章' : 'All posts'}
+            </Link>
+            {sortedTags.map((tag) => (
+              <Link
+                key={tag}
+                href={`/${locale}/tags/${slug(tag)}`}
+                aria-current={
+                  decodeURI(pathname).includes(`/tags/${slug(tag)}`) ? 'page' : undefined
+                }
+              >
+                {tag}
+                <span>{tagCounts[tag]}</span>
+              </Link>
+            ))}
+          </nav>
+        </aside>
+        <div className="journal-list">
+          <ul>
+            {displayPosts.map(({ path, date, title: postTitle, summary, tags }) => (
+              <li key={path}>
+                <article className="journal-entry">
+                  <time dateTime={date}>{formatDate(date, getDateLocale(locale))}</time>
+                  <h2>
+                    <Link href={`/${path}`}>{postTitle}</Link>
+                  </h2>
+                  <p>{summary}</p>
+                  <div className="entry-tags">
+                    {tags?.map((tag) => (
+                      <Tag key={tag} text={tag} />
+                    ))}
+                  </div>
+                </article>
+              </li>
+            ))}
+          </ul>
+          {totalPages > 1 && (
+            <nav className="journal-pagination" aria-label={isChinese ? '文章分页' : 'Pagination'}>
+              {currentPage > 1 ? (
                 <Link
-                  href={`/blog`}
-                  className="hover:text-primary-500 dark:hover:text-primary-500 font-bold text-gray-700 uppercase dark:text-gray-300"
+                  href={currentPage === 2 ? basePath : `${basePath}/page/${currentPage - 1}`}
+                  rel="prev"
                 >
-                  {locale === Locale.ZH ? '全部文章' : 'All Posts'}
+                  ← {isChinese ? '上一页' : 'Previous'}
                 </Link>
+              ) : (
+                <span />
               )}
-              <ul>
-                {sortedTags.map((t) => {
-                  return (
-                    <li key={t} className="my-3">
-                      {decodeURI(pathname.split('/tags/')[1]) === slug(t) ? (
-                        <h3 className="text-primary-500 inline px-3 py-2 text-sm font-bold uppercase">
-                          {`${t} (${tagCounts[t]})`}
-                        </h3>
-                      ) : (
-                        <Link
-                          href={`/tags/${slug(t)}`}
-                          className="hover:text-primary-500 dark:hover:text-primary-500 px-3 py-2 text-sm font-medium text-gray-500 uppercase dark:text-gray-300"
-                          aria-label={`View posts tagged ${t}`}
-                        >
-                          {`${t} (${tagCounts[t]})`}
-                        </Link>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          </div>
-          <div>
-            <ul>
-              {displayPosts.map((post) => {
-                const { path, date, title, summary, tags } = post;
-                return (
-                  <li key={path} className="py-5">
-                    <article className="flex flex-col space-y-2 xl:space-y-0">
-                      <dl>
-                        <dt className="sr-only">Published on</dt>
-                        <dd className="text-base leading-6 font-medium text-gray-500 dark:text-gray-400">
-                          <time dateTime={date} suppressHydrationWarning>
-                            {formatDate(date, dateLocale)}
-                          </time>
-                        </dd>
-                      </dl>
-                      <div className="space-y-3">
-                        <div>
-                          <h2 className="text-2xl leading-8 font-bold tracking-tight">
-                            <Link href={`/${path}`} className="text-gray-900 dark:text-gray-100">
-                              {title}
-                            </Link>
-                          </h2>
-                          <div className="flex flex-wrap">
-                            {tags?.map((tag) => (
-                              <Tag key={tag} text={tag} />
-                            ))}
-                          </div>
-                        </div>
-                        <div className="prose max-w-none text-gray-500 dark:text-gray-400">
-                          {summary}
-                        </div>
-                      </div>
-                    </article>
-                  </li>
-                );
-              })}
-            </ul>
-            {pagination && pagination.totalPages > 1 && (
-              <Pagination currentPage={pagination.currentPage} totalPages={pagination.totalPages} />
-            )}
-          </div>
+              <span>
+                {currentPage} / {totalPages}
+              </span>
+              {currentPage < totalPages ? (
+                <Link href={`${basePath}/page/${currentPage + 1}`} rel="next">
+                  {isChinese ? '下一页' : 'Next'} →
+                </Link>
+              ) : (
+                <span />
+              )}
+            </nav>
+          )}
         </div>
       </div>
-    </>
+    </div>
   );
 }

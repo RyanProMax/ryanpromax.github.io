@@ -1,4 +1,5 @@
 import 'css/tailwind.css';
+import 'css/editorial-site.css';
 import 'pliny/search/algolia.css';
 import 'remark-github-blockquote-alert/alert.css';
 
@@ -13,6 +14,9 @@ import { ThemeProviders } from './theme-providers';
 import { DEFAULT_LOCALE, Locale } from '@/locales/config';
 import { getOpenGraphLocale, getSiteDescription } from '@/locales/utils';
 import { Metadata } from 'next';
+import { allBlogs } from 'contentlayer/generated';
+import tagData from 'app/tag-data.json';
+import { slug } from 'github-slugger';
 
 const space_grotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -95,6 +99,25 @@ export default async function RootLayout({
     }),
   } as SearchConfig;
 
+  const availablePaths = Object.values(Locale).flatMap((language) => {
+    const posts = allBlogs.filter(
+      (post) => !post.draft && (post.language || DEFAULT_LOCALE) === language
+    );
+    const topics = Object.keys(tagData[language] || {});
+    return [
+      `/${language}`,
+      `/${language}/blog`,
+      `/${language}/projects`,
+      `/${language}/tags`,
+      ...posts.map((post) => `/${language}/blog/${post.slug}`),
+      ...topics.map((topic) => `/${language}/tags/${slug(topic)}`),
+      ...Array.from(
+        { length: Math.ceil(posts.length / 5) },
+        (_, i) => `/${language}/blog/page/${i + 1}`
+      ),
+    ];
+  });
+
   return (
     <html
       lang={locale}
@@ -128,14 +151,14 @@ export default async function RootLayout({
       <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fff" />
       <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
       <link rel="alternate" type="application/rss+xml" href={`${basePath}/${locale}/feed.xml`} />
-      <body className="bg-white pl-[calc(100vw-100%)] text-black antialiased dark:bg-gray-950 dark:text-white">
+      <body className="editorial-site antialiased">
         <ThemeProviders>
           <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
           <SectionContainer>
-            <div className="flex h-screen flex-col justify-between font-sans">
+            <div className="site-shell font-sans">
               <SearchProvider searchConfig={searchConfig}>
-                <Header />
-                <main className="mb-auto">{children}</main>
+                <Header availablePaths={availablePaths} />
+                <main className="site-main">{children}</main>
               </SearchProvider>
               <Footer />
             </div>

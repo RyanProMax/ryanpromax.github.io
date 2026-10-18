@@ -1,76 +1,51 @@
 'use client';
 
 import { usePathname, useParams } from 'next/navigation';
-import Image from 'next/image';
-
-import siteMetadata from '@/data/siteMetadata';
+import { Asterisk } from 'lucide-react';
 import headerNavLinks from '@/data/headerNavLinks';
+import { DEFAULT_LOCALE, Locale } from '@/locales/config';
 import Link from './Link';
 import MobileNav from './MobileNav';
-import ThemeSwitch from './ThemeSwitch';
 import SearchButton from './SearchButton';
 import LocaleSwitcher from './LocaleSwitcher';
+import ThemeSwitch from './ThemeSwitch';
 
-import { DEFAULT_LOCALE, Locale } from '@/locales/config';
-
-const Header = () => {
-  let headerClass = 'flex items-center w-full bg-white dark:bg-gray-950 justify-between py-10';
-  if (siteMetadata.stickyNav) {
-    headerClass += ' sticky top-0 z-50';
-  }
+export default function Header({ availablePaths }: { availablePaths: string[] }) {
   const pathname = usePathname();
   const { locale = DEFAULT_LOCALE } = useParams();
-  const currentNavLinks = headerNavLinks[locale as Locale] || headerNavLinks[DEFAULT_LOCALE];
-  const basePath = process.env.BASE_PATH || '';
+  const language = locale as Locale;
+  const links = headerNavLinks[language] || headerNavLinks[DEFAULT_LOCALE];
 
   return (
-    <header className={headerClass}>
-      <Link href="/" aria-label={siteMetadata.headerTitle}>
-        <div className="flex items-center justify-between">
-          <div className="mr-3">
-            <Image
-              src={`${basePath}/static/favicons/android-chrome-192x192.png`}
-              alt="Logo"
-              width={50}
-              height={50}
-              className="rounded-lg"
-            />
-          </div>
-          {typeof siteMetadata.headerTitle === 'string' ? (
-            <div className="hidden h-6 text-2xl font-semibold sm:block">
-              {siteMetadata.headerTitle}
-            </div>
-          ) : (
-            siteMetadata.headerTitle
-          )}
-        </div>
+    <header className="site-header">
+      <Link href={`/${language}`} className="site-identity" aria-label="Ryan — Home">
+        RYAN <Asterisk size={18} strokeWidth={1.5} aria-hidden="true" />
       </Link>
-      <div className="flex items-center space-x-4 leading-5 sm:-mr-6 sm:space-x-6">
-        <div className="no-scrollbar hidden max-w-40 items-center gap-x-4 overflow-x-auto sm:flex md:max-w-72 lg:max-w-96">
-          {currentNavLinks
+      <div className="site-header-actions">
+        <nav
+          className="desktop-navigation"
+          aria-label={language === Locale.ZH ? '主导航' : 'Main navigation'}
+        >
+          {links
             .filter((link) => link.href !== '/')
             .map((link) => {
-              const isActive = pathname.includes(link.href);
+              const href = `/${language}${link.href}`;
               return (
                 <Link
-                  key={link.title}
-                  href={link.href}
-                  className={`hover:text-primary-500 dark:hover:text-primary-400 m-1 font-medium text-gray-900 dark:text-gray-100 ${
-                    isActive ? 'text-primary-500 dark:text-primary-400' : ''
-                  } ${locale === Locale.ZH ? 'font-normal' : 'font-medium'}`}
+                  key={link.href}
+                  href={href}
+                  aria-current={pathname.startsWith(href) ? 'page' : undefined}
                 >
                   {link.title}
                 </Link>
               );
             })}
-        </div>
+        </nav>
         <SearchButton />
         <ThemeSwitch />
-        <LocaleSwitcher />
+        <LocaleSwitcher availablePaths={availablePaths} />
         <MobileNav />
       </div>
     </header>
   );
-};
-
-export default Header;
+}
