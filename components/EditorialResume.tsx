@@ -75,6 +75,7 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
   const lenisRef = useRef<Lenis | null>(null);
   const introRef = useRef<HTMLDivElement>(null);
   const promptRef = useRef<HTMLParagraphElement>(null);
+  const outroRef = useRef<HTMLElement>(null);
   const workRefs = useRef<Array<HTMLElement | null>>([]);
   const trackRefs = useRef<Array<HTMLDivElement | null>>([]);
   const clipRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -166,6 +167,16 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
         nextActiveWork = index;
       }
     });
+
+    // The bottom timeline must leave before the closing content enters its space.
+    // Waiting for the final work to cross the viewport midpoint leaves it over the CTA.
+    if (
+      window.matchMedia('(max-width: 900px)').matches &&
+      outroRef.current &&
+      outroRef.current.getBoundingClientRect().top < viewportHeight
+    ) {
+      nextActiveWork = -1;
+    }
 
     trackRefs.current.forEach((track, index) => {
       const clip = clipRefs.current[index];
@@ -349,6 +360,8 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
       <nav
         className={`${styles.timeline} ${activeWork >= 0 ? styles.timelineVisible : ''}`}
         aria-label={isChinese ? '经历时间线' : 'Experience timeline'}
+        aria-hidden={activeWork < 0}
+        inert={activeWork < 0 ? true : undefined}
       >
         {activeWorkItem && (
           <span className={styles.timelineStatus} aria-live="polite">
@@ -570,7 +583,7 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
           })}
         </div>
 
-        <section className={styles.outroTrack}>
+        <section ref={outroRef} className={styles.outroTrack}>
           <div className={styles.outroPanel}>
             <h2>
               {isChinese

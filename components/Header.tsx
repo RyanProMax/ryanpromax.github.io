@@ -41,10 +41,10 @@ export default function Header({ availablePaths }: { availablePaths: string[] })
               );
             })}
         </nav>
+        <MobileNav />
         <SearchButton />
         <ThemeSwitch />
         <LocaleSwitcher availablePaths={availablePaths} />
-        <MobileNav />
       </div>
     </header>
   );

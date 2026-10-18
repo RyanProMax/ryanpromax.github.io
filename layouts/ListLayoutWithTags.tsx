@@ -1,6 +1,7 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { slug } from 'github-slugger';
 import { formatDate } from 'pliny/utils/formatDate';
 import { CoreContent } from 'pliny/utils/contentlayer';
@@ -19,17 +20,23 @@ interface ListLayoutProps {
   locale: Locale;
 }
 
-export default function ListLayoutWithTags({
+function PostList({
   posts,
   title,
   initialDisplayPosts = [],
   pagination,
   locale,
-}: ListLayoutProps) {
+  selectedTag = '',
+}: ListLayoutProps & { selectedTag?: string }) {
   const pathname = usePathname();
   const tagCounts = (tagData as Record<Locale, Record<string, number>>)[locale] || {};
   const sortedTags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
-  const displayPosts = initialDisplayPosts.length > 0 ? initialDisplayPosts : posts;
+  const activeTag = selectedTag && sortedTags.includes(selectedTag) ? selectedTag : '';
+  const displayPosts = activeTag
+    ? posts.filter((post) => post.tags?.some((tag) => slug(tag) === activeTag))
+    : initialDisplayPosts.length > 0
+      ? initialDisplayPosts
+      : posts;
   const isChinese = locale === Locale.ZH;
   const basePath = pathname.replace(/\/page\/\d+\/?$/, '').replace(/\/$/, '');
   const currentPage = pagination?.currentPage || 1;
@@ -53,17 +60,17 @@ export default function ListLayoutWithTags({
           <nav>
             <Link
               href={`/${locale}/blog`}
-              aria-current={pathname.includes('/blog') ? 'page' : undefined}
+              aria-current={!activeTag ? 'page' : undefined}
+              scroll={false}
             >
               {isChinese ? '全部文章' : 'All posts'}
             </Link>
             {sortedTags.map((tag) => (
               <Link
                 key={tag}
-                href={`/${locale}/tags/${slug(tag)}`}
-                aria-current={
-                  decodeURI(pathname).includes(`/tags/${slug(tag)}`) ? 'page' : undefined
-                }
+                href={`/${locale}/blog?tag=${encodeURIComponent(tag)}`}
+                scroll={false}
+                aria-current={activeTag === tag ? 'page' : undefined}
               >
                 {tag}
                 <span>{tagCounts[tag]}</span>
@@ -72,6 +79,14 @@ export default function ListLayoutWithTags({
           </nav>
         </aside>
         <div className="journal-list">
+          {activeTag && (
+            <p className="journal-filter-status" role="status">
+              {activeTag} · {displayPosts.length} {isChinese ? '篇文章' : 'posts'}
+              <Link href={`/${locale}/blog`} scroll={false}>
+                {isChinese ? '清除筛选' : 'Clear filter'} ×
+              </Link>
+            </p>
+          )}
           <ul>
             {displayPosts.map(({ path, date, title: postTitle, summary, tags }) => (
               <li key={path}>
@@ -90,7 +105,7 @@ export default function ListLayoutWithTags({
               </li>
             ))}
           </ul>
-          {totalPages > 1 && (
+          {!activeTag && totalPages > 1 && (
             <nav className="journal-pagination" aria-label={isChinese ? '文章分页' : 'Pagination'}>
               {currentPage > 1 ? (
                 <Link
@@ -117,5 +132,18 @@ export default function ListLayoutWithTags({
         </div>
       </div>
     </div>
+  );
+}
+
+function FilteredPostList(props: ListLayoutProps) {
+  const searchParams = useSearchParams();
+  return <PostList {...props} selectedTag={searchParams.get('tag') || ''} />;
+}
+
+export default function ListLayoutWithTags(props: ListLayoutProps) {
+  return (
+    <Suspense fallback={<PostList {...props} />}>
+      <FilteredPostList {...props} />
+    </Suspense>
   );
 }

@@ -11,7 +11,8 @@ export default function LocaleSwitcher({ availablePaths }: { availablePaths: str
   const nextLocale = locale === Locale.EN ? Locale.ZH : Locale.EN;
   const candidate = pathname.replace(/^\/(en|zh)(?=\/|$)/, `/${nextLocale}`);
   const normalized = candidate.replace(/\/$/, '');
-  const target = availablePaths.includes(normalized) ? candidate : `/${nextLocale}/blog`;
+  const equivalent = availablePaths.includes(normalized);
+  const target = equivalent ? candidate : `/${nextLocale}/blog`;
   return (
     <Link
       href={target}
@@ -19,7 +20,8 @@ export default function LocaleSwitcher({ availablePaths }: { availablePaths: str
       lang={nextLocale}
       aria-label={nextLocale === Locale.ZH ? '切换到中文' : 'Switch to English'}
       onClick={(event) => {
-        if (window.location.search || window.location.hash) {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        if (equivalent && (window.location.search || window.location.hash)) {
           event.preventDefault();
           router.push(`${target}${window.location.search}${window.location.hash}`);
         }

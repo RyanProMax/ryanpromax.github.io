@@ -1,66 +1,31 @@
 'use client';
 
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
-import { Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { BookOpen, Layers } from 'lucide-react';
 import { useParams, usePathname } from 'next/navigation';
 import Link from './Link';
-import headerNavLinks from '@/data/headerNavLinks';
 import { DEFAULT_LOCALE, Locale } from '@/locales/config';
 
+// Like antfu.me's mobile navigation, keep primary destinations one tap away.
 export default function MobileNav() {
-  const [open, setOpen] = useState(false);
   const { locale = DEFAULT_LOCALE } = useParams();
   const pathname = usePathname();
-  const language = locale as Locale;
-  const links = headerNavLinks[language] || headerNavLinks[DEFAULT_LOCALE];
-  const label = language === Locale.ZH ? '导航' : 'Navigation';
+  const chinese = locale === Locale.ZH;
   return (
-    <>
-      <button
-        className="mobile-menu-toggle"
-        type="button"
-        aria-label={label}
-        aria-expanded={open}
-        onClick={() => setOpen(true)}
-      >
-        <Menu size={22} />
-      </button>
-      <Dialog open={open} onClose={setOpen} className="mobile-menu-dialog">
-        <div className="mobile-menu-backdrop" aria-hidden="true" />
-        <DialogPanel className="mobile-menu-panel">
-          <div className="mobile-menu-heading">
-            <DialogTitle>{label}</DialogTitle>
-            <button
-              type="button"
-              aria-label={language === Locale.ZH ? '关闭导航' : 'Close navigation'}
-              onClick={() => setOpen(false)}
-            >
-              <X size={24} />
-            </button>
-          </div>
-          <nav aria-label={label}>
-            {links.map((link) => {
-              const href = `/${language}${link.href === '/' ? '' : link.href}`;
-              const active =
-                link.href === '/'
-                  ? pathname.replace(/\/$/, '') === href
-                  : pathname.startsWith(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  aria-current={active ? 'page' : undefined}
-                  onClick={() => setOpen(false)}
-                >
-                  {link.title}
-                  <span aria-hidden="true">↗</span>
-                </Link>
-              );
-            })}
-          </nav>
-        </DialogPanel>
-      </Dialog>
-    </>
+    <nav className="mobile-navigation" aria-label={chinese ? '主导航' : 'Main navigation'}>
+      {[
+        { path: 'blog', label: chinese ? '文章' : 'Blog', Icon: BookOpen },
+        { path: 'projects', label: chinese ? '作品' : 'Projects', Icon: Layers },
+      ].map(({ path, label, Icon }) => (
+        <Link
+          key={path}
+          href={`/${locale}/${path}`}
+          title={label}
+          aria-label={label}
+          aria-current={pathname.startsWith(`/${locale}/${path}`) ? 'page' : undefined}
+        >
+          <Icon size={19} strokeWidth={1.5} aria-hidden="true" />
+        </Link>
+      ))}
+    </nav>
   );
 }

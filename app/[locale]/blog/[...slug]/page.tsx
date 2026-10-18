@@ -119,7 +119,13 @@ export default async function Page(props: { params: Promise<{ slug: string[]; lo
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <PostLayout content={mainContent} authorDetails={authorDetails} next={next} prev={prev}>
+      <PostLayout
+        toc={post.toc}
+        content={mainContent}
+        authorDetails={authorDetails}
+        next={next}
+        prev={prev}
+      >
         <MDXLayoutRenderer code={post.body.code} components={components} toc={post.toc} />
       </PostLayout>
     </>

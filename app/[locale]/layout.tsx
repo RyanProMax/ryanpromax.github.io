@@ -15,8 +15,6 @@ import { DEFAULT_LOCALE, Locale } from '@/locales/config';
 import { getOpenGraphLocale, getSiteDescription } from '@/locales/utils';
 import { Metadata } from 'next';
 import { allBlogs } from 'contentlayer/generated';
-import tagData from 'app/tag-data.json';
-import { slug } from 'github-slugger';
 
 const space_grotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -103,14 +101,11 @@ export default async function RootLayout({
     const posts = allBlogs.filter(
       (post) => !post.draft && (post.language || DEFAULT_LOCALE) === language
     );
-    const topics = Object.keys(tagData[language] || {});
     return [
       `/${language}`,
       `/${language}/blog`,
       `/${language}/projects`,
-      `/${language}/tags`,
       ...posts.map((post) => `/${language}/blog/${post.slug}`),
-      ...topics.map((topic) => `/${language}/tags/${slug(topic)}`),
       ...Array.from(
         { length: Math.ceil(posts.length / 5) },
         (_, i) => `/${language}/blog/page/${i + 1}`

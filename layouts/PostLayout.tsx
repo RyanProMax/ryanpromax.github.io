@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import ArticleToc, { TocHeading } from '@/components/ArticleToc';
 import { CoreContent } from 'pliny/utils/contentlayer';
 import { formatDate } from 'pliny/utils/formatDate';
 import type { Blog, Authors } from 'contentlayer/generated';
@@ -17,6 +18,7 @@ interface LayoutProps {
   next?: { path: string; title: string };
   prev?: { path: string; title: string };
   children: ReactNode;
+  toc?: TocHeading[];
 }
 
 export default function PostLayout({
@@ -25,6 +27,7 @@ export default function PostLayout({
   next,
   prev,
   children,
+  toc = [],
 }: LayoutProps) {
   const { filePath, date, title, tags, language = DEFAULT_LOCALE } = content;
   const isChinese = language === Locale.ZH;
@@ -56,7 +59,10 @@ export default function PostLayout({
           </div>
         </div>
       </header>
-      <div className="prose prose-invert reading-content">{children}</div>
+      <div className="reading-body">
+        <ArticleToc headings={toc} chinese={isChinese} />
+        <div className="prose prose-invert reading-content">{children}</div>
+      </div>
       <div className="reading-comments" id="comment">
         <Comments slug={content.slug} />
       </div>

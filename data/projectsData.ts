@@ -14,9 +14,7 @@ const projectsData: Record<Locale, Project[]> = {
   [Locale.EN]: [
     {
       title: 'Douyin Live Studio',
-      description: `Support various live streams including
-      entertainment, gaming, and e-commerce. It offers one-click streaming start, real-time audio/video 
-      processing, beauty filters, and comment management, helping hosts create high-quality broadcasts effortlessly.`,
+      description: 'A desktop app for game and entertainment live streaming on Douyin.',
       role: 'Owner of Game & AI Coding directions',
       focus: 'Game live streaming, interaction experience, desktop engineering',
       impact:
@@ -26,12 +24,11 @@ const projectsData: Record<Locale, Project[]> = {
     },
     {
       title: 'Electron React Rspack',
-      description: `An Electron-React boilerplate with TypeScript & Rspack, supporting persistent storage, 
-      local logging, incremental updates, and more.`,
+      description:
+        'An Electron starter with React, TypeScript and Rspack, including local storage, logging and automatic updates.',
       role: 'Owner',
       focus: 'Electron, React, TypeScript, Rspack',
-      impact:
-        'A reusable desktop application starter that packages common engineering capabilities for faster product iteration.',
+      impact: 'Includes application packaging, light and dark themes, and automated releases.',
       imgSrc: '/static/images/electron-react-rspack.png',
       href: 'https://github.com/RyanProMax/electron-react-rspack',
     },
@@ -39,7 +36,7 @@ const projectsData: Record<Locale, Project[]> = {
   [Locale.ZH]: [
     {
       title: '抖音直播伴侣',
-      description: `支持娱乐、游戏、电商等多种直播类型，提供一键开播、实时音视频处理、美颜滤镜和评论管理等功能，助力主播高效打造高质量直播内容。`,
+      description: '面向抖音主播的桌面直播工具，支持游戏与娱乐直播。',
       role: '游戏方向 / AI Coding 方向负责人',
       focus: '游戏直播、互动体验、桌面端工程',
       impact: '负责游戏直播核心能力建设，并推进主仓库 AI Friendly & E2E 工程实践。',
@@ -48,10 +45,11 @@ const projectsData: Record<Locale, Project[]> = {
     },
     {
       title: 'Electron React Rspack',
-      description: `基于 TypeScript 和 Rspack 的 Electron-React 脚手架模板，支持持久化存储、本地日志记录、增量更新等功能，适用于构建跨平台桌面应用。`,
+      description:
+        '基于 React、TypeScript 和 Rspack 的 Electron 应用模板，集成本地存储、日志与自动更新。',
       role: 'Owner',
       focus: 'Electron、React、TypeScript、Rspack',
-      impact: '沉淀桌面应用常见工程能力，降低跨平台产品从 0 到 1 的启动成本。',
+      impact: '提供应用打包、明暗主题与自动化发布配置。',
       imgSrc: '/static/images/electron-react-rspack.png',
       href: 'https://github.com/RyanProMax/electron-react-rspack',
     },
