@@ -522,8 +522,21 @@
   position: relative;
   inset: auto;
   width: 100%;
-  padding: clamp(1.5rem, 3vw, 2.5rem);
-  gap: 1rem;
+  min-height: clamp(28rem, 42vw, 32rem);
+  padding: clamp(2.5rem, 4.5vw, 3.5rem);
+  gap: 1.5rem;
+}
+
+.imageClip:not(.compactVisual) .posterDetails li + li {
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 900px) {
+  .imageClip:not(.compactVisual) .posterComposition {
+    min-height: 34rem;
+    padding: 2rem;
+    gap: 1.25rem;
+  }
 }
 
 .imageClip:not(.compactVisual) .logo {
