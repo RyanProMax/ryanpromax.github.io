@@ -686,26 +686,32 @@
 @media (max-width: 900px) {
   .timeline {
     top: auto;
-    bottom: calc(0.65rem + env(safe-area-inset-bottom, 0px));
-    left: 50%;
-    display: flex;
-    gap: 0;
-    padding: 0 0.25rem;
+    bottom: 0;
+    left: 0;
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(4, 2.75rem);
+    justify-content: center;
+    gap: 0.45rem 0;
+    padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
     background: var(--site-background);
-    transform: translate3d(-50%, 0.55rem, 0);
+    transform: none;
+    /* Keep the entire dock opaque while titles and cards pass behind it. */
+    transition: none;
   }
 
   .timeline::before {
-    top: 50%;
-    right: 1.5rem;
-    bottom: auto;
-    left: 1.5rem;
-    width: auto;
+    top: auto;
+    right: auto;
+    bottom: calc(2.025rem + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    width: 8.25rem;
     height: 1px;
+    transform: translateX(-50%);
   }
 
   .timelineVisible {
-    transform: translate3d(-50%, 0, 0);
+    transform: none;
   }
 
   .timeline button {
@@ -725,21 +731,21 @@
   }
 
   .timelineStatus {
-    position: absolute;
-    bottom: calc(100% + 0.45rem);
-    left: 50%;
+    position: relative;
     display: block;
-    width: max-content;
-    max-width: calc(100vw - 2rem);
+    width: calc(100vw - 2rem);
+    max-width: none;
+    grid-column: 1 / -1;
+    justify-self: center;
     overflow: hidden;
     color: color-mix(in srgb, var(--site-text) 72%, transparent);
     font-size: 0.625rem;
     font-weight: 500;
     letter-spacing: 0.06em;
     line-height: 1.25;
+    text-align: center;
     text-overflow: ellipsis;
     text-transform: uppercase;
-    transform: translateX(-50%);
     white-space: nowrap;
   }
 
@@ -761,8 +767,8 @@
 
   .workTitle {
     width: 100%;
-    font-size: min(12vw, 4.5rem);
-    line-height: 0.9;
+    font-size: clamp(2rem, 8.5vw, 3.25rem);
+    line-height: 1.04;
   }
 
   .titleRole {
@@ -871,7 +877,7 @@
   }
 
   .workTitle {
-    font-size: 11vw;
+    font-size: clamp(2rem, 8.5vw, 3.25rem);
     letter-spacing: -0.04em;
   }
 

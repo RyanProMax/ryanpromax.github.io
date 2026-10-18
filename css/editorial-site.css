@@ -662,8 +662,8 @@
   display: none;
 }
 .article-toc-mobile {
-  margin-top: 1.5rem;
-  border-block: 1px solid var(--site-line);
+  margin-top: 0;
+  border-bottom: 1px solid var(--site-line);
   padding: 0.8rem 0;
 }
 .article-toc-mobile summary {
@@ -727,5 +727,12 @@
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto !important;
+  }
+}
+
+@media (max-width: 1279px) {
+  .reading-header {
+    border-bottom: 0;
+    padding-bottom: 1rem;
   }
 }
