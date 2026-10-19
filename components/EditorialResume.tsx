@@ -426,16 +426,12 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
             type="button"
             className={styles.introMeta}
             onClick={scrollToExperience}
-            aria-label={
-              isChinese
-                ? '浏览工程职业生涯：2016 年至今'
-                : 'Explore engineering career: 2016 to present'
-            }
+            aria-label={isChinese ? '浏览职业生涯：2016 年至今' : 'Explore career: 2016 to present'}
           >
             <span>
               <ScrambleText
                 key={`career-${activeLocale}`}
-                text={isChinese ? '工程职业生涯' : 'ENGINEERING CAREER'}
+                text={isChinese ? '职业生涯' : 'CAREER'}
                 play={interfaceReady}
                 delay={830}
                 duration={500}

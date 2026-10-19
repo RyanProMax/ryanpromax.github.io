@@ -10,6 +10,7 @@
   --site-body: #454941;
   --site-code: #8b2945;
   --site-hover-strength: 12%;
+  --site-scrollbar: #bfc1b8;
 }
 .dark {
   color-scheme: dark;
@@ -22,6 +23,31 @@
   --site-body: #c9c9c4;
   --site-code: #e8a6b9;
   --site-hover-strength: 100%;
+  --site-scrollbar: #454640;
+}
+/* Keep the viewport width stable when the homepage locks document scrolling.
+   antfu.me reserves a root scrollbar too; stable also covers overflow: hidden. */
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--site-scrollbar) var(--site-background);
+  background: var(--site-background);
+}
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: var(--site-background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--site-scrollbar);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--site-muted);
 }
 .editorial-site {
   background: var(--site-background);
@@ -53,7 +79,6 @@
   background: color-mix(in srgb, var(--site-background) 92%, transparent);
   backdrop-filter: blur(14px);
   color: var(--site-text);
-  border-bottom: 1px solid var(--site-line);
 }
 .site-identity {
   display: inline-flex;
@@ -122,6 +147,33 @@
 .mobile-navigation a[aria-current] {
   color: var(--site-accent);
 }
+.site-header :is(a, button) {
+  position: relative;
+  isolation: isolate;
+}
+.site-header :is(a, button)::before {
+  content: '';
+  position: absolute;
+  inset: 0 -0.45rem;
+  z-index: -1;
+  border-radius: 0.5rem;
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--site-accent) 16%, transparent),
+    color-mix(in srgb, var(--site-muted) 8%, transparent)
+  );
+  opacity: 0;
+  transition: opacity 180ms ease;
+  pointer-events: none;
+}
+.site-header :is(a, button):is(:hover, :focus-visible)::before {
+  opacity: 1;
+}
+.site-header :is(a, button):focus-visible {
+  outline: 2px solid var(--site-accent);
+  outline-offset: 3px;
+  border-radius: 0.25rem;
+}
 .site-footer {
   display: flex;
   justify-content: space-between;
@@ -138,8 +190,7 @@
   gap: 1.4rem;
 }
 .editorial-page-heading {
-  padding: 1rem 0 3rem;
-  border-bottom: 1px solid var(--site-line);
+  padding: 1rem 0 2rem;
 }
 .editorial-eyebrow {
   color: var(--site-accent);
@@ -148,11 +199,11 @@
   text-transform: uppercase;
 }
 .editorial-page-heading h1 {
-  margin: 1.1rem 0 1rem;
-  font-size: clamp(2.75rem, 7vw, 5rem);
-  line-height: 1.06;
+  margin: 0.75rem 0;
+  font-size: clamp(2rem, 4vw, 2.5rem);
+  line-height: 1.2;
   font-weight: 500;
-  letter-spacing: -0.055em;
+  letter-spacing: -0.035em;
 }
 .editorial-page-heading > p:last-child:not(:first-child) {
   max-width: 42rem;
@@ -161,20 +212,19 @@
   line-height: 1.8;
 }
 .journal-grid {
-  display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
-  gap: 4rem;
-  padding-top: 2.5rem;
+  display: block;
+  padding-top: 0.5rem;
 }
 .journal-topics {
-  align-self: start;
-  position: sticky;
-  top: 7rem;
+  margin-bottom: 2.5rem;
+}
+.journal-topics .editorial-eyebrow {
+  display: none;
 }
 .journal-topics nav {
   display: flex;
-  flex-direction: column;
-  margin-top: 1rem;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
 }
 .journal-topics nav a {
   display: flex;
@@ -194,9 +244,8 @@
   color: var(--site-accent);
 }
 .journal-entry {
-  padding: 0 0 2.5rem;
-  margin-bottom: 2.5rem;
-  border-bottom: 1px solid var(--site-line);
+  padding: 0 0 1.75rem;
+  margin-bottom: 1.75rem;
 }
 .journal-entry time,
 .reading-meta {
@@ -204,8 +253,8 @@
   color: var(--site-muted);
 }
 .journal-entry h2 {
-  margin: 0.7rem 0 0.9rem;
-  font-size: clamp(1.35rem, 2.5vw, 1.8rem);
+  margin: 0.4rem 0 0.65rem;
+  font-size: 1.25rem;
   letter-spacing: -0.025em;
   line-height: 1.4;
   font-weight: 500;
@@ -421,13 +470,12 @@
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 3rem 2.5rem;
-  padding-top: 2.5rem;
+  gap: 2.5rem 2rem;
+  padding-top: 1rem;
 }
 .project-card {
   min-width: 0;
-  border-bottom: 1px solid var(--site-line);
-  padding-bottom: 2rem;
+  padding-bottom: 1rem;
 }
 .project-image {
   aspect-ratio: 16/9;
@@ -449,10 +497,10 @@
   transform: scale(1.025);
 }
 .project-copy h2 {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 500;
   letter-spacing: -0.025em;
-  margin: 1.5rem 0 1rem;
+  margin: 1rem 0 0.65rem;
 }
 .project-copy h2 span {
   color: var(--site-accent);
@@ -577,6 +625,7 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .site-header :is(a, button)::before,
   .project-image img {
     transition: none;
   }
