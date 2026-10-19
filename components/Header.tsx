@@ -9,6 +9,7 @@ import MobileNav from './MobileNav';
 import SearchButton from './SearchButton';
 import LocaleSwitcher from './LocaleSwitcher';
 import ThemeSwitch from './ThemeSwitch';
+import SlidingNav from './SlidingNav';
 
 export default function Header({ availablePaths }: { availablePaths: string[] }) {
   const pathname = usePathname();
@@ -22,7 +23,7 @@ export default function Header({ availablePaths }: { availablePaths: string[] })
         RYAN <Asterisk size={18} strokeWidth={1.5} aria-hidden="true" />
       </Link>
       <div className="site-header-actions">
-        <nav
+        <SlidingNav
           className="desktop-navigation"
           aria-label={language === Locale.ZH ? '主导航' : 'Main navigation'}
         >
@@ -34,13 +35,15 @@ export default function Header({ availablePaths }: { availablePaths: string[] })
                 <Link
                   key={link.href}
                   href={href}
-                  aria-current={pathname.startsWith(href) ? 'page' : undefined}
+                  aria-current={
+                    pathname === href || pathname.startsWith(`${href}/`) ? 'page' : undefined
+                  }
                 >
                   {link.title}
                 </Link>
               );
             })}
-        </nav>
+        </SlidingNav>
         <MobileNav />
         <SearchButton />
         <ThemeSwitch />

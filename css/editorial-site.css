@@ -114,11 +114,6 @@ html {
 .site-footer a:hover {
   color: var(--site-text);
 }
-.desktop-navigation a[aria-current] {
-  text-decoration: underline;
-  text-decoration-color: var(--site-accent);
-  text-underline-offset: 0.6rem;
-}
 .site-header-actions > button,
 .locale-switch {
   display: inline-flex;
@@ -148,26 +143,28 @@ html {
   color: var(--site-accent);
 }
 .site-header :is(a, button) {
+  transition: color 180ms ease;
+}
+.site-header :is(a, button):is(:hover, :focus-visible) {
+  color: var(--site-accent);
+}
+.sliding-nav {
   position: relative;
-  isolation: isolate;
 }
-.site-header :is(a, button)::before {
-  content: '';
+.sliding-nav-indicator {
   position: absolute;
-  inset: 0 -0.45rem;
-  z-index: -1;
-  border-radius: 0.5rem;
-  background: linear-gradient(
-    120deg,
-    color-mix(in srgb, var(--site-accent) 16%, transparent),
-    color-mix(in srgb, var(--site-muted) 8%, transparent)
-  );
-  opacity: 0;
-  transition: opacity 180ms ease;
+  top: 0;
+  left: 0;
+  height: 1px;
+  background: var(--site-accent);
   pointer-events: none;
+  opacity: 0;
 }
-.site-header :is(a, button):is(:hover, :focus-visible)::before {
-  opacity: 1;
+.sliding-nav[data-indicator-ready] > .sliding-nav-indicator {
+  transition:
+    transform 220ms ease,
+    width 220ms ease,
+    opacity 150ms ease;
 }
 .site-header :is(a, button):focus-visible {
   outline: 2px solid var(--site-accent);
@@ -441,6 +438,13 @@ html {
 .reading-content hr {
   border-color: var(--site-line);
 }
+/* Legacy inline TOCs left a leading Markdown rule; the layout owns this divider. */
+.reading-content > hr:first-child {
+  display: none;
+}
+.reading-content > hr:first-child + :is(h2, h3) {
+  margin-top: 0;
+}
 .reading-footer {
   padding-top: 1.5rem;
   border-top: 1px solid var(--site-line);
@@ -625,7 +629,8 @@ html {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .site-header :is(a, button)::before,
+  .site-header :is(a, button),
+  .sliding-nav[data-indicator-ready] > .sliding-nav-indicator,
   .project-image img {
     transition: none;
   }
@@ -784,4 +789,16 @@ html {
     border-bottom: 0;
     padding-bottom: 1rem;
   }
+}
+
+/* KBar scrolls its result wrapper, not the document root. */
+.editorial-site div:has(> #kbar-listbox) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--site-scrollbar) var(--site-background);
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+  max-height: min(400px, 60svh) !important;
+}
+.editorial-site div:has(> #kbar-listbox)::-webkit-scrollbar-button {
+  display: none;
 }

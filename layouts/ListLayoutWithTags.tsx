@@ -7,6 +7,7 @@ import { formatDate } from 'pliny/utils/formatDate';
 import { CoreContent } from 'pliny/utils/contentlayer';
 import type { Blog } from 'contentlayer/generated';
 import Link from '@/components/Link';
+import SlidingNav from '@/components/SlidingNav';
 import Tag from '@/components/Tag';
 import tagData from 'app/tag-data.json';
 import { Locale } from '@/locales/config';
@@ -44,9 +45,6 @@ function PostList({
   return (
     <div className="journal-page">
       <header className="editorial-page-heading">
-        <p className="editorial-eyebrow">
-          {isChinese ? '笔记与思考' : 'Notes & ideas'} / {String(posts.length).padStart(2, '0')}
-        </p>
         <h1>{title}</h1>
         <p>
           {isChinese
@@ -57,7 +55,7 @@ function PostList({
       <div className="journal-grid">
         <aside className="journal-topics" aria-label={isChinese ? '按标签浏览' : 'Browse by topic'}>
           <p className="editorial-eyebrow">{isChinese ? '主题' : 'Topics'}</p>
-          <nav>
+          <SlidingNav aria-label={isChinese ? '文章主题' : 'Post topics'}>
             <Link
               href={`/${locale}/blog`}
               aria-current={!activeTag ? 'page' : undefined}
@@ -76,7 +74,7 @@ function PostList({
                 <span>{tagCounts[tag]}</span>
               </Link>
             ))}
-          </nav>
+          </SlidingNav>
         </aside>
         <div className="journal-list">
           {activeTag && (

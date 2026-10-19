@@ -30,7 +30,6 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
   return (
     <div>
       <header className="editorial-page-heading">
-        <p className="editorial-eyebrow">{locale === Locale.ZH ? '精选作品' : 'Selected work'}</p>
         <h1>{title}</h1>
         <p>{desc}</p>
       </header>
