@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="2040" viewBox="0 0 2400 2040"><rect width="2400" height="2040" fill="#FAFBFD"/>
+<text x="80" y="100" font-family="DejaVu Sans, sans-serif" font-size="50" fill="#142B43" font-weight="700">A Chromium instance: processes, threads, and modules</text>
+<text x="82" y="158" font-family="DejaVu Sans, sans-serif" font-size="29" fill="#718095" font-weight="400">Read from outside in: instance → process → thread / thread pool → responsibilities</text>
+<rect x="50" y="210" width="2300" height="1740" rx="27" fill="#F6F8FB" stroke="#DCE4EE" stroke-width="1.7"/>
+<text x="85" y="267" font-family="DejaVu Sans, sans-serif" font-size="27" fill="#142B43" font-weight="600">Core thread architecture</text>
+<text x="1620" y="267" font-family="DejaVu Sans, sans-serif" font-size="17" fill="#718095" font-weight="400">Thread counts and module locations vary by platform, version, and configuration</text>
+<rect x="85" y="300" width="500" height="920" rx="23" fill="#EFF4FB" stroke="#D2DFEE" stroke-width="1.7"/>
+<text x="115" y="353" font-family="DejaVu Sans, sans-serif" font-size="34" fill="#4079CC" font-weight="700">Browser process</text>
+<text x="115" y="395" font-family="DejaVu Sans, sans-serif" font-size="16.4" fill="#718095" font-weight="400">Manages the instance, UI, navigation, and permissions</text>
+<rect x="115" y="420" width="440" height="240" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="137" y="445" width="7" height="29" rx="3" fill="#4079CC" stroke="#4079CC" stroke-width="1.7"/>
+<text x="159" y="469" font-family="DejaVu Sans, sans-serif" font-size="28" fill="#4079CC" font-weight="600">UI main thread</text>
+<text x="143" y="514" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">Window / tab UI</text>
+<text x="143" y="553" font-family="DejaVu Sans, sans-serif" font-size="24.2" fill="#142B43" font-weight="400">Navigation and process lifecycle</text>
+<text x="143" y="592" font-family="DejaVu Sans, sans-serif" font-size="21.4" fill="#142B43" font-weight="400">Input routing · Permissions / security</text>
+<rect x="115" y="690" width="440" height="165" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="137" y="715" width="7" height="29" rx="3" fill="#4079CC" stroke="#4079CC" stroke-width="1.7"/>
+<text x="159" y="739" font-family="DejaVu Sans, sans-serif" font-size="28" fill="#4079CC" font-weight="600">IO thread</text>
+<text x="143" y="784" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">IPC / Mojo channels</text>
+<text x="143" y="823" font-family="DejaVu Sans, sans-serif" font-size="20.2" fill="#142B43" font-weight="400">Cross-process messages and async I/O</text>
+<rect x="115" y="885" width="440" height="290" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="137" y="910" width="7" height="29" rx="3" fill="#4079CC" stroke="#4079CC" stroke-width="1.7"/>
+<text x="159" y="934" font-family="DejaVu Sans, sans-serif" font-size="28" fill="#4079CC" font-weight="600">ThreadPool</text>
+<text x="143" y="979" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">Blocking file / database tasks</text>
+<text x="143" y="1018" font-family="DejaVu Sans, sans-serif" font-size="19.5" fill="#142B43" font-weight="400">Background computation and data work</text>
+<text x="143" y="1057" font-family="DejaVu Sans, sans-serif" font-size="23.9" fill="#142B43" font-weight="400">Priority-based worker scheduling</text>
+<text x="143" y="1136" font-family="DejaVu Sans, sans-serif" font-size="22.3" fill="#718095" font-weight="400">Sequenced tasks; reusable threads</text>
+<rect x="625" y="300" width="1150" height="1570" rx="23" fill="#EFF4FB" stroke="#D2DFEE" stroke-width="1.7"/>
+<text x="655" y="353" font-family="DejaVu Sans, sans-serif" font-size="34" fill="#4079CC" font-weight="700">Renderer processes × N</text>
+<text x="655" y="395" font-family="DejaVu Sans, sans-serif" font-size="23" fill="#718095" font-weight="400">Each process has a main thread; isolation policy determines page and frame placement</text>
+<rect x="655" y="420" width="1090" height="600" rx="20" fill="white" stroke="#BDD0EB" stroke-width="1.7"/>
+<rect x="677" y="445" width="7" height="29" rx="3" fill="#4079CC" stroke="#4079CC" stroke-width="1.7"/>
+<text x="699" y="469" font-family="DejaVu Sans, sans-serif" font-size="31" fill="#4079CC" font-weight="700">Page main thread</text>
+<text x="1110" y="469" font-family="DejaVu Sans, sans-serif" font-size="24" fill="#718095" font-weight="400">JS, DOM, and page lifecycle run sequentially</text>
+<rect x="685" y="495" width="1030" height="88" rx="12" fill="#F3F6FA" stroke="#F3F6FA" stroke-width="1.7"/>
+<text x="708" y="533" font-family="DejaVu Sans, sans-serif" font-size="22.9" fill="#142B43" font-weight="600">Task scheduling</text>
+<text x="930" y="533" font-family="DejaVu Sans, sans-serif" font-size="26" fill="#142B43" font-weight="400">Task queues · Event loop · Microtask checkpoints</text>
+<text x="930" y="565" font-family="DejaVu Sans, sans-serif" font-size="23" fill="#718095" font-weight="400">Input dispatch · Rendering schedules</text>
+<rect x="685" y="600" width="1030" height="145" rx="12" fill="#F3F6FA" stroke="#F3F6FA" stroke-width="1.7"/>
+<text x="708" y="641" font-family="DejaVu Sans, sans-serif" font-size="29" fill="#142B43" font-weight="600">Blink</text>
+<text x="930" y="641" font-family="DejaVu Sans, sans-serif" font-size="26" fill="#142B43" font-weight="400">HTML / CSS parsing · DOM / Canvas API</text>
+<text x="930" y="683" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">Style → Layout → Paint recording</text>
+<text x="930" y="721" font-family="DejaVu Sans, sans-serif" font-size="23" fill="#718095" font-weight="400">Display lists and property trees go to the compositor</text>
+<rect x="685" y="765" width="1030" height="225" rx="14" fill="#EDF5F2" stroke="#D5E9E2" stroke-width="1.7"/>
+<text x="710" y="806" font-family="DejaVu Sans, sans-serif" font-size="29" fill="#158E88" font-weight="700">V8 Isolate</text>
+<text x="945" y="806" font-family="DejaVu Sans, sans-serif" font-size="26" fill="#158E88" font-weight="400">JS virtual machine instance on the main thread</text>
+<text x="710" y="850" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="600">Contexts</text>
+<text x="1060" y="850" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">Separate globals and built-in objects</text>
+<text x="710" y="890" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="600">Engine + call stack</text>
+<text x="1060" y="890" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">Interprets / compiles code; tracks calls</text>
+<text x="710" y="930" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="600">Heap + GC</text>
+<text x="1060" y="930" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">Stores objects; reclaims unused memory</text>
+<text x="710" y="969" font-family="DejaVu Sans, sans-serif" font-size="23" fill="#718095" font-weight="400">Contexts share this Isolate's heap and execution time</text>
+<rect x="655" y="1050" width="520" height="235" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="677" y="1075" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="699" y="1099" font-family="DejaVu Sans, sans-serif" font-size="28" fill="#158E88" font-weight="600">Compositor thread</text>
+<text x="683" y="1144" font-family="DejaVu Sans, sans-serif" font-size="20" fill="#142B43" font-weight="400">Input hit testing · Scroll / composited animation</text>
+<text x="683" y="1183" font-family="DejaVu Sans, sans-serif" font-size="22.5" fill="#142B43" font-weight="400">Layers / property trees · Frame scheduling</text>
+<text x="683" y="1222" font-family="DejaVu Sans, sans-serif" font-size="23.3" fill="#142B43" font-weight="400">Coordinates raster work; submits frames</text>
+<rect x="1205" y="1050" width="540" height="235" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="1227" y="1075" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="1249" y="1099" font-family="DejaVu Sans, sans-serif" font-size="28" fill="#158E88" font-weight="600">Raster / compositor helpers</text>
+<text x="1233" y="1144" font-family="DejaVu Sans, sans-serif" font-size="23.9" fill="#142B43" font-weight="400">Image decoding · Raster task scheduling</text>
+<text x="1233" y="1183" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">GPU rasterization / CPU fallback</text>
+<text x="1233" y="1222" font-family="DejaVu Sans, sans-serif" font-size="23.2" fill="#142B43" font-weight="400">Worker count scales to device capabilities</text>
+<rect x="655" y="1315" width="520" height="185" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="677" y="1340" width="7" height="29" rx="3" fill="#4079CC" stroke="#4079CC" stroke-width="1.7"/>
+<text x="699" y="1364" font-family="DejaVu Sans, sans-serif" font-size="28" fill="#4079CC" font-weight="600">IO thread</text>
+<text x="683" y="1409" font-family="DejaVu Sans, sans-serif" font-size="21.4" fill="#142B43" font-weight="400">IPC channels · Sending / receiving messages</text>
+<text x="683" y="1448" font-family="DejaVu Sans, sans-serif" font-size="24.4" fill="#142B43" font-weight="400">Dispatches work to the relevant thread</text>
+<rect x="1205" y="1315" width="540" height="250" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="1227" y="1340" width="7" height="29" rx="3" fill="#4079CC" stroke="#4079CC" stroke-width="1.7"/>
+<text x="1249" y="1364" font-family="DejaVu Sans, sans-serif" font-size="28" fill="#4079CC" font-weight="600">Web Worker threads × N</text>
+<text x="1233" y="1409" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">Separate event loops · Background JS</text>
+<text x="1233" y="1448" font-family="DejaVu Sans, sans-serif" font-size="24.4" fill="#142B43" font-weight="400">Each has its own V8 Isolate and JS heap</text>
+<text x="1233" y="1487" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">Message passing · Worker APIs</text>
+<text x="1233" y="1535" font-family="DejaVu Sans, sans-serif" font-size="20.3" fill="#718095" font-weight="400">Dedicated / Shared / Service workers as needed</text>
+<rect x="655" y="1530" width="520" height="300" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="677" y="1555" width="7" height="29" rx="3" fill="#4079CC" stroke="#4079CC" stroke-width="1.7"/>
+<text x="699" y="1579" font-family="DejaVu Sans, sans-serif" font-size="28" fill="#4079CC" font-weight="600">In-process ThreadPool</text>
+<text x="683" y="1624" font-family="DejaVu Sans, sans-serif" font-size="22.8" fill="#142B43" font-weight="400">V8 background compilation / optimization</text>
+<text x="683" y="1663" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">Concurrent / parallel parts of GC</text>
+<text x="683" y="1702" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">Other background and blocking tasks</text>
+<text x="683" y="1785" font-family="DejaVu Sans, sans-serif" font-size="23" fill="#718095" font-weight="400">GC also has phases that pause JS</text>
+<rect x="1205" y="1595" width="540" height="235" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="1227" y="1620" width="7" height="29" rx="3" fill="#4079CC" stroke="#4079CC" stroke-width="1.7"/>
+<text x="1249" y="1644" font-family="DejaVu Sans, sans-serif" font-size="26.3" fill="#4079CC" font-weight="600">Media and other helper threads</text>
+<text x="1233" y="1689" font-family="DejaVu Sans, sans-serif" font-size="21.9" fill="#142B43" font-weight="400">Audio / video demuxing, decoding, and sync</text>
+<text x="1233" y="1728" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">Canvas / image-processing support</text>
+<text x="1233" y="1767" font-family="DejaVu Sans, sans-serif" font-size="24.4" fill="#142B43" font-weight="400">Created per page features and platform</text>
+<rect x="85" y="1260" width="500" height="610" rx="23" fill="#EFF4FB" stroke="#D2DFEE" stroke-width="1.7"/>
+<text x="115" y="1313" font-family="DejaVu Sans, sans-serif" font-size="29.5" fill="#158E88" font-weight="700">Other utility processes × N</text>
+<text x="115" y="1355" font-family="DejaVu Sans, sans-serif" font-size="20.4" fill="#718095" font-weight="400">Audio / video decoding / data decoding, etc.</text>
+<rect x="115" y="1390" width="440" height="190" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="137" y="1415" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="159" y="1439" font-family="DejaVu Sans, sans-serif" font-size="28" fill="#158E88" font-weight="600">Service main thread</text>
+<text x="143" y="1484" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">Runs the service's modules</text>
+<text x="143" y="1523" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">Handles Mojo requests</text>
+<rect x="115" y="1610" width="440" height="200" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="137" y="1635" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="159" y="1659" font-family="DejaVu Sans, sans-serif" font-size="28" fill="#158E88" font-weight="600">Worker threads / pool</text>
+<text x="143" y="1704" font-family="DejaVu Sans, sans-serif" font-size="21.3" fill="#142B43" font-weight="400">Service-specific computation and I/O</text>
+<text x="143" y="1743" font-family="DejaVu Sans, sans-serif" font-size="19.2" fill="#142B43" font-weight="400">Thread structure depends on the service</text>
+<rect x="1815" y="300" width="500" height="790" rx="23" fill="#EFF4FB" stroke="#D2DFEE" stroke-width="1.7"/>
+<text x="1845" y="353" font-family="DejaVu Sans, sans-serif" font-size="34" fill="#158E88" font-weight="700">GPU / Viz process</text>
+<text x="1845" y="395" font-family="DejaVu Sans, sans-serif" font-size="18.4" fill="#718095" font-weight="400">Combines process output and accesses the GPU</text>
+<rect x="1845" y="420" width="440" height="170" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="1867" y="445" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="1889" y="469" font-family="DejaVu Sans, sans-serif" font-size="28" fill="#158E88" font-weight="600">GPU main thread</text>
+<text x="1873" y="514" font-family="DejaVu Sans, sans-serif" font-size="24.6" fill="#142B43" font-weight="400">GPU service · Command buffers</text>
+<text x="1873" y="553" font-family="DejaVu Sans, sans-serif" font-size="20.4" fill="#142B43" font-weight="400">Graphics resources · GPU rasterization</text>
+<rect x="1845" y="620" width="440" height="175" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="1867" y="645" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="1889" y="669" font-family="DejaVu Sans, sans-serif" font-size="22.4" fill="#158E88" font-weight="600">Viz display compositor thread</text>
+<text x="1873" y="714" font-family="DejaVu Sans, sans-serif" font-size="24.3" fill="#142B43" font-weight="400">Aggregates renderer / UI frames</text>
+<text x="1873" y="753" font-family="DejaVu Sans, sans-serif" font-size="19.5" fill="#142B43" font-weight="400">Display scheduling · Frame presentation</text>
+<rect x="1845" y="825" width="440" height="210" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="1867" y="850" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="1889" y="874" font-family="DejaVu Sans, sans-serif" font-size="28" fill="#158E88" font-weight="600">IO / helper threads</text>
+<text x="1873" y="919" font-family="DejaVu Sans, sans-serif" font-size="21.9" fill="#142B43" font-weight="400">IO: channels and message handling</text>
+<text x="1873" y="958" font-family="DejaVu Sans, sans-serif" font-size="21" fill="#142B43" font-weight="400">DrDC: dedicated GPU drawing thread</text>
+<text x="1873" y="997" font-family="DejaVu Sans, sans-serif" font-size="18.5" fill="#142B43" font-weight="400">Helpers enabled by backend configuration</text>
+<rect x="1815" y="1130" width="500" height="740" rx="23" fill="#EFF4FB" stroke="#D2DFEE" stroke-width="1.7"/>
+<text x="1845" y="1183" font-family="DejaVu Sans, sans-serif" font-size="34" fill="#158E88" font-weight="700">Network Service</text>
+<text x="1845" y="1225" font-family="DejaVu Sans, sans-serif" font-size="23" fill="#718095" font-weight="400">Usually in a separate utility process</text>
+<rect x="1845" y="1250" width="440" height="270" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="1867" y="1275" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="1889" y="1299" font-family="DejaVu Sans, sans-serif" font-size="28" fill="#158E88" font-weight="600">Network IO thread</text>
+<text x="1873" y="1344" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">URLLoader · NetworkContext</text>
+<text x="1873" y="1383" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">HTTP / HTTPS · WebSocket</text>
+<text x="1873" y="1422" font-family="DejaVu Sans, sans-serif" font-size="19.1" fill="#142B43" font-weight="400">Connections / sockets · DNS coordination</text>
+<text x="1873" y="1461" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#142B43" font-weight="400">Cookies · Network cache</text>
+<rect x="1845" y="1550" width="440" height="180" rx="18" fill="white" stroke="#DCE5EF" stroke-width="1.7"/>
+<rect x="1867" y="1575" width="7" height="29" rx="3" fill="#158E88" stroke="#158E88" stroke-width="1.7"/>
+<text x="1889" y="1599" font-family="DejaVu Sans, sans-serif" font-size="28" fill="#158E88" font-weight="600">Helper threads / pool</text>
+<text x="1873" y="1644" font-family="DejaVu Sans, sans-serif" font-size="21.4" fill="#142B43" font-weight="400">Blocking resolution / disk cache, etc.</text>
+<text x="1873" y="1683" font-family="DejaVu Sans, sans-serif" font-size="23.1" fill="#142B43" font-weight="400">Scheduled by the implementation</text>
+<text x="1845" y="1775" font-family="DejaVu Sans, sans-serif" font-size="19.5" fill="#718095" font-weight="400">Location varies by platform and configuration</text>
+<text x="1845" y="1815" font-family="DejaVu Sans, sans-serif" font-size="18.5" fill="#718095" font-weight="400">Some configurations run in the Browser process</text>
+<text x="85" y="1915" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#718095" font-weight="400">Coordination: Mojo / IPC between processes; posted tasks between threads; compositor frames sent to Viz</text>
+<text x="82" y="2000" font-family="DejaVu Sans, sans-serif" font-size="25" fill="#718095" font-weight="400">Scope: core architecture of typical desktop multiprocess setups; feature threads are created as needed; focus is on key roles and ownership</text>
+</svg>
