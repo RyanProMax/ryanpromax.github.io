@@ -1,14 +1,11 @@
 import Image from './Image';
 import Link from './Link';
 
-const DEFAULT_LABELS = { role: 'Role', focus: 'Focus', impact: 'Impact', learnMore: 'Learn more' };
+const DEFAULT_LABELS = { learnMore: 'Learn more' };
 
 interface CardProps {
   title: string;
   description: string;
-  role?: string;
-  focus?: string;
-  impact?: string;
   imgSrc?: string;
   href?: string;
   labels?: typeof DEFAULT_LABELS;
@@ -17,9 +14,6 @@ interface CardProps {
 export default function Card({
   title,
   description,
-  role,
-  focus,
-  impact,
   imgSrc,
   href,
   labels = DEFAULT_LABELS,
@@ -48,22 +42,6 @@ export default function Card({
           )}
         </h2>
         <p>{description}</p>
-        {(role || focus || impact) && (
-          <dl>
-            {[
-              [labels.role, role],
-              [labels.focus, focus],
-              [labels.impact, impact],
-            ]
-              .filter(([, value]) => value)
-              .map(([label, value]) => (
-                <div key={label}>
-                  <dt>{label}</dt>
-                  <dd>{value}</dd>
-                </div>
-              ))}
-          </dl>
-        )}
         {href && (
           <Link href={href} className="project-link">
             {labels.learnMore} →

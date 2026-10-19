@@ -22,10 +22,7 @@ export default async function Page({ params }: { params: Promise<{ locale: Local
   const { locale = DEFAULT_LOCALE } = await params;
   const title = getNavLinkData(locale, '/projects')?.title || 'Projects';
   const desc = Description[locale];
-  const labels =
-    locale === Locale.ZH
-      ? { role: '角色', focus: '方向', impact: '成果', learnMore: '查看详情' }
-      : { role: 'Role', focus: 'Focus', impact: 'Impact', learnMore: 'Learn more' };
+  const labels = locale === Locale.ZH ? { learnMore: '查看详情' } : { learnMore: 'Learn more' };
 
   return (
     <div>
