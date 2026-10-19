@@ -4,8 +4,7 @@ import { CoreContent } from 'pliny/utils/contentlayer';
 import { formatDate } from 'pliny/utils/formatDate';
 import type { Blog, Authors } from 'contentlayer/generated';
 import Link from '@/components/Link';
-import Comments from '@/components/Comments';
-import ScrollTopAndComment from '@/components/ScrollTopAndComment';
+import ScrollTop from '@/components/ScrollTop';
 import Image from '@/components/Image';
 import Tag from '@/components/Tag';
 import siteMetadata from '@/data/siteMetadata';
@@ -33,7 +32,7 @@ export default function PostLayout({
   const isChinese = language === Locale.ZH;
   return (
     <article className="reading-page">
-      <ScrollTopAndComment />
+      <ScrollTop />
       <header className="reading-header">
         <Link href={`/${language}/blog`} className="editorial-back">
           ← {isChinese ? '全部文章' : 'All posts'}
@@ -62,9 +61,6 @@ export default function PostLayout({
       <div className="reading-body">
         <ArticleToc headings={toc} chinese={isChinese} />
         <div className="prose prose-invert reading-content">{children}</div>
-      </div>
-      <div className="reading-comments" id="comment">
-        <Comments slug={content.slug} />
       </div>
       <footer className="reading-footer">
         <Link href={`${siteMetadata.siteRepo}/blob/main/data/${filePath}`}>

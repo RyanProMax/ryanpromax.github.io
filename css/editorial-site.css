@@ -643,11 +643,6 @@ html {
   width: 19px;
   height: 19px;
 }
-.reading-comments {
-  padding: 0 0 2rem;
-  color: var(--site-muted);
-  font-size: 0.8rem;
-}
 /* The search portal must clear the immersive homepage and its navigation. */
 .editorial-site .z-50:has(input[aria-controls='kbar-listbox']) {
   z-index: 250;
