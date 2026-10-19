@@ -46,7 +46,7 @@ function PostList({
     <div className="journal-page">
       <header className="editorial-page-heading">
         <h1>{title}</h1>
-        <p>
+        <p className="journal-description">
           {isChinese
             ? '关于桌面端工程、游戏直播与 AI4SE 的实践记录。'
             : 'Field notes on desktop engineering, game live streaming, and AI4SE.'}

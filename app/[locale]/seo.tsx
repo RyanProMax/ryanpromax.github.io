@@ -25,7 +25,7 @@ export function genPageMetadata({
     title,
     description: pageDescription,
     openGraph: {
-      title: `${title} | ${siteMetadata.title}`,
+      title: `${title} - ${siteMetadata.author}`,
       description: pageDescription,
       url: './',
       siteName: siteMetadata.title,
@@ -34,7 +34,7 @@ export function genPageMetadata({
       type: 'website',
     },
     twitter: {
-      title: `${title} | ${siteMetadata.title}`,
+      title: `${title} - ${siteMetadata.author}`,
       description: pageDescription,
       card: 'summary_large_image',
       images: image ? [image] : [siteMetadata.socialBanner],

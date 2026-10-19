@@ -208,6 +208,9 @@ html {
   font-size: 1rem;
   line-height: 1.8;
 }
+.journal-description {
+  font-style: italic;
+}
 .journal-grid {
   display: block;
   padding-top: 0.5rem;
@@ -626,10 +629,6 @@ html {
   width: 19px;
   height: 19px;
 }
-/* The search portal must clear the immersive homepage and its navigation. */
-.editorial-site .z-50:has(input[aria-controls='kbar-listbox']) {
-  z-index: 250;
-}
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
@@ -769,6 +768,47 @@ html {
   }
 }
 
+/* Pliny's portal lives outside .site-shell; share the site's type and palette. */
+.editorial-site .z-50:has(input[aria-controls='kbar-listbox']) {
+  z-index: 250;
+  font-family: var(--font-sans);
+  background: color-mix(in srgb, var(--site-background) 75%, transparent);
+  backdrop-filter: blur(6px);
+}
+.editorial-site .rounded-2xl:has(input[aria-controls='kbar-listbox']) {
+  border: 1px solid var(--site-line);
+  border-radius: 0.25rem;
+  background: var(--site-background);
+  color: var(--site-text);
+  box-shadow: 0 16px 48px rgb(0 0 0 / 12%);
+}
+.editorial-site div:has(> input[aria-controls='kbar-listbox']) {
+  gap: 1rem;
+  border-bottom: 1px solid var(--site-line);
+}
+.editorial-site div:has(> input[aria-controls='kbar-listbox']):focus-within {
+  border-bottom-color: var(--site-accent);
+}
+.editorial-site input[aria-controls='kbar-listbox'] {
+  min-width: 0;
+  margin: 0;
+  padding: 0.5rem 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  box-shadow: none;
+  font-size: 1rem;
+  color: var(--site-text);
+}
+.editorial-site input[aria-controls='kbar-listbox']::placeholder,
+.editorial-site div:has(> input[aria-controls='kbar-listbox']) svg {
+  color: var(--site-muted);
+}
+.editorial-site div:has(> input[aria-controls='kbar-listbox']) kbd {
+  border-color: var(--site-line);
+  color: var(--site-muted);
+  font-size: 0.65rem;
+}
 /* KBar scrolls its result wrapper, not the document root. */
 .editorial-site div:has(> #kbar-listbox) {
   scrollbar-width: thin;
@@ -779,4 +819,27 @@ html {
 }
 .editorial-site div:has(> #kbar-listbox)::-webkit-scrollbar-button {
   display: none;
+}
+#kbar-listbox [role='option'] > div > div {
+  color: var(--site-text);
+  background: transparent;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+#kbar-listbox [aria-selected='true'] > div > div {
+  background: var(--site-surface);
+  box-shadow: inset 2px 0 var(--site-accent);
+}
+#kbar-listbox .text-xs {
+  color: var(--site-muted);
+  font-size: 0.7rem;
+}
+#kbar-listbox .uppercase {
+  padding-top: 0.75rem;
+  border: 0;
+  letter-spacing: 0.12em;
+}
+.editorial-site .rounded-2xl:has(input[aria-controls='kbar-listbox']) > .text-center {
+  border: 0;
+  color: var(--site-muted);
 }

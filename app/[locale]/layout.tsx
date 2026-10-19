@@ -34,7 +34,7 @@ export async function generateMetadata({
     metadataBase: new URL(siteMetadata.siteUrl),
     title: {
       default: siteMetadata.title,
-      template: `%s | ${siteMetadata.title}`,
+      template: `%s - ${siteMetadata.author}`,
     },
     description,
     openGraph: {
