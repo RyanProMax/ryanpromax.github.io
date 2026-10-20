@@ -46,7 +46,7 @@ function PostList({
     <div className="journal-page">
       <header className="editorial-page-heading">
         <h1>{title}</h1>
-        <p className="journal-description">
+        <p>
           {isChinese
             ? '关于桌面端工程、游戏直播与 AI4SE 的实践记录。'
             : 'Field notes on desktop engineering, game live streaming, and AI4SE.'}
@@ -54,7 +54,6 @@ function PostList({
       </header>
       <div className="journal-grid">
         <aside className="journal-topics" aria-label={isChinese ? '按标签浏览' : 'Browse by topic'}>
-          <p className="editorial-eyebrow">{isChinese ? '主题' : 'Topics'}</p>
           <SlidingNav aria-label={isChinese ? '文章主题' : 'Post topics'}>
             <Link
               href={`/${locale}/blog`}

@@ -11,7 +11,7 @@ export default function ThemeSwitch() {
   useEffect(() => setMounted(true), []);
   const dark = resolvedTheme === 'dark';
 
-  const toggle = (event: MouseEvent<HTMLButtonElement>) => {
+  const toggle = async (event: MouseEvent<HTMLButtonElement>) => {
     const nextTheme = dark ? 'light' : 'dark';
     const update = () => flushSync(() => setTheme(nextTheme));
     if (
@@ -26,23 +26,27 @@ export default function ThemeSwitch() {
     const y = event.detail ? event.clientY : rect.top + rect.height / 2;
     const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
     const transition = document.startViewTransition(update);
-    void transition.ready
-      .then(() => {
-        const clips = [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`];
-        document.documentElement.animate(
-          { clipPath: nextTheme === 'dark' ? clips.reverse() : clips },
-          {
-            duration: 400,
-            easing: 'ease-out',
-            fill: 'forwards',
-            pseudoElement:
-              nextTheme === 'dark' ? '::view-transition-old(root)' : '::view-transition-new(root)',
-          }
-        );
-      })
-      .catch(() => {
-        /* A superseding navigation can cancel the visual transition. */
-      });
+    let animation: Animation | undefined;
+    try {
+      await transition.ready;
+      const clips = [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`];
+      animation = document.documentElement.animate(
+        { clipPath: nextTheme === 'dark' ? clips.reverse() : clips },
+        {
+          duration: 400,
+          easing: 'ease-out',
+          fill: 'forwards',
+          pseudoElement:
+            nextTheme === 'dark' ? '::view-transition-old(root)' : '::view-transition-new(root)',
+        }
+      );
+      await transition.finished;
+    } catch {
+      /* A superseding navigation can cancel the visual transition. */
+    } finally {
+      // Finished fill effects otherwise survive and clip a later root snapshot in Chromium.
+      animation?.cancel();
+    }
   };
 
   return (

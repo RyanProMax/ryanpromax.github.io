@@ -202,13 +202,11 @@ html {
   font-weight: 500;
   letter-spacing: -0.035em;
 }
-.editorial-page-heading > p:last-child:not(:first-child) {
+.editorial-page-heading > h1 + p {
   max-width: 42rem;
   color: var(--site-muted);
   font-size: 1rem;
   line-height: 1.8;
-}
-.journal-description {
   font-style: italic;
 }
 .journal-grid {
@@ -217,9 +215,6 @@ html {
 }
 .journal-topics {
   margin-bottom: 2.5rem;
-}
-.journal-topics .editorial-eyebrow {
-  display: none;
 }
 .journal-topics nav {
   display: flex;
@@ -550,9 +545,6 @@ html {
   .site-header {
     padding: 0.65rem 1rem;
   }
-  .site-header-actions {
-    gap: 0.35rem;
-  }
   .desktop-navigation {
     display: none;
   }
@@ -572,9 +564,6 @@ html {
   .site-main {
     padding-top: 6.5rem;
   }
-  .editorial-page-heading {
-    padding-bottom: 2rem;
-  }
   .journal-grid {
     display: block;
     padding-top: 1.5rem;
@@ -582,9 +571,6 @@ html {
   .journal-topics {
     position: static;
     margin-bottom: 2rem;
-  }
-  .journal-topics .editorial-eyebrow {
-    display: none;
   }
   .journal-topics nav {
     flex-direction: row;
