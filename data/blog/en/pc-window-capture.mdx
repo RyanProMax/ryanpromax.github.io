@@ -3,13 +3,13 @@ title: Game Capture & Window Capture
 date: '2024-09-26'
 tags: ['game-capture', 'window-capture', 'live-stream']
 draft: false
-summary: What are the principles behind game capture and window capture? What’s the difference between the two?
+summary: Which surface game-hook capture, WGC, DXGI duplication, BitBlt, and the Magnification API actually read, and why some can record exclusive fullscreen while others go black.
 language: en
 ---
 
 <TOCInline toc={props.toc} asDisclosure />
 
-## 1.1 Graphics APIs
+### 1.1 Graphics APIs
 
 Windows graphics APIs (Graphics Application Programming Interfaces) are software interfaces that allow developers to create and manage graphical content. These APIs serve as an abstraction layer between applications and underlying hardware, enabling rendering without directly manipulating hardware resources.
 
@@ -27,69 +27,121 @@ Windows graphics APIs (Graphics Application Programming Interfaces) are software
 
 7. [Vulkan](https://docs.vulkan.org/spec/latest/index.html): A low-overhead, cross-platform graphics and compute API by the Khronos Group, offering fine-grained control and extreme performance.
 
-## 2. Game Process Capture
+### 2. Game Process Capture
 
-- **Mechanism**: Injects a DLL into the target process to intercept DirectX/OpenGL/Vulkan rendering calls and fetch GPU framebuffer data for sharing with the capture software.
-
-- **Advantages**:
-
-  - High performance & low latency: Directly intercepts GPU rendering calls without CPU round-trips; frame rate syncs with GPU rendering.
-  - Game-optimized: Fully supports fullscreen exclusive mode and hardware acceleration; compatible with DX9/10/11/12, OpenGL, Vulkan-based games.
-
-- **Disadvantages**:
-
-  - Poor compatibility: Doesn’t work with typical desktop applications (e.g., GDI/GDI+ rendering); hard to hook into Electron (Chromium/Skia with multi-process sandboxing).
-  - Security and stability risks: Injection mechanisms may be blocked by antivirus or anti-cheat systems and can crash the target application.
-  - High maintenance: Requires constant adaptation to new game engines, API versions, and OS security policies.
-
-## 3. Window Capture
-
-### [WinRT Screen capture](https://learn.microsoft.com/en-us/windows/uwp/audio-video-camera/screen-capture)
-
-- **Mechanism**: Uses the Windows.Graphics.Capture API to share GPU textures of a specific window or screen via DWM (Desktop Window Manager) and DXGI Desktop Duplication.
+- **Mechanism**: Inject a DLL into the target process and copy the back buffer when the program presents a frame. The hook depends on the API. D3D9 has no DXGI swap chain, so the hook is `IDirect3DDevice9::Present`. D3D10/11/12 hook `IDXGISwapChain::Present`. OpenGL hooks `wglSwapBuffers`. Vulkan hooks `vkQueuePresentKHR`. The copy goes through a shared GPU texture, which the capture process opens to receive frames.
 
 - **Advantages**:
 
-  - Cross-GPU: Can capture even if OBS and the target window are on different GPUs.
-  - Low latency & high performance: Shares GPU textures directly without copying to the CPU, ideal for dynamic content.
+  - It can capture exclusive fullscreen. That image bypasses DWM, so WGC and BitBlt never see it. The hook runs inside the process at Present, so it does.
+  - Frame rate follows the game's own Present, not the monitor refresh rate. A game presenting at 144fps on a 60Hz monitor is still captured at the game's present rate.
+  - Occlusion does not matter. The copy is the back buffer, not pixels already composited on the desktop.
+  - The copy stays on the GPU. There is no readback to the CPU first.
 
 - **Disadvantages**:
 
-  - Requires Windows 10 1803+: Not available on older Windows 10 versions or Windows 7.
+  - It only works for programs that present through D3D, OpenGL, or Vulkan. A plain GDI window has none of these calls, so there is nothing to hook.
+  - Multi-process sandboxes (for example the GPU process in Electron / Chromium) are hard to inject.
+  - Antivirus and anti-cheat block DLL injection. A hook that touches a swap chain the game has already released can crash the game.
+  - Each API has its own present function and swap-chain lifetime, so each one needs its own adaptation.
+  - If the game runs as administrator, the capture process must run as administrator as well, or the system rejects the injection.
 
-  - Limited Vulkan/DX12 compatibility: Some exclusive fullscreen render paths may not be capturable.
+### 3. Window Capture
 
+With DWM enabled, each top-level window draws to its own off-screen redirection surface, and DWM then composites those surfaces into the desktop. The methods below differ in whether they read a window's content before that composition, or the desktop after it.
 
-### [GDI BitBlt](https://learn.microsoft.com/zh-cn/windows/win32/api/wingdi/nf-wingdi-bitblt)
+#### [Windows.Graphics.Capture (WGC)](https://learn.microsoft.com/en-us/windows/apps/develop/media-authoring-processing/screen-capture)
 
-- **Mechanism**: Uses the GDI BitBlt function to copy pixel blocks from a source DC to a destination DC. Compatible with older Windows versions.
+- **Mechanism**: `Windows.Graphics.Capture` asks DWM for a window's full content before desktop composition, including the GPU textures DWM will composite, and returns it as a D3D11 texture. Occlusion is applied during composition, so other windows covering the target do not matter. Both GDI and GPU-rendered windows work, because the capture reads that per-window content, not the GDI redirection bitmap and not the finished desktop. A minimized window usually stops rendering, so there is no new surface to read. Exclusive fullscreen bypasses DWM, and this API never sees that frame.
+
+  For a window, the size follows the window (`GraphicsCaptureItem.Size`). The frame rate follows DWM composition and is capped by that monitor's refresh rate. On a 60Hz display, a 144fps game that is windowed or borderless and still composited by DWM is not delivered at 144fps.
+
+  The API exists on Windows 10 1803, but only through the system picker, `GraphicsCapturePicker`. Capturing a specific window or monitor by handle goes through [`IGraphicsCaptureItemInterop`](https://learn.microsoft.com/en-us/windows/win32/api/windows.graphics.capture.interop/nn-windows-graphics-capture-interop-igraphicscaptureiteminterop): `CreateForWindow` / `CreateForMonitor`, which require Windows 10 1903 or later. Versions 1803 and 1809 do not have those methods. Windows 10 before 1803, and Windows 7, do not have the API. DXGI Desktop Duplication is a separate API. It duplicates the already composited desktop of a monitor, and is covered in the next section.
 
 - **Advantages**:
 
-  - Excellent compatibility: Works on Windows 7 and earlier; no special permissions or user interaction required.
-  - Simple implementation: Depends solely on GDI, easy to port.
+  - It captures both GDI and GPU-rendered windows, and occlusion does not matter.
+  - Frames are textures on the caller's D3D11 device. There is no CPU readback and no injection into the target process.
+  - It does not have Desktop Duplication's rule that the device must be created on the adapter that owns the output. The capture process and the target window can sit on different GPUs.
 
 - **Disadvantages**:
 
-  - Cannot capture hardware-accelerated windows: GPU-drawn content bypasses the GDI pipeline, resulting in black or corrupted captures.
-  - High CPU overhead & latency: Requires GPU-to-CPU data copying; performance and frame rate are constrained.
+  - Capture by handle requires Windows 10 1903 or later. Versions 1803 and 1809 only have the system picker.
+  - It cannot capture exclusive fullscreen. A minimized window is usually black, or stops updating.
+  - On Windows 10, a yellow border is drawn around the captured window or display. On Windows 11, [`IsBorderRequired`](https://learn.microsoft.com/en-us/uwp/api/windows.graphics.capture.graphicscapturesession.isborderrequired) can be set to false. The docs require consent first, via `GraphicsCaptureAccess.RequestAccessAsync` with `GraphicsCaptureAccessKind.Borderless`. A packaged app must also declare `graphicsCaptureWithoutBorder`. If another app still requires the border, the border stays.
+  - On hybrid-GPU laptops the cross-adapter copy still fails in practice: the game renders on the discrete GPU while the capture texture is on the integrated GPU, and the result is a black or broken frame.
 
-### [Magnification API](https://learn.microsoft.com/zh-cn/windows/win32/winauto/magapi/entry-magapi-sdk)
+#### [DXGI Desktop Duplication](https://learn.microsoft.com/en-us/windows/win32/direct3ddxgi/desktop-dup-api)
 
-- **Mechanism**: Creates a magnifier window and uses MagSetWindowFilterList to filter target windows, then reads the image from the magnifier's DC.
+- **Mechanism**: [`IDXGIOutput1::DuplicateOutput`](https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgioutput1-duplicateoutput), available on Windows 8 and later. It takes the desktop image of a monitor output as a DXGI texture on the GPU. Cropping that image to a window rectangle is the caller's job. The image is the desktop after DWM composition. The D3D device must be created on the adapter the output is connected to. On Windows 7, even with the Platform Update, the method returns `E_NOTIMPL`.
 
 - **Advantages**:
 
-  - Can capture background or occluded windows: Bypasses Z-order restrictions; ideal for capturing hidden windows.
-  - Supports hardware-accelerated content: Captures rendered results after DWM composition.
+  - The image stays on the GPU as a DXGI surface, and dirty rectangles are available. That is lighter than BitBlt's copy to the CPU, and it fits full-screen or whole-monitor capture.
+  - From Windows 8 up to, but not including, Windows 10 1903, WGC cannot target a window by handle. Desktop Duplication is the GPU capture path for that range.
 
 - **Disadvantages**:
 
-  - High performance cost: Frequent composition and readback from the magnifier cause high CPU/GPU usage.
-  - Depends on Aero/DWM: May not work if Aero is disabled or when third-party themes are used.
+  - Capture is per output. Cropping to a window rectangle keeps whatever is covering that window.
+  - A game that takes over the output and leaves DWM out of the path is not in this desktop image. The API docs say duplication is supported for the DWM desktop and for non-8bpp DirectX and OpenGL full-screen modes.
+  - A process can have only one duplication interface on a given output. A session allows four duplicating processes by default; beyond that the call returns `DXGI_ERROR_NOT_CURRENTLY_AVAILABLE`.
 
-## 4. Recommendations
+#### [GDI BitBlt](https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-bitblt)
 
-1. For high-performance gaming scenarios, `Game Process Capture` is preferred, followed by `WGC` (Windows Graphics Capture). Both offer comparable performance, but WGC is safer since it doesn’t use injection.
+- **Mechanism**: A DC (device context) is a GDI handle to a drawing surface. `BitBlt` copies pixels from one DC to another. What you capture depends on which surface the source DC points at.
 
-2. If compatibility with older systems is needed, consider using `BitBlt` and `Magnification API` as fallback options.
+  Under DWM, a window's GDI drawing goes into its own off-screen redirection bitmap, which then takes part in desktop composition.
+
+  - A window DC (`GetDC(hwnd)` / `GetWindowDC`) reads that bitmap. A plain GDI window still has its pixels there when another window covers it.
+  - A D3D flip-model swap chain, and DirectComposition as used by Chrome / Electron, live in separate GPU textures. DWM samples those textures during composition and never writes them into the GDI bitmap. Chrome / Electron also set `WS_EX_NOREDIRECTIONBITMAP`, so that bitmap is never created. BitBlt from the window DC is black. An older blit-model present that does land in the redirection bitmap can still be captured from the window DC.
+  - A screen DC (`GetDC(NULL)`), cropped to the window rectangle, reads the desktop after composition. GPU windows show up, and so does anything covering them.
+  - [`PrintWindow`](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-printwindow) by default asks the target window to handle `WM_PRINT`, and GPU windows often stay black. With `PW_RENDERFULLCONTENT` (Windows 8.1 and later, defined in `winuser.h`), DWM renders the whole window into the destination DC, including DirectComposition / GPU layers. Many windows of that kind, including Chrome and Electron, can be captured this way, including while covered. The call is synchronous. Exclusive fullscreen, and content protected by display affinity, still cannot.
+
+- **Advantages**:
+
+  - It works on every Windows version that still has GDI. It is a general fallback, not a path kept only for old systems.
+  - It needs no extra permission and no system picker. A plain GDI window can be read from its own DC, and occlusion does not matter.
+
+- **Disadvantages**:
+
+  - A window DC does not contain flip-model or DirectComposition content.
+  - A screen DC does contain GPU windows that DWM has composited onto the desktop, but occluding windows are included, and exclusive fullscreen is still missing.
+  - Pixels are copied to the CPU, which gets expensive at high resolution.
+
+#### [Magnification API](https://learn.microsoft.com/en-us/windows/win32/winauto/magapi/magapi-intro)
+
+- **Mechanism**: The magnifier control copies a source rectangle of the screen into an off-screen bitmap (`MagSetWindowSource`). That rectangle is the desktop after DWM composition, the same layer as a screen-DC BitBlt, but a different path: it does not go through WGC or DXGI Desktop Duplication. [`MagSetWindowFilterList`](https://learn.microsoft.com/en-us/windows/win32/api/magnification/nf-magnification-magsetwindowfilterlist) with `MW_FILTERMODE_EXCLUDE` removes listed windows, such as the capturer's own preview and overlays. The magnifier window itself is excluded automatically. A minimized window is no longer in the composition, and excluding other windows does not bring it back. `MW_FILTERMODE_INCLUDE` is unsupported on Windows 7 and later. The full-screen magnifier does not support a filter list. WebRTC's screen capturer includes an implementation of this API.
+
+- **Advantages**:
+
+  - As the last tier, it can still produce a frame after the others have failed. Older systems have no WGC, and on Windows 7 `DuplicateOutput` returns `E_NOTIMPL`. In some driver, hybrid-GPU, and remote-session environments, desktop duplication fails as well. The magnifier does not use that API, so in those environments it can still return the composited desktop.
+  - It can exclude the capturer's own preview and overlays. The image is the same composited desktop, but cleaner than a screen-DC BitBlt, which would include those windows in the crop.
+
+- **Disadvantages**:
+
+  - It shares the composited-desktop layer. Exclusive fullscreen, windows protected by `SetWindowDisplayAffinity`, and minimized windows are still missing. It is the last resort that keeps something on screen, not a cure-all.
+  - Pixels are on the CPU, and the overhead is higher than the tiers above it. [`MagSetImageScalingCallback`](https://learn.microsoft.com/en-us/windows/win32/api/magnification/nf-magnification-magsetimagescalingcallback) is deprecated as of Windows 7, works only while DWM is off, and has no replacement callback.
+  - A process can use only one magnifier instance. It is aimed at the whole desktop, not at a window handle. A 32-bit process is not supported on 64-bit Windows (WOW64).
+
+### 4. Why Capture Still Fails
+
+WGC and BitBlt can both be wired up and still produce a black or frozen frame in production. Common causes:
+
+1. **The pixels never enter the surface these APIs read.** Exclusive fullscreen bypasses DWM. Borderless fullscreen can use independent flip (direct flip): the swap chain is scanned out by the display. A hardware overlay (MPO, multiplane overlay) puts video or HDR on a separate hardware plane. Those pixels may be absent from the surface WGC and BitBlt receive, which shows up as black, or as a frame that stops updating.
+
+2. **The window opts out of capture.** The target calls [`SetWindowDisplayAffinity`](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowdisplayaffinity). `WDA_EXCLUDEFROMCAPTURE` (Windows 10 2004 and later) makes the window disappear from the capture. `WDA_MONITOR` leaves that area with no content. Both apply only while DWM is compositing the desktop.
+
+3. **The window state or the handle is wrong.** After minimize, the program usually stops drawing: WGC has no new surface, and a screen crop cannot see the window either. A window that sits off-screen is cropped by a screen DC or by DXGI as whatever else is on the desktop, or as empty space. WGC can sometimes still read the window surface, but if the program has stopped drawing, the frame is black or frozen anyway. A window on another virtual desktop may be cloaked. A child window or a launcher window is not the top-level window that is actually drawing.
+
+4. **GPU, format, and session.** On a hybrid-GPU laptop the game runs on the discrete GPU and the capture texture is created on the integrated GPU. Drivers that only partly support shared textures or desktop duplication produce the same black or frozen frames. With Windows HD Color enabled, the content format is not necessarily `DXGI_FORMAT_B8G8R8A8_UNORM` from the official sample. Treating it as 8-bit washes the image out (the docs call this pixel overclipping). HDR needs a format such as `DXGI_FORMAT_R16G16B16A16_FLOAT`. Remote Desktop often does not expose the same desktop surface. When the session disconnects, Desktop Duplication returns `DXGI_ERROR_SESSION_DISCONNECTED`.
+
+5. **Privilege and the secure desktop.** Injection requires an integrity level high enough to open the target process. The UAC consent UI and the lock screen live on the secure desktop, which a normal user process cannot enter. Desktop Duplication returns `E_ACCESSDENIED` for that desktop. The docs say only `LOCAL_SYSTEM` can access it.
+
+### 5. Recommendations
+
+1. For games, try process injection first. It can capture exclusive fullscreen, and the frame rate follows the game's Present.
+2. When injection is not available and the system is Windows 10 1903 or later, capture the window with WGC.
+3. Next, use DXGI Desktop Duplication, or BitBlt from the screen DC, and crop to the window rectangle.
+4. When those still produce no usable frame, use the Magnification API as the last tier. It reads the composited desktop through another path, and it can exclude the capturer's own windows, which keeps a picture on screen.
+5. When the target is known to be a plain GDI window, BitBlt from the window DC directly. Occlusion still works. That shortcut sits beside the chain above, not inside it.
+6. Detect black frames and frozen frames, step down these tiers automatically, and send the failure reason to telemetry.
