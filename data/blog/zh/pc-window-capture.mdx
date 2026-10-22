@@ -9,7 +9,7 @@ language: zh
 
 <TOCInline toc={props.toc} asDisclosure />
 
-### 1.1 图形 API
+## 1. 图形 API
 
 Windows 系统的图形 API（Graphics Application Programming Interface）是软件接口，用于开发者创建和管理图形内容。相当于桥接层，在应用程序与底层硬件之间提供了一层抽象，开发者无需操作硬件接口即可进行图形绘制。
 
@@ -27,7 +27,7 @@ Windows 系统的图形 API（Graphics Application Programming Interface）是�
 
 7. [Vulkan](https://docs.vulkan.org/spec/latest/index.html)：Khronos Group 提供的低开销、跨平台图形/计算 API，面向极致性能和细粒度控制。
 
-### 2. 游戏进程采集
+## 2. 游戏进程采集
 
 - **原理**：把 DLL 注入目标进程，在它提交画面时把后台缓冲拷出来。拦截点按 API 分开：D3D9 没有 DXGI 交换链，钩的是 `IDirect3DDevice9::Present`；D3D10/11/12 钩 `IDXGISwapChain::Present`；OpenGL 钩 `wglSwapBuffers`；Vulkan 钩 `vkQueuePresentKHR`。拷贝走共享 GPU 纹理，采集进程打开这张纹理取帧。
 
@@ -46,11 +46,11 @@ Windows 系统的图形 API（Graphics Application Programming Interface）是�
   - 每套 API 的提交函数和交换链生命周期都不同，要分别适配。
   - 游戏以管理员身份运行时，采集进程也必须以管理员身份运行，否则系统会拒绝注入。
 
-### 3. 窗口采集
+## 3. 窗口采集
 
 DWM 开启后，每个顶层窗口先画到自己的屏外重定向表面，再由 DWM 合成进桌面。下面几种方式的差别，就是读合成前的窗口内容，还是读合成后的桌面。
 
-#### [Windows.Graphics.Capture（WGC）](https://learn.microsoft.com/zh-cn/windows/apps/develop/media-authoring-processing/screen-capture)
+### [Windows.Graphics.Capture（WGC）](https://learn.microsoft.com/zh-cn/windows/apps/develop/media-authoring-processing/screen-capture)
 
 - **原理**：`Windows.Graphics.Capture` 向 DWM 要一个窗口在桌面合成之前的完整内容，包括 DWM 拿去合成的 GPU 纹理，以 D3D11 纹理交回调用方。遮挡是合成时才叠上去的，所以窗口被别的窗口挡住不影响。GDI 窗口和 GPU 窗口都能采到，因为读的是这份窗口内容，不是 GDI 重定向位图，也不是合成完的整张桌面。最小化后窗口通常停止绘制，没有新的表面可读。独占全屏绕过 DWM，这套 API 看不到那一帧。
 
@@ -71,7 +71,7 @@ DWM 开启后，每个顶层窗口先画到自己的屏外重定向表面，再�
   - Win10 上，被采集的窗口或显示器边缘有一圈黄色边框。Win11 起可以设 [`IsBorderRequired`](https://learn.microsoft.com/zh-cn/uwp/api/windows.graphics.capture.graphicscapturesession.isborderrequired) 为 false。文档要求先用 `GraphicsCaptureAccess.RequestAccessAsync` 取得 `GraphicsCaptureAccessKind.Borderless` 同意，打包应用还要声明 `graphicsCaptureWithoutBorder`；别的程序如果仍要求边框，边框会留下。
   - 双显卡笔记本上，游戏在独显、采集纹理在核显时，跨适配器拷贝仍可能黑屏或异常。
 
-#### [DXGI Desktop Duplication](https://learn.microsoft.com/zh-cn/windows/win32/direct3ddxgi/desktop-dup-api)
+### [DXGI Desktop Duplication](https://learn.microsoft.com/zh-cn/windows/win32/direct3ddxgi/desktop-dup-api)
 
 - **原理**：Win8 起的 [`IDXGIOutput1::DuplicateOutput`](https://learn.microsoft.com/zh-cn/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgioutput1-duplicateoutput)。按显示器输出拿到桌面图像，是一块 GPU 上的 DXGI 纹理，再按窗口矩形自己裁剪。读的是 DWM 合成之后的桌面。D3D 设备必须创建在连接这块输出的适配器上。Win7 即使装了 Platform Update，这个接口也返回 `E_NOTIMPL`。
 
@@ -86,7 +86,7 @@ DWM 开启后，每个顶层窗口先画到自己的屏外重定向表面，再�
   - 真正独占输出、把 DWM 挤掉的全屏游戏，不在这张桌面图像里。接口文档写明它支持 DWM 桌面，以及非 8bpp 的 DirectX / OpenGL 全屏模式。
   - 同一输出上，一个进程同时只能有一份复制；一个会话里同时复制的进程默认最多四个，超限返回 `DXGI_ERROR_NOT_CURRENTLY_AVAILABLE`。
 
-#### [GDI BitBlt](https://learn.microsoft.com/zh-cn/windows/win32/api/wingdi/nf-wingdi-bitblt)
+### [GDI BitBlt](https://learn.microsoft.com/zh-cn/windows/win32/api/wingdi/nf-wingdi-bitblt)
 
 - **原理**：DC（Device Context，设备上下文）是 GDI 里指向一块绘图表面的句柄。`BitBlt` 把像素从一个 DC 拷到另一个 DC。采到什么，取决于源 DC 指向哪块表面。
 
@@ -108,7 +108,7 @@ DWM 开启后，每个顶层窗口先画到自己的屏外重定向表面，再�
   - 屏幕 DC 能看到已经合成进桌面的 GPU 窗口，但遮挡会进画面，独占全屏仍然采不到。
   - 像素拷到 CPU，分辨率高时开销大。
 
-#### [Magnification API](https://learn.microsoft.com/zh-cn/windows/win32/winauto/magapi/magapi-intro)
+### [Magnification API](https://learn.microsoft.com/zh-cn/windows/win32/winauto/magapi/magapi-intro)
 
 - **原理**：放大镜控件把屏幕上的一块源矩形拷进离屏位图（`MagSetWindowSource`）。读的是 DWM 合成之后的桌面，和屏幕 DC 的 BitBlt 同一层，但路径不同：不经过 WGC，也不经过 DXGI Desktop Duplication。[`MagSetWindowFilterList`](https://learn.microsoft.com/zh-cn/windows/win32/api/magnification/nf-magnification-magsetwindowfilterlist) 用 `MW_FILTERMODE_EXCLUDE` 可以排除指定窗口，例如采集端自己的预览和浮层；放大镜窗口自己会被自动排除。最小化的窗口已经不在合成结果里，排除别的窗口也把它变不出来。`MW_FILTERMODE_INCLUDE` 从 Windows 7 起不支持。全屏放大镜不支持过滤列表。WebRTC 的屏幕采集里有一套这个 API 的实现。
 
@@ -123,7 +123,7 @@ DWM 开启后，每个顶层窗口先画到自己的屏外重定向表面，再�
   - 像素在 CPU 上，开销比前几档高。[`MagSetImageScalingCallback`](https://learn.microsoft.com/zh-cn/windows/win32/api/magnification/nf-magnification-magsetimagescalingcallback) 从 Windows 7 起弃用，只在 DWM 关闭时有效，没有替代回调。
   - 一个进程只能用一个放大镜实例。它面向整块桌面，不是按窗口句柄采集。32 位进程在 64 位 Windows 上不受支持（WOW64）。
 
-### 4. 为什么仍然会采集失败
+## 4. 为什么仍然会采集失败
 
 WGC 和 BitBlt 都接上之后，线上仍会黑屏或画面冻结。常见原因：
 
@@ -137,7 +137,7 @@ WGC 和 BitBlt 都接上之后，线上仍会黑屏或画面冻结。常见原�
 
 5. **权限和安全桌面。** 注入要求调用方的完整性级别足以打开目标进程。UAC 同意界面和锁屏在安全桌面上，普通用户进程进不去。Desktop Duplication 对安全桌面返回 `E_ACCESSDENIED`，文档写明只有 `LOCAL_SYSTEM` 能访问。
 
-### 5. 使用建议
+## 5. 使用建议
 
 1. 游戏优先用进程注入。这条路径能采到独占全屏，帧率也跟着游戏的 Present。
 2. 注入不可用，且系统是 Win10 1903 及以上时，用 WGC 按窗口采集。
