@@ -3,7 +3,7 @@ title: 游戏采集 & 窗口采集
 date: '2024-09-26'
 tags: ['game-capture', 'window-capture', 'live-stream']
 draft: false
-summary: 游戏采集跟窗口采集的原理是什么，两者又有什么区别？一篇文章告诉你。
+summary: 进程注入、WGC、DXGI 桌面复制、BitBlt 和 Magnification 各读到哪一层画面，为什么有的能录独占全屏，有的却黑屏。
 language: zh
 ---
 
@@ -29,61 +29,121 @@ Windows 系统的图形 API（Graphics Application Programming Interface）是�
 
 ### 2. 游戏进程采集
 
-- **原理**：通过 DLL 注入到目标进程，拦截 DirectX/OpenGL/Vulkan 图形调用，获取 GPU 帧缓冲数据并共享给采集软件。
+- **原理**：把 DLL 注入目标进程，在它提交画面时把后台缓冲拷出来。拦截点按 API 分开：D3D9 没有 DXGI 交换链，钩的是 `IDirect3DDevice9::Present`；D3D10/11/12 钩 `IDXGISwapChain::Present`；OpenGL 钩 `wglSwapBuffers`；Vulkan 钩 `vkQueuePresentKHR`。拷贝走共享 GPU 纹理，采集进程打开这张纹理取帧。
 
 - **优点**：
 
-  - 高性能、低延迟：可直接拦截 GPU 渲染调用，无需往返 CPU，帧率与 GPU 渲染同步。
-  - 专门针对游戏优化：支持全屏独占模式和硬件加速特性，兼容 DX9/10/11/12、OpenGL、Vulkan 主流游戏。
+  - 能采集独占全屏。这种画面绕过 DWM，WGC 和 BitBlt 都读不到；注入发生在进程内部的 Present 上，所以读得到。
+  - 帧率跟着游戏自己的 Present，不跟显示器刷新率。60Hz 显示器上以 144fps Present 的游戏，采集仍按游戏的提交节奏出帧。
+  - 窗口被挡住也不影响，读的是后台缓冲，不是桌面上已经合成好的像素。
+  - 拷贝留在 GPU 上，不必先读回 CPU。
 
 - **缺点**：
-  - 兼容性差：对普通桌面应用（GDI/GDI+ 渲染）无法工作，对 Electron（Chromium/Skia 多进程沙箱）也难以插入钩子。
-  - 安全与稳定风险：注入机制可能被杀软、反作弊系统拦截，甚至引发目标程序崩溃。
-  - 维护成本：需不断适配新游戏引擎、API 版本与系统安全策略。
+
+  - 只对通过 D3D、OpenGL、Vulkan 提交画面的程序有效。纯 GDI 窗口没有这些调用，无钩可挂。
+  - 多进程沙箱（例如 Electron / Chromium 的 GPU 进程）很难注入。
+  - 杀毒软件和反作弊会拦截 DLL 注入；钩子如果和已经释放的交换链发生冲突，会直接把游戏打崩。
+  - 每套 API 的提交函数和交换链生命周期都不同，要分别适配。
+  - 游戏以管理员身份运行时，采集进程也必须以管理员身份运行，否则系统会拒绝注入。
 
 ### 3. 窗口采集
 
-#### [WinRT 原生捕获](https://learn.microsoft.com/zh-cn/windows/uwp/audio-video-camera/screen-capture)
+DWM 开启后，每个顶层窗口先画到自己的屏外重定向表面，再由 DWM 合成进桌面。下面几种方式的差别，就是读合成前的窗口内容，还是读合成后的桌面。
 
-- **原理**：基于 Windows.Graphics.Capture API，通过 DWM（桌面窗口管理器）与 DXGI Desktop Duplication，共享 GPU 纹理捕获特定窗口或屏幕。
+#### [Windows.Graphics.Capture（WGC）](https://learn.microsoft.com/zh-cn/windows/apps/develop/media-authoring-processing/screen-capture)
+
+- **原理**：`Windows.Graphics.Capture` 向 DWM 要一个窗口在桌面合成之前的完整内容，包括 DWM 拿去合成的 GPU 纹理，以 D3D11 纹理交回调用方。遮挡是合成时才叠上去的，所以窗口被别的窗口挡住不影响。GDI 窗口和 GPU 窗口都能采到，因为读的是这份窗口内容，不是 GDI 重定向位图，也不是合成完的整张桌面。最小化后窗口通常停止绘制，没有新的表面可读。独占全屏绕过 DWM，这套 API 看不到那一帧。
+
+  按窗口采集时，尺寸跟着窗口走（`GraphicsCaptureItem.Size`）。帧率跟着 DWM 的合成，上限是这块显示器的刷新率。同一台 60Hz 显示器上，窗口化或无边框、仍由 DWM 合成的 144fps 游戏，WGC 不会按 144fps 出帧。
+
+  这套 API 在 Win10 1803 就有，但当时只能弹出系统选择器 `GraphicsCapturePicker`。按句柄指定窗口或显示器，要走 [`IGraphicsCaptureItemInterop`](https://learn.microsoft.com/zh-cn/windows/win32/api/windows.graphics.capture.interop/nn-windows-graphics-capture-interop-igraphicscaptureiteminterop) 的 `CreateForWindow` / `CreateForMonitor`，最低版本是 Win10 1903。1803 和 1809 都没有这两个方法。1803 之前的 Windows 10，以及 Win7，没有这套 API。DXGI Desktop Duplication 是另一套接口，按显示器复制已经合成好的桌面，见下一节。
 
 - **优点**：
 
-  - 跨 GPU：即使 OBS 与目标窗口处于不同 GPU，仍能捕获。
-  - 低延迟、高性能：直接共享 GPU 纹理，无需拷贝到 CPU，适合动态内容。
+  - GDI 和 GPU 绘制的窗口都能采，窗口被挡住也不影响。
+  - 帧是调用方 D3D11 设备上的纹理，不必读回 CPU，也不注入目标进程。
+  - 没有 Desktop Duplication「设备必须创建在输出所在适配器上」的限制，采集端和目标窗口可以不在同一块显卡。
 
 - **缺点**：
-  - 仅支持 Win10 1803+ 以上系统：旧版 Windows 10 或 Win7 无法使用。
-  - 部分 Vulkan/DX12 游戏兼容性不足：部分全屏专属渲染可能无法捕获。
+
+  - 按句柄采集需要 Win10 1903+。1803 和 1809 只有系统选择器。
+  - 采不到独占全屏。最小化的窗口通常是黑的，或不再更新。
+  - Win10 上，被采集的窗口或显示器边缘有一圈黄色边框。Win11 起可以设 [`IsBorderRequired`](https://learn.microsoft.com/zh-cn/uwp/api/windows.graphics.capture.graphicscapturesession.isborderrequired) 为 false。文档要求先用 `GraphicsCaptureAccess.RequestAccessAsync` 取得 `GraphicsCaptureAccessKind.Borderless` 同意，打包应用还要声明 `graphicsCaptureWithoutBorder`；别的程序如果仍要求边框，边框会留下。
+  - 双显卡笔记本上，游戏在独显、采集纹理在核显时，跨适配器拷贝仍可能黑屏或异常。
+
+#### [DXGI Desktop Duplication](https://learn.microsoft.com/zh-cn/windows/win32/direct3ddxgi/desktop-dup-api)
+
+- **原理**：Win8 起的 [`IDXGIOutput1::DuplicateOutput`](https://learn.microsoft.com/zh-cn/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgioutput1-duplicateoutput)。按显示器输出拿到桌面图像，是一块 GPU 上的 DXGI 纹理，再按窗口矩形自己裁剪。读的是 DWM 合成之后的桌面。D3D 设备必须创建在连接这块输出的适配器上。Win7 即使装了 Platform Update，这个接口也返回 `E_NOTIMPL`。
+
+- **优点**：
+
+  - 画面以 DXGI 表面留在 GPU 上，还可以查询脏矩形，比 BitBlt 拷到 CPU 轻，适合整屏、整台显示器的采集。
+  - Win8 到 Win10 1903 之前还不能按窗口句柄用 WGC，这段时间它是可用的 GPU 采集路径。
+
+- **缺点**：
+
+  - 只能按输出采集。裁到窗口矩形时，挡在上面的内容也在画面里。
+  - 真正独占输出、把 DWM 挤掉的全屏游戏，不在这张桌面图像里。接口文档写明它支持 DWM 桌面，以及非 8bpp 的 DirectX / OpenGL 全屏模式。
+  - 同一输出上，一个进程同时只能有一份复制；一个会话里同时复制的进程默认最多四个，超限返回 `DXGI_ERROR_NOT_CURRENTLY_AVAILABLE`。
 
 #### [GDI BitBlt](https://learn.microsoft.com/zh-cn/windows/win32/api/wingdi/nf-wingdi-bitblt)
 
-- **原理**：使用 GDI BitBlt 函数将源 DC 像素块拷贝到目标 DC，兼容旧版 Windows。
+- **原理**：DC（Device Context，设备上下文）是 GDI 里指向一块绘图表面的句柄。`BitBlt` 把像素从一个 DC 拷到另一个 DC。采到什么，取决于源 DC 指向哪块表面。
+
+  DWM 下，窗口的 GDI 绘制进自己的屏外重定向位图，再参与桌面合成。
+
+  - 窗口 DC（`GetDC(hwnd)` / `GetWindowDC`）读的就是这块位图。普通 GDI 窗口即使被挡住，位图里仍有内容。
+  - D3D 的 flip-model 交换链，以及 Chrome / Electron 使用的 DirectComposition，画在另外的 GPU 纹理里。DWM 合成时直接采样这些纹理，不写进 GDI 位图。Chrome / Electron 还会加上 `WS_EX_NOREDIRECTIONBITMAP`，直接不创建这张位图。对它们做窗口 DC 的 BitBlt，结果是黑的。更早的 blit 模型如果画进了重定向位图，窗口 DC 仍可能采到。
+  - 屏幕 DC（`GetDC(NULL)`）再按窗口矩形裁剪，读的是合成之后的桌面。GPU 窗口能采到，挡在上面的窗口也会被采进去。
+  - [`PrintWindow`](https://learn.microsoft.com/zh-cn/windows/win32/api/winuser/nf-winuser-printwindow) 默认让目标窗口处理 `WM_PRINT`，GPU 窗口经常仍是黑的。加上 `PW_RENDERFULLCONTENT`（Windows 8.1+，定义在 `winuser.h`）后，DWM 会把整个窗口画进目标 DC，包括 DirectComposition / GPU 层。Chrome、Electron 这类窗口很多可以这样采到，被挡住时也能用。调用是同步的。独占全屏，以及设置了显示亲和性的内容，仍然不行。
 
 - **优点**：
 
-  - 兼容性好：Win7 及更早版本皆支持；无需额外权限或用户交互。
-  - 实现简单：仅依赖 GDI 接口，易于移植。
+  - 所有带 GDI 的 Windows 版本都能用，是通用退路，不只给老系统。
+  - 不需要额外权限，也不需要系统选择器。纯 GDI 窗口用窗口 DC 即可，被遮挡也不影响。
 
 - **缺点**：
-  - 无法捕获硬件加速窗口：GPU 绘制绕过 GDI 管道，导致黑屏或花屏。
-  - 高 CPU 开销、延迟大：需将 GPU 数据同步拷贝到 CPU，帧率 & 性能受限。
 
-#### [Magnification API](https://learn.microsoft.com/zh-cn/windows/win32/winauto/magapi/entry-magapi-sdk)
+  - 窗口 DC 拿不到 flip-model 和 DirectComposition 的 GPU 画面。
+  - 屏幕 DC 能看到已经合成进桌面的 GPU 窗口，但遮挡会进画面，独占全屏仍然采不到。
+  - 像素拷到 CPU，分辨率高时开销大。
 
-- **原理**：创建放大镜窗口，通过 MagSetWindowFilterList 筛选目标窗口，再从放大镜 DC 读取画面。
+#### [Magnification API](https://learn.microsoft.com/zh-cn/windows/win32/winauto/magapi/magapi-intro)
+
+- **原理**：放大镜控件把屏幕上的一块源矩形拷进离屏位图（`MagSetWindowSource`），读的是 DWM 合成之后的桌面，和屏幕 DC 的 BitBlt 是同一层。[`MagSetWindowFilterList`](https://learn.microsoft.com/zh-cn/windows/win32/api/magnification/nf-magnification-magsetwindowfilterlist) 用 `MW_FILTERMODE_EXCLUDE` 可以把指定窗口从这张画面里排除，例如采集程序自己的浮层，从而露出它底下、仍在桌面合成里的内容。放大镜窗口自己会被自动排除。最小化的窗口已经不在合成结果里，排除别的窗口也把它变不出来。`MW_FILTERMODE_INCLUDE` 从 Windows 7 起不支持，不能用来只采集某一个窗口。全屏放大镜不支持过滤列表。
+
+  WebRTC 的屏幕采集里有一套基于该 API 的实现，用来排除指定窗口。
 
 - **优点**：
 
-  - 可捕获后台或被遮挡窗口：绕过 Z 顺序限制，适合隐藏窗口录制。
-  - 支持硬件加速内容：DWM 合成后仍可读取渲染结果。
+  - 能从屏幕画面里排除指定窗口。BitBlt 和 DXGI 桌面复制都做不到这一点。
+  - 内容只要还在 DWM 合成里，硬件加速窗口和 GDI 窗口都能看到。
 
 - **缺点**：
-  - 帧率 & 性能开销高：放大镜合成与回读频繁，CPU/GPU 占用率高。
-  - 依赖 Aero/DWM：在禁用 Aero 或使用第三方主题时可能失效。
 
-### 4. 使用建议
+  - 屏幕 DC BitBlt 采不到的，它一般也采不到，包括独占全屏和设置了显示亲和性的窗口。它不是前几种方式都失败之后的保底。
+  - [`MagSetImageScalingCallback`](https://learn.microsoft.com/zh-cn/windows/win32/api/magnification/nf-magnification-magsetimagescalingcallback) 从 Windows 7 起弃用，只在 DWM 关闭时有效，没有替代回调。官方路径是把源矩形拷进位图，像素在 CPU 侧。
+  - 面向整块桌面，不是按窗口句柄采集。运行时按进程调用 `MagInitialize`。全屏放大镜是系统全局的一份状态。32 位进程在 64 位 Windows 上不受支持（WOW64）。WebRTC 使用已弃用的缩放回调，经线程局部存储转发，因此每个采集器独占一条带消息循环的线程。
 
-1. 高性能游戏场景，优先选用`游戏进程采集`，其次 `WGC`，二者性能相差不大；WGC 无注入，安全性更好。
+### 4. 为什么仍然会采集失败
 
-2. 若有支持老系统和兼容性的需求，再考虑使用 `BitBlt` 与 `Magnification API`。
+WGC 和 BitBlt 都接上之后，线上仍会黑屏或画面冻结。常见原因：
+
+1. **画面没有进 DWM 正在读的那一层。** 独占全屏会绕过 DWM。无边框全屏可能走 independent flip（direct flip）：交换链直接交给显示器扫描。硬件 overlay（MPO，multiplane overlay）把视频或 HDR 放在单独的硬件平面上。这些像素可能不在 WGC 和 BitBlt 拿到的表面里，表现是黑屏，或停在旧帧上。
+
+2. **窗口拒绝被采集。** 目标程序调用 [`SetWindowDisplayAffinity`](https://learn.microsoft.com/zh-cn/windows/win32/api/winuser/nf-winuser-setwindowdisplayaffinity)。`WDA_EXCLUDEFROMCAPTURE`（Win10 2004 起）让窗口在采集结果里不出现；`WDA_MONITOR` 让采集结果里这块区域没有内容。两者都只在 DWM 正在合成桌面时生效。
+
+3. **窗口状态或句柄不对。** 最小化后程序通常停止绘制，WGC 没有新表面，按屏幕裁剪也截不到它。窗口在屏幕外时，屏幕 DC 和 DXGI 按桌面矩形裁，裁到的是别的内容或空白；WGC 有时仍能拿到窗口表面，但程序若因此停止绘制，一样是黑的或冻住。另一张虚拟桌面上的窗口可能被 cloak。句柄如果是子窗口或启动器窗口，采到的就不是正在绘制的那一层。
+
+4. **显卡、格式和会话。** 混合显卡笔记本上，游戏在独显，采集用的纹理在核显。驱动对共享纹理或桌面复制支持不完整时，也会黑屏或冻帧。开了 Windows HD Color 时，内容像素格式不一定是官方示例里的 `DXGI_FORMAT_B8G8R8A8_UNORM`，直接当 8-bit 用会发灰（文档称为 pixel overclipping），HDR 需要改用 `DXGI_FORMAT_R16G16B16A16_FLOAT` 这一类格式。远程桌面里经常拿不到同一块桌面表面；会话断开时 Desktop Duplication 返回 `DXGI_ERROR_SESSION_DISCONNECTED`。
+
+5. **权限和安全桌面。** 注入要求调用方的完整性级别足以打开目标进程。UAC 同意界面和锁屏在安全桌面上，普通用户进程进不去。Desktop Duplication 对安全桌面返回 `E_ACCESSDENIED`，文档写明只有 `LOCAL_SYSTEM` 能访问。
+
+### 5. 使用建议
+
+1. 游戏优先用进程注入。这条路径能采到独占全屏，帧率也跟着游戏的 Present。
+2. 注入不可用，且系统是 Win10 1903 及以上时，用 WGC 按窗口采集。
+3. 再往下用 DXGI Desktop Duplication，或屏幕 DC 的 BitBlt，按窗口矩形裁剪。
+4. 确认是纯 GDI 窗口时，直接用窗口 DC 的 BitBlt。被遮挡也能采到，不必先截整屏再裁。
+5. 用黑帧和冻帧检测在这几档之间自动切换，并把失败原因打进遥测，用来区分句柄、权限、格式和显卡问题。
+6. Magnification 只在需要把采集程序自己的窗口从屏幕画面里排除时使用。
