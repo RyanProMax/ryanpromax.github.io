@@ -110,20 +110,18 @@ DWM 开启后，每个顶层窗口先画到自己的屏外重定向表面，再�
 
 #### [Magnification API](https://learn.microsoft.com/zh-cn/windows/win32/winauto/magapi/magapi-intro)
 
-- **原理**：放大镜控件把屏幕上的一块源矩形拷进离屏位图（`MagSetWindowSource`），读的是 DWM 合成之后的桌面，和屏幕 DC 的 BitBlt 是同一层。[`MagSetWindowFilterList`](https://learn.microsoft.com/zh-cn/windows/win32/api/magnification/nf-magnification-magsetwindowfilterlist) 用 `MW_FILTERMODE_EXCLUDE` 可以把指定窗口从这张画面里排除，例如采集程序自己的浮层，从而露出它底下、仍在桌面合成里的内容。放大镜窗口自己会被自动排除。最小化的窗口已经不在合成结果里，排除别的窗口也把它变不出来。`MW_FILTERMODE_INCLUDE` 从 Windows 7 起不支持，不能用来只采集某一个窗口。全屏放大镜不支持过滤列表。
-
-  WebRTC 的屏幕采集里有一套基于该 API 的实现，用来排除指定窗口。
+- **原理**：放大镜控件把屏幕上的一块源矩形拷进离屏位图（`MagSetWindowSource`）。读的是 DWM 合成之后的桌面，和屏幕 DC 的 BitBlt 同一层，但路径不同：不经过 WGC，也不经过 DXGI Desktop Duplication。[`MagSetWindowFilterList`](https://learn.microsoft.com/zh-cn/windows/win32/api/magnification/nf-magnification-magsetwindowfilterlist) 用 `MW_FILTERMODE_EXCLUDE` 可以排除指定窗口，例如采集端自己的预览和浮层；放大镜窗口自己会被自动排除。最小化的窗口已经不在合成结果里，排除别的窗口也把它变不出来。`MW_FILTERMODE_INCLUDE` 从 Windows 7 起不支持。全屏放大镜不支持过滤列表。WebRTC 的屏幕采集里有一套这个 API 的实现。
 
 - **优点**：
 
-  - 能从屏幕画面里排除指定窗口。BitBlt 和 DXGI 桌面复制都做不到这一点。
-  - 内容只要还在 DWM 合成里，硬件加速窗口和 GDI 窗口都能看到。
+  - 放在降级链最后一档时，前面都失败了它还有机会出帧。老系统没有 WGC；Win7 上 `DuplicateOutput` 返回 `E_NOTIMPL`。一部分驱动、双显卡和远程会话环境里，桌面复制也会失败。放大镜不走那条接口，这些环境里有时仍能拿到合成后的桌面。
+  - 能排除采集程序自己的预览和浮层。同样是读合成桌面，画面比屏幕 DC 的 BitBlt 干净，屏幕 BitBlt 会把这些窗口一起裁进去。
 
 - **缺点**：
 
-  - 屏幕 DC BitBlt 采不到的，它一般也采不到，包括独占全屏和设置了显示亲和性的窗口。它不是前几种方式都失败之后的保底。
-  - [`MagSetImageScalingCallback`](https://learn.microsoft.com/zh-cn/windows/win32/api/magnification/nf-magnification-magsetimagescalingcallback) 从 Windows 7 起弃用，只在 DWM 关闭时有效，没有替代回调。官方路径是把源矩形拷进位图，像素在 CPU 侧。
-  - 面向整块桌面，不是按窗口句柄采集。运行时按进程调用 `MagInitialize`。全屏放大镜是系统全局的一份状态。32 位进程在 64 位 Windows 上不受支持（WOW64）。WebRTC 使用已弃用的缩放回调，经线程局部存储转发，因此每个采集器独占一条带消息循环的线程。
+  - 和屏幕合成是同一层。独占全屏、`SetWindowDisplayAffinity` 保护的窗口、最小化的窗口，它也采不到。它是让画面别空着的最后一档，不是万能解法。
+  - 像素在 CPU 上，开销比前几档高。[`MagSetImageScalingCallback`](https://learn.microsoft.com/zh-cn/windows/win32/api/magnification/nf-magnification-magsetimagescalingcallback) 从 Windows 7 起弃用，只在 DWM 关闭时有效，没有替代回调。
+  - 一个进程只能用一个放大镜实例。它面向整块桌面，不是按窗口句柄采集。32 位进程在 64 位 Windows 上不受支持（WOW64）。
 
 ### 4. 为什么仍然会采集失败
 
@@ -144,6 +142,6 @@ WGC 和 BitBlt 都接上之后，线上仍会黑屏或画面冻结。常见原�
 1. 游戏优先用进程注入。这条路径能采到独占全屏，帧率也跟着游戏的 Present。
 2. 注入不可用，且系统是 Win10 1903 及以上时，用 WGC 按窗口采集。
 3. 再往下用 DXGI Desktop Duplication，或屏幕 DC 的 BitBlt，按窗口矩形裁剪。
-4. 确认是纯 GDI 窗口时，直接用窗口 DC 的 BitBlt。被遮挡也能采到，不必先截整屏再裁。
-5. 用黑帧和冻帧检测在这几档之间自动切换，并把失败原因打进遥测，用来区分句柄、权限、格式和显卡问题。
-6. Magnification 只在需要把采集程序自己的窗口从屏幕画面里排除时使用。
+4. 上面仍然没有可用画面时，用 Magnification 做最后一档。它用另一条路径读合成后的桌面，并能排除采集端自己的窗口，用来把画面留住。
+5. 确认目标是纯 GDI 窗口时，可以直接用窗口 DC 的 BitBlt，被遮挡也能采到。这是一条捷径，不插在上面的降级链里。
+6. 用黑帧和冻帧检测沿这几档自动往下切换，并把失败原因打进遥测。

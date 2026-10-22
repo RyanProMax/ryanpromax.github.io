@@ -110,20 +110,18 @@ With DWM enabled, each top-level window draws to its own off-screen redirection 
 
 #### [Magnification API](https://learn.microsoft.com/en-us/windows/win32/winauto/magapi/magapi-intro)
 
-- **Mechanism**: The magnifier control copies a source rectangle of the screen into an off-screen bitmap (`MagSetWindowSource`). That rectangle is the desktop after DWM composition, the same layer as a screen-DC BitBlt. [`MagSetWindowFilterList`](https://learn.microsoft.com/en-us/windows/win32/api/magnification/nf-magnification-magsetwindowfilterlist) with `MW_FILTERMODE_EXCLUDE` removes the listed windows from that image, for example the capture app's own overlays, and reveals whatever is still in the desktop composition underneath. The magnifier window itself is excluded automatically. A minimized window is no longer in the composition, and excluding other windows does not bring it back. `MW_FILTERMODE_INCLUDE` is unsupported on Windows 7 and later, so the list cannot be used to capture only one window. The full-screen magnifier does not support a filter list.
-
-  WebRTC's screen capturer includes an implementation of this API, used to exclude a chosen window.
+- **Mechanism**: The magnifier control copies a source rectangle of the screen into an off-screen bitmap (`MagSetWindowSource`). That rectangle is the desktop after DWM composition, the same layer as a screen-DC BitBlt, but a different path: it does not go through WGC or DXGI Desktop Duplication. [`MagSetWindowFilterList`](https://learn.microsoft.com/en-us/windows/win32/api/magnification/nf-magnification-magsetwindowfilterlist) with `MW_FILTERMODE_EXCLUDE` removes listed windows, such as the capturer's own preview and overlays. The magnifier window itself is excluded automatically. A minimized window is no longer in the composition, and excluding other windows does not bring it back. `MW_FILTERMODE_INCLUDE` is unsupported on Windows 7 and later. The full-screen magnifier does not support a filter list. WebRTC's screen capturer includes an implementation of this API.
 
 - **Advantages**:
 
-  - It can exclude specific windows from a screen capture. BitBlt and DXGI Desktop Duplication cannot.
-  - Hardware-accelerated windows and GDI windows both show up, as long as DWM is still compositing them.
+  - As the last tier, it can still produce a frame after the others have failed. Older systems have no WGC, and on Windows 7 `DuplicateOutput` returns `E_NOTIMPL`. In some driver, hybrid-GPU, and remote-session environments, desktop duplication fails as well. The magnifier does not use that API, so in those environments it can still return the composited desktop.
+  - It can exclude the capturer's own preview and overlays. The image is the same composited desktop, but cleaner than a screen-DC BitBlt, which would include those windows in the crop.
 
 - **Disadvantages**:
 
-  - What a screen-DC BitBlt cannot see, the magnifier generally cannot see either, including exclusive fullscreen and windows protected by display affinity. It is not the fallback for when the other methods have already failed.
-  - [`MagSetImageScalingCallback`](https://learn.microsoft.com/en-us/windows/win32/api/magnification/nf-magnification-magsetimagescalingcallback) is deprecated as of Windows 7, works only while DWM is off, and has no replacement callback. The documented path copies the source rectangle into a bitmap, so the pixels are on the CPU.
-  - It is aimed at the desktop, not at a window handle. The runtime is initialized per process with `MagInitialize`. The full-screen magnifier is a single system-wide state. A 32-bit process is not supported on 64-bit Windows (WOW64). WebRTC uses the deprecated scaling callback and forwards it through thread-local storage, so each capturer owns a thread that runs a message loop.
+  - It shares the composited-desktop layer. Exclusive fullscreen, windows protected by `SetWindowDisplayAffinity`, and minimized windows are still missing. It is the last resort that keeps something on screen, not a cure-all.
+  - Pixels are on the CPU, and the overhead is higher than the tiers above it. [`MagSetImageScalingCallback`](https://learn.microsoft.com/en-us/windows/win32/api/magnification/nf-magnification-magsetimagescalingcallback) is deprecated as of Windows 7, works only while DWM is off, and has no replacement callback.
+  - A process can use only one magnifier instance. It is aimed at the whole desktop, not at a window handle. A 32-bit process is not supported on 64-bit Windows (WOW64).
 
 ### 4. Why Capture Still Fails
 
@@ -144,6 +142,6 @@ WGC and BitBlt can both be wired up and still produce a black or frozen frame in
 1. For games, try process injection first. It can capture exclusive fullscreen, and the frame rate follows the game's Present.
 2. When injection is not available and the system is Windows 10 1903 or later, capture the window with WGC.
 3. Next, use DXGI Desktop Duplication, or BitBlt from the screen DC, and crop to the window rectangle.
-4. When the target is a plain GDI window, BitBlt from the window DC directly. Occlusion still works, and there is no need to capture the whole screen and crop.
-5. Detect black frames and frozen frames, switch between these tiers automatically, and send the failure reason to telemetry so a bad handle, a privilege mismatch, a format, and a GPU problem can be told apart.
-6. Use the Magnification API only when a screen capture must exclude the capture app's own windows.
+4. When those still produce no usable frame, use the Magnification API as the last tier. It reads the composited desktop through another path, and it can exclude the capturer's own windows, which keeps a picture on screen.
+5. When the target is known to be a plain GDI window, BitBlt from the window DC directly. Occlusion still works. That shortcut sits beside the chain above, not inside it.
+6. Detect black frames and frozen frames, step down these tiers automatically, and send the failure reason to telemetry.
