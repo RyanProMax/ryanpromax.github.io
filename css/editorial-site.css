@@ -1,6 +1,8 @@
 /* The reading pages share the résumé's quiet editorial palette. */
 :root {
   color-scheme: light;
+  --site-content-width: 760px;
+  --site-gutter: 1.5rem;
   --site-background: #f3f2ed;
   --site-text: #20211e;
   --site-muted: #666962;
@@ -56,6 +58,10 @@ html {
 .editorial-site ::selection {
   background: var(--site-accent);
   color: var(--site-background);
+}
+.site-container {
+  width: min(var(--site-content-width), calc(100% - 2 * var(--site-gutter)));
+  margin-inline: auto;
 }
 .site-shell {
   min-height: 100svh;
@@ -298,7 +304,7 @@ html {
   text-align: right;
 }
 .reading-page {
-  max-width: 760px;
+  width: 100%;
   margin-inline: auto;
 }
 .reading-header {
@@ -520,7 +526,7 @@ html {
   color: var(--site-text);
 }
 .topic-index {
-  max-width: 760px;
+  max-width: 100%;
   padding-top: 1.5rem;
 }
 .topic-index > a {
@@ -542,6 +548,9 @@ html {
   color: var(--site-accent);
 }
 @media (max-width: 700px) {
+  :root {
+    --site-gutter: 1rem;
+  }
   .site-header {
     padding: 0.65rem 1rem;
   }
