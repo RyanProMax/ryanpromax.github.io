@@ -241,8 +241,6 @@
   cursor: pointer;
   text-align: left;
   padding: 0.85rem 0;
-  border-top: 1px solid color-mix(in srgb, var(--site-text) 22%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, var(--site-text) 22%, transparent);
   margin-top: 2rem;
   color: color-mix(in srgb, var(--site-text) 62%, transparent);
   font-size: 0.625rem;
@@ -423,7 +421,6 @@
   flex: 0 0 auto;
   place-items: center;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--poster-accent) 26%, transparent);
   background: var(--poster-background);
   color: var(--poster-accent);
   transform: scale(1);
@@ -614,7 +611,6 @@
   display: inline-flex;
   min-height: 2.75rem;
   align-items: center;
-  border-bottom: 1px solid currentColor;
   font-size: 0.6875rem;
   font-weight: 500;
   letter-spacing: 0.08em;
@@ -746,9 +742,7 @@
   }
 
   .titleMeta {
-    top: 1rem;
-    right: 1rem;
-    left: 1rem;
+    display: none;
   }
 
   .workTitle {
@@ -763,7 +757,7 @@
   }
 
   .fixedVisual {
-    height: 100svh;
+    inset: 5.5rem 0 calc(6.5rem + env(safe-area-inset-bottom, 0px));
     padding: 0 1rem;
   }
 
@@ -851,12 +845,6 @@
     padding: 0 0.85rem;
   }
 
-  .titleMeta {
-    top: 0.85rem;
-    right: 0.85rem;
-    left: 0.85rem;
-  }
-
   .workTitle {
     font-size: clamp(2rem, 8.5vw, 3.25rem);
     letter-spacing: -0.04em;
@@ -879,6 +867,55 @@
     align-items: flex-start;
     flex-direction: column;
     gap: 0.25rem;
+  }
+}
+
+/* Let long descriptions remain readable when fixed navigation leaves little height. */
+@media (max-width: 900px) and (max-height: 48rem) {
+  .work {
+    padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .imageTrack {
+    display: none;
+  }
+
+  .fixedVisual {
+    position: relative;
+    inset: auto;
+    display: block;
+    padding: 0 1rem;
+  }
+
+  .imageClip,
+  .imageClip.compactVisual {
+    width: 100%;
+    height: auto;
+    aspect-ratio: auto;
+    will-change: auto;
+  }
+
+  .poster {
+    height: auto;
+    will-change: auto;
+  }
+
+  .posterComposition,
+  .imageClip:not(.compactVisual) .posterComposition {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    min-height: 0;
+    padding: 1.5rem;
+    gap: 1.25rem;
+  }
+
+  .posterBrand {
+    width: min(36%, 8rem);
+  }
+
+  .imageClip:not(.compactVisual) .posterDetails {
+    font-size: 1rem;
   }
 }
 

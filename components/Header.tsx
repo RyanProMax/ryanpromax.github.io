@@ -11,7 +11,13 @@ import LocaleSwitcher from './LocaleSwitcher';
 import ThemeSwitch from './ThemeSwitch';
 import SlidingNav from './SlidingNav';
 
-export default function Header({ availablePaths }: { availablePaths: string[] }) {
+export default function Header({
+  availablePaths,
+  assetPrefix,
+}: {
+  availablePaths: string[];
+  assetPrefix: string;
+}) {
   const pathname = usePathname();
   const { locale = DEFAULT_LOCALE } = useParams();
   const language = locale as Locale;
@@ -45,7 +51,7 @@ export default function Header({ availablePaths }: { availablePaths: string[] })
             })}
         </SlidingNav>
         <MobileNav />
-        <SearchButton />
+        <SearchButton assetPrefix={assetPrefix} />
         <ThemeSwitch />
         <LocaleSwitcher availablePaths={availablePaths} />
       </div>

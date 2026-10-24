@@ -85,6 +85,7 @@ export default function ScrambleText({
   const animationFrameRef = useRef<number | null>(null);
   const delayRef = useRef<number | null>(null);
   const activeRef = useRef(false);
+  const previousTextRef = useRef(text);
 
   const cancelAnimation = useCallback(() => {
     if (animationFrameRef.current !== null) {
@@ -144,9 +145,12 @@ export default function ScrambleText({
   );
 
   useEffect(() => {
+    const textChanged = previousTextRef.current !== text;
+    previousTextRef.current = text;
     cancelAnimation();
     setDisplayText(text);
-    if (play) scramble(delay);
+    // Reveal on entry, but show updated translations immediately.
+    if (play && !textChanged) scramble(delay);
     return cancelAnimation;
   }, [cancelAnimation, delay, play, scramble, text]);
 

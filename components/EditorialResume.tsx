@@ -26,7 +26,7 @@ export interface ResumeLocalization {
 
 interface Props {
   assetPrefix: string;
-  initialLocale: Locale;
+  locale: Locale;
   localizations: Record<Locale, ResumeLocalization>;
 }
 
@@ -63,8 +63,11 @@ const removeLeadingEmoji = (value: string) => value.replace(/^[^\p{L}\p{N}]+/u, 
 const scrollEasing = (value: number) => (value === 1 ? 1 : 1 - Math.pow(2, -10 * value));
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-export default function EditorialResume({ assetPrefix, initialLocale, localizations }: Props) {
-  const activeLocale = initialLocale;
+export default function EditorialResume({
+  assetPrefix,
+  locale: activeLocale,
+  localizations,
+}: Props) {
   const [activeWork, setActiveWork] = useState(-1);
   const [landingInteractive, setLandingInteractive] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -139,6 +142,7 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
     const viewportHeight = root.clientHeight;
     const scrollTop = root.scrollTop;
     const reducedMotion = prefersReducedMotion();
+    const flowingCards = window.matchMedia('(max-width: 900px) and (max-height: 48rem)').matches;
     const topLandingVisibility = 1 - clamp(scrollTop / (viewportHeight * 0.82));
     const landingVisibility = topLandingVisibility;
     const nextLandingInteractive = landingVisibility > 0.6;
@@ -182,6 +186,13 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
       const clip = clipRefs.current[index];
       const poster = posterRefs.current[index];
       if (!track || !clip || !poster) return;
+
+      // Short screens need the full text in the scroll flow, clear of fixed navigation.
+      if (flowingCards) {
+        clip.style.clipPath = 'none';
+        poster.style.transform = 'none';
+        return;
+      }
 
       const rect = track.getBoundingClientRect();
       const progress = clamp((viewportHeight - rect.top) / (viewportHeight + rect.height));
@@ -251,10 +262,6 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
   useEffect(() => {
     scheduleScrollUpdate();
   }, [activeLocale, scheduleScrollUpdate]);
-
-  useEffect(() => {
-    document.documentElement.lang = activeLocale;
-  }, [activeLocale]);
 
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow;
@@ -393,7 +400,6 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
           <div className={styles.introName}>
             <h1>
               <ScrambleText
-                key={`name-${activeLocale}`}
                 text={profile.name.toUpperCase()}
                 play={interfaceReady}
                 delay={500}
@@ -404,7 +410,6 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
           </div>
           <p className={styles.introOccupation}>
             <ScrambleText
-              key={`occupation-${activeLocale}`}
               text={(profile.occupation ?? '').toUpperCase()}
               play={interfaceReady}
               delay={610}
@@ -414,7 +419,6 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
           {profile.summary && (
             <p className={styles.introSummary}>
               <ScrambleText
-                key={`summary-${activeLocale}`}
                 text={profile.summary}
                 play={interfaceReady}
                 delay={700}
@@ -430,7 +434,6 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
           >
             <span>
               <ScrambleText
-                key={`career-${activeLocale}`}
                 text={isChinese ? '职业生涯' : 'CAREER'}
                 play={interfaceReady}
                 delay={830}
@@ -439,7 +442,6 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
             </span>
             <span>
               <ScrambleText
-                key={`period-${activeLocale}`}
                 text={`2016 — ${isChinese ? '至今' : 'PRESENT'}`}
                 play={interfaceReady}
                 delay={890}
@@ -453,7 +455,6 @@ export default function EditorialResume({ assetPrefix, initialLocale, localizati
         <figure className={styles.introTrack}>
           <p ref={promptRef} className={styles.scrollPrompt}>
             <ScrambleText
-              key={`prompt-${activeLocale}`}
               text={isChinese ? '向下滚动探索' : 'SCROLL TO EXPLORE'}
               play={interfaceReady}
               delay={1110}

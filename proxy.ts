@@ -42,8 +42,11 @@ export function proxy(request: NextRequest) {
     return createRedirectResponse(url, preferredLocale);
   }
 
-  // 情况2：显式语言路径优先，确保 cookie 与当前 URL 同步
-  if (request.cookies.get('preferred-locale')?.value !== currentUrlLocale) {
+  // Only document visits should update the preference; route prefetches must not.
+  if (
+    request.headers.get('sec-fetch-dest') === 'document' &&
+    request.cookies.get('preferred-locale')?.value !== currentUrlLocale
+  ) {
     const response = NextResponse.next();
     setLocaleCookie(response, currentUrlLocale);
     return response;

@@ -1,8 +1,8 @@
 import SearchButtonWrapper from './SearchButtonWrapper';
 
-const SearchButton = () => {
+const SearchButton = ({ assetPrefix }: { assetPrefix: string }) => {
   return (
-    <SearchButtonWrapper>
+    <SearchButtonWrapper assetPrefix={assetPrefix}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"

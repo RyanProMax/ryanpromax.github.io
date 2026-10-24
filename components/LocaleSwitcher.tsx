@@ -16,21 +16,17 @@ export default function LocaleSwitcher({ availablePaths }: { availablePaths: str
   return (
     <Link
       href={target}
+      replace
+      scroll={false}
       className="locale-switch"
       lang={nextLocale}
+      hrefLang={nextLocale}
       aria-label={nextLocale === Locale.ZH ? '切换到中文' : 'Switch to English'}
-      onClick={(event) => {
-        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      onNavigate={(event) => {
         // Translated headings have different IDs, so do not carry article fragments.
         if (equivalent && window.location.search) {
           event.preventDefault();
-          router.push(`${target}${window.location.search}`);
-        }
-        try {
-          localStorage.setItem('preferred-locale', nextLocale);
-          document.cookie = `preferred-locale=${nextLocale}; max-age=31536000; path=/; samesite=lax`;
-        } catch {
-          /* Navigation still works when browser storage is unavailable. */
+          router.replace(`${target}${window.location.search}`, { scroll: false });
         }
       }}
     >
