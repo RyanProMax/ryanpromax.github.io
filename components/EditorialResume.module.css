@@ -453,7 +453,7 @@
   inset: auto;
   width: 100%;
   min-height: clamp(28rem, 42vw, 32rem);
-  padding: clamp(2.5rem, 4.5vw, 3.5rem);
+  padding: clamp(2.5rem, 6vw, 6rem);
   gap: 1.5rem;
 }
 
@@ -464,7 +464,7 @@
 @media (max-width: 900px) {
   .imageClip:not(.compactVisual) .posterComposition {
     min-height: 30rem;
-    padding: 1.75rem;
+    padding: clamp(1.75rem, 6vw, 3.5rem);
     gap: 1.25rem;
   }
 
@@ -666,7 +666,7 @@
   pointer-events: none;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1439px) {
   .timeline {
     top: auto;
     bottom: 0;
@@ -731,7 +731,9 @@
     text-transform: uppercase;
     white-space: nowrap;
   }
+}
 
+@media (max-width: 900px) {
   .titleStage {
     height: 90svh;
     gap: 1rem;

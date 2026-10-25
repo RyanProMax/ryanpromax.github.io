@@ -175,7 +175,7 @@ export default function EditorialResume({
     // The bottom timeline must leave before the closing content enters its space.
     // Waiting for the final work to cross the viewport midpoint leaves it over the CTA.
     if (
-      window.matchMedia('(max-width: 900px)').matches &&
+      window.matchMedia('(max-width: 1439px)').matches &&
       outroRef.current &&
       outroRef.current.getBoundingClientRect().top < viewportHeight
     ) {

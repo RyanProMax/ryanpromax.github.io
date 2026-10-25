@@ -1,7 +1,7 @@
 /* The reading pages share the résumé's quiet editorial palette. */
 :root {
   color-scheme: light;
-  --site-content-width: 760px;
+  --site-content-width: 1104px;
   --site-gutter: 1.5rem;
   --site-background: #f3f2ed;
   --site-text: #20211e;
@@ -729,7 +729,7 @@ html {
   color: var(--site-accent);
   border-left-color: var(--site-accent);
 }
-@media (min-width: 1280px) {
+@media (min-width: 1680px) {
   .article-toc {
     display: block;
     position: sticky;
@@ -756,7 +756,7 @@ html {
   }
 }
 
-@media (max-width: 1279px) {
+@media (max-width: 1679px) {
   .reading-header {
     border-bottom: 0;
     padding-bottom: 1rem;
