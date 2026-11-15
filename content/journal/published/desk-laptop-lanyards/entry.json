@@ -1,0 +1,17 @@
+{
+  "kind": "life",
+  "status": "published",
+  "id": "desk-laptop-lanyards",
+  "date": "2021-07-26",
+  "summary": [
+    "新的开始",
+    "A new beginning"
+  ],
+  "image": {
+    "src": "photo.webp",
+    "alt": [
+      "桌上的笔记本电脑、DAY 1 本子与挂绳",
+      "A laptop, DAY 1 notebook and lanyards on a desk"
+    ]
+  }
+}

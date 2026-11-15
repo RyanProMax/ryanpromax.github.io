@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, Layers } from 'lucide-react';
+import { BookOpen, Layers, Heart } from 'lucide-react';
 import { useParams, usePathname } from 'next/navigation';
 import Link from './Link';
 import { DEFAULT_LOCALE, Locale } from '@/locales/config';
@@ -16,6 +16,8 @@ export default function MobileNav() {
       {[
         { path: 'blog', label: chinese ? '文章' : 'Blog', Icon: BookOpen },
         { path: 'projects', label: chinese ? '作品' : 'Projects', Icon: Layers },
+        { path: 'life', label: chinese ? '生活' : 'Life', Icon: Heart },
+        // { path: 'travel', label: chinese ? '旅行' : 'Travel', Icon: MapPin },
       ].map(({ path, label, Icon }) => (
         <Link
           key={path}

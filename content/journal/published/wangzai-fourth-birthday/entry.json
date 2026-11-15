@@ -1,0 +1,17 @@
+{
+  "kind": "life",
+  "status": "published",
+  "id": "wangzai-fourth-birthday",
+  "date": "2025-01-08",
+  "summary": [
+    "旺仔四岁啦！",
+    "Wang Zai turns four!"
+  ],
+  "image": {
+    "src": "photo.webp",
+    "alt": [
+      "旺仔与数字4生日蜡烛和装饰",
+      "Wang Zai beside a number-four birthday candle and decorations"
+    ]
+  }
+}

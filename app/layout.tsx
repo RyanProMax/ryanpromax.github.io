@@ -31,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       `/${language}`,
       `/${language}/blog`,
       `/${language}/projects`,
+      `/${language}/life`,
       ...posts.map((post) => `/${language}/blog/${post.slug}`),
       ...Array.from(
         { length: Math.ceil(posts.length / 5) },

@@ -1,0 +1,194 @@
+.journal {
+  padding-bottom: 1rem;
+}
+.timeline {
+  position: relative;
+  --year-width: 96px;
+  --year-gap: 2.5rem;
+  --entry-inset: 2.5rem;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--year-width) + var(--year-gap));
+  top: calc(3rem + 12px);
+  bottom: 2rem;
+  width: 1px;
+  background: var(--site-line);
+}
+.yearGroup {
+  display: grid;
+  grid-template-columns: var(--year-width) minmax(0, 1fr);
+  gap: var(--year-gap);
+  padding-top: 3rem;
+}
+.year {
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--site-text);
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+  align-self: start;
+  justify-self: end;
+  margin-right: -1px;
+  line-height: 24px;
+}
+
+.entries {
+  padding-left: var(--entry-inset);
+}
+.entry {
+  position: relative;
+  padding-bottom: 3.5rem;
+}
+.entry::before {
+  content: '';
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  top: 8.5px;
+  left: calc(-1 * var(--entry-inset) - 3px);
+  border-radius: 50%;
+  background: var(--site-accent);
+  box-shadow: 0 0 0 5px var(--site-background);
+}
+.date {
+  display: block;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--site-text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  font-family: inherit;
+  font-weight: 400;
+}
+.entry p {
+  color: var(--site-body);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  max-width: 36rem;
+  margin-top: 0.75rem;
+}
+.photo {
+  position: relative;
+  display: block;
+  margin-top: 1.5rem;
+  width: min(100%, 640px, calc(480px * var(--photo-ratio)));
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: zoom-in;
+  background: var(--site-surface);
+}
+.photo img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 480px;
+  height: auto;
+  object-fit: contain;
+  transition: transform 0.4s;
+}
+.photo:hover img {
+  /* Keep the complete photograph visible and the shared-element rect stable. */
+  transform: none;
+}
+.lightbox {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+}
+.lightbox::backdrop {
+  background: #000b;
+  backdrop-filter: blur(6px);
+}
+.lightbox img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: auto;
+  max-width: 90vw;
+  max-height: 85dvh;
+  height: auto;
+  translate: -50% -50%;
+  transform-origin: top left;
+  object-fit: contain;
+  border-radius: 8px;
+}
+.close {
+  position: absolute;
+  z-index: 1;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  background: var(--site-background);
+  color: var(--site-text);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.journal button:focus-visible {
+  outline: 2px solid var(--site-accent);
+  outline-offset: 4px;
+}
+@media (max-width: 640px) {
+  .photo {
+    width: min(100%, calc(min(360px, 60svh) * var(--photo-ratio)));
+  }
+  .timeline {
+    --year-width: 56px;
+    --year-gap: 1.2rem;
+    --entry-inset: 1.2rem;
+  }
+  .timeline::before {
+    top: calc(2rem + 12px);
+  }
+  .yearGroup {
+    padding-top: 2rem;
+  }
+  .year {
+    font-size: 1.125rem;
+  }
+  .entry {
+    padding-bottom: 2.5rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .journal *,
+  .journal *::before {
+    transition: none !important;
+  }
+}
+
+.entryHeading {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.entryHeading .date {
+  flex: 0 0 auto;
+}
+.entryHeading p {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .entryHeading {
+    gap: 0.8rem;
+  }
+}

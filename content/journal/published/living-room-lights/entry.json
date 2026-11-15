@@ -1,0 +1,17 @@
+{
+  "kind": "life",
+  "status": "published",
+  "id": "living-room-lights",
+  "date": "2023-04-16",
+  "summary": [
+    "乔迁大吉！",
+    "Here’s to our new home!"
+  ],
+  "image": {
+    "src": "photo.webp",
+    "alt": [
+      "亮着灯的客厅与餐桌",
+      "A lit living room and dining table"
+    ]
+  }
+}

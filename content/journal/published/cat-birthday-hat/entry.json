@@ -1,0 +1,17 @@
+{
+  "kind": "life",
+  "status": "published",
+  "id": "cat-birthday-hat",
+  "date": "2024-01-08",
+  "summary": [
+    "旺仔三岁啦！",
+    "Wang Zai turns three!"
+  ],
+  "image": {
+    "src": "photo.webp",
+    "alt": [
+      "戴蓝色生日帽的猫",
+      "A cat wearing a blue birthday hat"
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "kind": "life",
+  "status": "published",
+  "id": "kitten-behind-window",
+  "date": "2021-01-08",
+  "summary": [
+    "我们的嫡长子旺仔~",
+    "Our firstborn, Wang Zai~"
+  ],
+  "image": {
+    "src": "photo.webp",
+    "alt": [
+      "玻璃后的小猫",
+      "A kitten behind glass"
+    ]
+  }
+}

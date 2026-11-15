@@ -1,0 +1,17 @@
+{
+  "kind": "life",
+  "status": "published",
+  "id": "ultrasound-record",
+  "date": "2026-11-10",
+  "summary": [
+    "第一次看到小羊酥！",
+    "Our first glimpse of Xiao Yang Su!"
+  ],
+  "image": {
+    "src": "photo.webp",
+    "alt": [
+      "超声检查记录",
+      "An ultrasound record"
+    ]
+  }
+}

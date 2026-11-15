@@ -3,14 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "next dev --webpack",
-    "dev": "cross-env INIT_CWD=. next dev --webpack",
-    "build": "cross-env INIT_CWD=. next build --webpack && cross-env NODE_OPTIONS='--experimental-json-modules' node ./scripts/postbuild.mjs",
-    "build:prod": "cross-env INIT_CWD=. EXPORT=1 UNOPTIMIZED=1 next build --webpack && cross-env NODE_OPTIONS='--experimental-json-modules' node ./scripts/postbuild.mjs",
+    "start": "node scripts/journal.mjs --preview && next dev --webpack",
+    "dev": "node scripts/journal.mjs --preview && cross-env INIT_CWD=. next dev --webpack",
+    "build": "node scripts/journal.mjs && cross-env INIT_CWD=. next build --webpack && cross-env NODE_OPTIONS='--experimental-json-modules' node ./scripts/postbuild.mjs",
+    "build:prod": "node scripts/journal.mjs && cross-env INIT_CWD=. EXPORT=1 UNOPTIMIZED=1 next build --webpack && cross-env NODE_OPTIONS='--experimental-json-modules' node ./scripts/postbuild.mjs",
     "serve": "next start",
-    "analyze": "cross-env ANALYZE=true next build --webpack",
+    "analyze": "node scripts/journal.mjs && cross-env ANALYZE=true next build --webpack",
     "lint": "eslint --fix app components layouts scripts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "photos": "node scripts/journal.mjs --preview",
+    "photos:publish": "node scripts/journal.mjs"
   },
   "dependencies": {
     "@headlessui/react": "2.2.0",

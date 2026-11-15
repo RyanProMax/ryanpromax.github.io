@@ -42,3 +42,8 @@ npm-debug.log*
 .contentlayer
 .impeccable
 .workbuddy
+
+# Local journal drafts and generated preview assets (never commit)
+/content/journal/local/
+/data/generated/journal.json
+/public/static/journal-generated/

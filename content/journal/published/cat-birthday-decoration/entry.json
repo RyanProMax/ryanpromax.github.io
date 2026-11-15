@@ -1,0 +1,17 @@
+{
+  "kind": "life",
+  "status": "published",
+  "id": "cat-birthday-decoration",
+  "date": "2025-02-14",
+  "summary": [
+    "福仔一岁啦！",
+    "Fu Zai turns one!"
+  ],
+  "image": {
+    "src": "photo.webp",
+    "alt": [
+      "怀里的猫与生日装饰",
+      "A cat being held beside birthday decorations"
+    ]
+  }
+}
