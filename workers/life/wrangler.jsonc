@@ -4,7 +4,11 @@
   "compatibility_date": "2026-11-23",
   "workers_dev": false,
   "preview_urls": false,
-  "routes": [{ "pattern": "ryanzh.me/api/life/*", "zone_name": "ryanzh.me" }],
+  "routes": [
+    { "pattern": "ryanzh.me/api/life/*", "zone_name": "ryanzh.me" },
+    { "pattern": "ryanzh.me/_next/static/chunks/app/%5Blocale%5D/life/page-492f02067c8cc73d.js*", "zone_name": "ryanzh.me" },
+    { "pattern": "ryanzh.me/_next/static/chunks/app/%255Blocale%255D/life/page-492f02067c8cc73d.js*", "zone_name": "ryanzh.me" },
+  ],
   "vars": { "LIFE_HOST": "ryanzh.me" },
   "assets": {
     "directory": "./.assets",
