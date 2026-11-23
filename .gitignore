@@ -47,3 +47,7 @@ npm-debug.log*
 /content/journal/local/
 /data/generated/journal.json
 /public/static/journal-generated/
+
+# Access-controlled Life files and Worker secrets (never publish via GitHub Pages)
+/workers/life/.assets/
+/workers/life/.dev.vars*

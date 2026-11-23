@@ -192,3 +192,33 @@
     gap: 0.8rem;
   }
 }
+
+.unlock {
+  display: grid;
+  max-width: 25rem;
+  gap: 0.8rem;
+}
+
+.unlockControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.unlockControls input {
+  flex: 1;
+  min-width: 9rem;
+}
+
+.unlockControls input,
+.unlockControls button {
+  border: 1px solid currentColor;
+  border-radius: 0.35rem;
+  padding: 0.45rem 0.75rem;
+  background: transparent;
+  color: inherit;
+}
+
+.unlockControls button:disabled {
+  opacity: 0.55;
+}

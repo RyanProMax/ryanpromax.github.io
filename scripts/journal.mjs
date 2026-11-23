@@ -5,8 +5,16 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const root = process.cwd();
 const preview = process.argv.includes('--preview');
-const source = path.join(root, 'content/journal');
-const target = path.join(root, 'public/static/journal-generated');
+const privateLife = process.argv.includes('--private-life');
+if (privateLife && preview) throw new Error('Private Life builds never include drafts');
+const source = path.join(
+  root,
+  privateLife ? 'content/journal/local/life-private' : 'content/journal'
+);
+const target = path.join(
+  root,
+  privateLife ? 'workers/life/.assets/photos' : 'public/static/journal-generated'
+);
 const result = { life: [], travel: [] };
 const assets = [];
 const ids = new Set();
@@ -18,12 +26,14 @@ async function scan(dir) {
     const file = path.join(dir, entry.name);
     if (entry.isSymbolicLink()) throw new Error(`Symlinks are not supported: ${file}`);
     if (entry.isDirectory()) {
+      if (!privateLife && entry.name === 'local') continue;
       await scan(file);
       continue;
     }
     if (!entry.name.endsWith('.json')) continue;
     const item = JSON.parse(await fs.readFile(file, 'utf8'));
     if (!['life', 'travel'].includes(item.kind)) throw new Error(`Invalid kind: ${file}`);
+    if (privateLife ? item.kind !== 'life' : item.kind === 'life') continue;
     if (!['draft', 'published', 'example'].includes(item.status))
       throw new Error(`Explicit status required: ${file}`);
     if (!preview && item.status !== 'published') continue;
@@ -81,14 +91,35 @@ async function scan(dir) {
           .webp({ quality: 85 })
           .toBuffer();
         assets.push({ name: `${key}.webp`, buffer });
-        item.image.src = `/static/journal-generated/${key}.webp`;
+        item.image.src = privateLife
+          ? `/api/life/photos/${key}.webp`
+          : `/static/journal-generated/${key}.webp`;
       }
     }
     item.example = item.status === 'example';
     delete item.status;
     const kind = item.kind;
     delete item.kind;
-    result[kind].push(item);
+    // Only the fields the unlocked page renders enter the private manifest.
+    result[kind].push(
+      privateLife
+        ? {
+            id: item.id,
+            date: item.date,
+            summary: item.summary,
+            ...(item.image
+              ? {
+                  image: {
+                    src: item.image.src,
+                    alt: item.image.alt,
+                    width: item.image.width,
+                    height: item.image.height,
+                  },
+                }
+              : {}),
+          }
+        : item
+    );
   }
 }
 await scan(source);
@@ -105,6 +136,13 @@ for (const file of await fs.readdir(target)) {
   if (/^(life|travel)-[a-z0-9-]+\.webp$/.test(file)) await fs.unlink(path.join(target, file));
 }
 for (const asset of assets) await fs.writeFile(path.join(target, asset.name), asset.buffer);
+if (privateLife) {
+  await fs.writeFile(path.join(target, '../entries.json'), JSON.stringify(result.life), {
+    mode: 0o600,
+  });
+  console.log(`Private Life package: ${result.life.length} entries, ${assets.length} images.`);
+  process.exit(0);
+}
 await fs.mkdir(path.join(root, 'data/generated'), { recursive: true });
 await fs.writeFile(
   path.join(root, 'data/generated/journal.json'),

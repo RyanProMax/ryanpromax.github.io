@@ -1,16 +1,16 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react';
 import Image from 'next/image';
 import { X } from 'lucide-react';
 import { Locale } from '@/locales/config';
-import { lifeEntries } from '@/data/lifeJournal';
+import type { LifeEntry } from '@/data/lifeJournal';
 import styles from './LifeJournal.module.css';
 
 export default function LifeJournal({ locale }: { locale: Locale }) {
   const en = locale === Locale.EN;
   const language = en ? 1 : 0;
-  const [photo, setPhoto] = useState<(typeof lifeEntries)[number] | null>(null);
+  const [photo, setPhoto] = useState<LifeEntry | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
   const previewImage = useRef<HTMLImageElement>(null);
   const trigger = useRef<HTMLButtonElement | null>(null);
@@ -58,9 +58,81 @@ export default function LifeJournal({ locale }: { locale: Locale }) {
     });
     animation.current.onfinish = () => dialog.current?.close();
   };
-  const entries = lifeEntries;
+  const [entries, setEntries] = useState<LifeEntry[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const unlock = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    const form = event.currentTarget;
+    const password = new FormData(form).get('password');
+    form.reset();
+    try {
+      const auth = await fetch('/api/life/unlock', {
+        method: 'POST',
+        body: typeof password === 'string' ? password : '',
+        cache: 'no-store',
+      });
+      if (auth.status === 401) {
+        setError(en ? 'Incorrect password.' : '密码不正确。');
+        return;
+      }
+      if (auth.status === 429) {
+        setError(
+          en ? 'Too many attempts. Try again in a minute.' : '尝试次数过多，请一分钟后再试。'
+        );
+        return;
+      }
+      if (auth.status !== 204) throw new Error('Unlock unavailable');
+      const response = await fetch('/api/life/entries', { cache: 'no-store' });
+      if (!response.ok || !response.headers.get('Content-Type')?.includes('application/json'))
+        throw new Error('Journal unavailable');
+      const data: unknown = await response.json();
+      if (!Array.isArray(data)) throw new Error('Invalid journal');
+      setEntries(data as LifeEntry[]);
+    } catch {
+      setError(
+        en ? 'Could not open the journal. Please try again.' : '暂时无法打开生活页，请稍后再试。'
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+  if (entries === null)
+    return (
+      <div className={styles.journal}>
+        <header className="editorial-page-heading">
+          <h1>{en ? 'Life' : '生活'}</h1>
+        </header>
+        <form
+          className={styles.unlock}
+          method="post"
+          action="/api/life/unlock"
+          onSubmit={unlock}
+          aria-busy={busy}
+        >
+          <label htmlFor="life-password">
+            {en ? 'Enter the password to view.' : '输入密码后查看。'}
+          </label>
+          <div className={styles.unlockControls}>
+            <input
+              id="life-password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+            />
+            <button type="submit" disabled={busy}>
+              {en ? 'Unlock' : '解锁'}
+            </button>
+          </div>
+          {error && <p role="alert">{error}</p>}
+        </form>
+      </div>
+    );
   const years = [...new Set(entries.map((entry) => entry.date?.slice(0, 4) || 'pending'))];
-  const basePath = process.env.BASE_PATH || '';
 
   return (
     <div className={styles.journal}>
@@ -108,7 +180,7 @@ export default function LifeJournal({ locale }: { locale: Locale }) {
                           }}
                         >
                           <Image
-                            src={`${basePath}${entry.image.src}`}
+                            src={entry.image.src}
                             alt={entry.image.alt[language]}
                             width={entry.image.width || 960}
                             height={entry.image.height || 600}
@@ -150,7 +222,7 @@ export default function LifeJournal({ locale }: { locale: Locale }) {
         {photo?.image && (
           <Image
             ref={previewImage}
-            src={`${basePath}${photo.image.src}`}
+            src={photo.image.src}
             alt={photo.image.alt[language]}
             width={photo.image.width || 960}
             height={photo.image.height || 600}

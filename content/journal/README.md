@@ -1,5 +1,5 @@
 # Journal content
 
-Each published entry has `entry.json` and its reviewed, metadata-stripped `photo.webp`. These files are public. Do not add original private photographs here.
+Life entries and their reviewed, metadata-stripped `photo.webp` files must be stored only in the ignored `content/journal/local/life-private/` directory, with one `entry.json` next to each image. Mark a reviewed entry `published` to include it in the **authenticated Worker** package. The public site generator intentionally excludes all Life records and ignores the entire local tree.
 
-`pnpm photos` regenerates local preview; `pnpm build` and `pnpm build:prod` include only explicitly published entries. Private drafts belong in ignored `content/journal/local/` with status `draft`. Unknown dates may be null only in local drafts. Never deploy output from a development preview.
+See [the private Life runbook](../../workers/life/README.md) for packaging, tests, secrets and deployment. Do not place originals or private drafts in the Worker asset folder or commit them. Never deploy a public artifact from a development preview.
