@@ -76,7 +76,7 @@ const worker = {
     if (url.host !== env.LIFE_HOST || !url.pathname.startsWith(base)) return reply(404);
     if (
       !env.LIFE_PASSWORD ||
-      env.LIFE_PASSWORD.length < 16 ||
+      env.LIFE_PASSWORD.length < 8 ||
       !env.LIFE_SESSION_KEY ||
       env.LIFE_SESSION_KEY.length < 32 ||
       env.LIFE_SESSION_KEY === env.LIFE_PASSWORD

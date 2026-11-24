@@ -6,7 +6,7 @@ test('Life assets are readable only with an unexpired server-issued session', as
   let reads = 0;
   let remaining = 4;
   const host = 'https://ryanzh.me';
-  const password = 'test-fixture-not-a-real-password';
+  const password = 'Q6k?2pL!'; // Eight characters, test fixture only.
   const env = {
     LIFE_HOST: 'ryanzh.me',
     LIFE_PASSWORD: password,
@@ -73,4 +73,9 @@ test('Life assets are readable only with an unexpired server-issued session', as
     LIFE_SESSION_KEY: '',
   });
   assert.equal(unavailable.status, 503);
+  const tooShort = await worker.fetch(new Request(host + '/api/life/entries'), {
+    ...env,
+    LIFE_PASSWORD: password.slice(0, 7),
+  });
+  assert.equal(tooShort.status, 503);
 });
