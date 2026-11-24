@@ -193,9 +193,26 @@
   }
 }
 
-.unlock {
+:global(.site-main):has(> .locked) {
   display: grid;
-  max-width: 25rem;
+}
+
+.locked {
+  display: grid;
+  grid-template-areas: 'locked-content';
+  min-height: 18rem;
+}
+
+.locked > header {
+  grid-area: locked-content;
+  align-self: start;
+}
+
+.unlock {
+  grid-area: locked-content;
+  place-self: center;
+  display: grid;
+  width: min(100%, 25rem);
   gap: 0.8rem;
 }
 

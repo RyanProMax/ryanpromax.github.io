@@ -102,7 +102,7 @@ export default function LifeJournal({ locale }: { locale: Locale }) {
   };
   if (entries === null)
     return (
-      <div className={styles.journal}>
+      <div className={`${styles.journal} ${styles.locked}`}>
         <header className="editorial-page-heading">
           <h1>{en ? 'Life' : '生活'}</h1>
         </header>
